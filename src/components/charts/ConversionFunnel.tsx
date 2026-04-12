@@ -112,18 +112,8 @@ export function ConversionFunnel({ data, steps, onStepsChange }: Props) {
       {/* 범례 및 헤더 */}
       <div className="mb-6 flex items-center justify-between">
         <div>
-          <h3 className="text-xl font-bold text-[#0F172A] tracking-tight">Full-Funnel Lifecycle</h3>
+          <h3 className="text-xl font-bold text-[#0F172A] tracking-tight">전환 퍼널 (Full-Funnel)</h3>
           <p className="text-[11px] text-[#64748B] font-medium uppercase tracking-wider mt-0.5">Marketing Conversion Journey</p>
-        </div>
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-1.5 grayscale opacity-60">
-            <span className="w-1.5 h-1.5 rounded-full bg-[#3B82F6]" />
-            <span className="text-[10px] font-semibold text-[#64748B]">New Users</span>
-          </div>
-          <div className="flex items-center gap-1.5 grayscale opacity-60">
-            <span className="w-1.5 h-1.5 rounded-full bg-[#0D9488]" />
-            <span className="text-[10px] font-semibold text-[#64748B]">Returning</span>
-          </div>
         </div>
       </div>
 
@@ -165,40 +155,35 @@ export function ConversionFunnel({ data, steps, onStepsChange }: Props) {
       {/* 퍼널 메인 영역 */}
       <div className="flex-1 flex flex-col items-center justify-center py-2">
         {data.map((step, i) => {
-          const meta = STEP_META[step.field] || { title: step.label, sub: 'Performance', icon: Users, color: '#334155' }
-          const Icon = meta.icon
           const dropRate = step.rate !== null ? (1 - step.rate) * 100 : 0
           
           // 하단으로 갈수록 카드가 좁아지는 테이퍼링 (95% -> 90% -> 85% ...)
           const widthScale = 1 - (i * 0.08)
 
+          // 색상 결정 (Vibrant Blue -> Deep Blue -> Dark Teal -> Dark Navy)
+          const colors = ['#0066FF', '#0055DD', '#0044BB', '#00484F']
+          const color = colors[i] || colors[colors.length - 1]
+
           return (
             <div key={step.field} className="w-full flex flex-col items-center">
               {/* 단계 카드 */}
               <div 
-                className="relative rounded-2xl p-4 flex items-center shadow-lg transition-all duration-500 hover:scale-[1.02]"
+                className="relative rounded-2xl p-5 flex items-center justify-between shadow-lg transition-all duration-500 hover:scale-[1.02]"
                 style={{ 
                   width: `${widthScale * 100}%`,
-                  backgroundColor: meta.color,
-                  boxShadow: `0 10px 25px -5px ${meta.color}40`,
+                  backgroundColor: color,
+                  boxShadow: `0 10px 25px -5px ${color}40`,
                   color: 'white'
                 }}
               >
-                {/* 아이콘 */}
-                <div className="w-12 h-12 rounded-xl bg-white/20 flex items-center justify-center mr-4 backdrop-blur-md">
-                  <Icon className="h-6 w-6 text-white" />
-                </div>
-                
-                {/* 텍스트 정보 */}
-                <div className="flex-1">
-                  <div className="text-sm font-bold leading-tight">{meta.title}</div>
-                  <div className="text-[10px] text-white/70 font-medium">{meta.sub}</div>
+                {/* 왼쪽: 이벤트명 */}
+                <div className="text-base font-bold tracking-tight">
+                  {step.label}
                 </div>
 
-                {/* 수치 정보 */}
-                <div className="text-right">
-                  <div className="text-xl font-extrabold tracking-tight">{formatNumber(step.value)}</div>
-                  <div className="text-[10px] text-white/70 font-bold uppercase tracking-widest">Users</div>
+                {/* 오른쪽: 수치 */}
+                <div className="text-2xl font-extrabold tracking-tight">
+                  {formatNumber(step.value)}
                 </div>
               </div>
 
@@ -206,7 +191,7 @@ export function ConversionFunnel({ data, steps, onStepsChange }: Props) {
               {i < data.length - 1 && (
                 <div className="h-14 relative flex flex-col items-center">
                   <div className="w-px h-full bg-slate-200" />
-                  <div className="absolute top-1/2 -translate-y-1/2 bg-white px-2 py-0.5 border border-slate-100 rounded-full shadow-sm flex items-center gap-1 animate-in zoom-in duration-500">
+                  <div className="absolute top-1/2 -translate-y-1/2 bg-white px-2 py-0.5 border border-slate-100 rounded-full shadow-sm flex items-center gap-1">
                     <span className="text-[10px] text-red-500 font-bold">↓</span>
                     <span className="text-[10px] font-bold text-slate-600 whitespace-nowrap">
                       {dropRate.toFixed(1)}% Drop
