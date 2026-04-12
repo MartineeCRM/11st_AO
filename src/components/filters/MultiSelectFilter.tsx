@@ -61,16 +61,18 @@ export function MultiSelectFilter({ label, options, selected, onChange, allLabel
             전체
           </button>
           <div className="my-1 border-t border-[#F3F4F6]" />
-          {options.map(opt => (
-            <button
-              key={opt}
-              onClick={() => toggle(opt)}
-              className="flex w-full items-center gap-2 px-3 py-1.5 text-xs text-[#374151] hover:bg-[#F9FAFB]"
-            >
-              <Check className={cn('h-3 w-3 text-[#4361EE]', selected.includes(opt) ? 'opacity-100' : 'opacity-0')} />
-              {opt}
-            </button>
-          ))}
+          <div className="max-h-[420px] overflow-y-auto">
+            {options.map(opt => (
+              <button
+                key={opt}
+                onClick={() => toggle(opt)}
+                className="flex w-full items-center gap-2 px-3 py-1.5 text-xs text-[#374151] hover:bg-[#F9FAFB]"
+              >
+                <Check className={cn('h-3 w-3 text-[#4361EE]', selected.includes(opt) ? 'opacity-100' : 'opacity-0')} />
+                {opt}
+              </button>
+            ))}
+          </div>
         </div>
       )}
     </div>

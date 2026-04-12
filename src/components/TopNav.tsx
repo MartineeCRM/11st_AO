@@ -13,9 +13,9 @@ export function TopNav({ activeTab, onTabChange }: Props) {
       {/* 로고 */}
       <div className="flex items-center gap-2 mr-8">
         <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-[#4361EE]">
-          <span className="text-xs font-bold text-white">C</span>
+          <span className="text-xs font-bold text-white">M</span>
         </div>
-        <span className="text-sm font-bold text-[#111827]">CRM Hub</span>
+        <span className="text-sm font-bold text-[#111827]">CRM Dashboard</span>
       </div>
 
       {/* 탭 */}

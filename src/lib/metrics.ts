@@ -191,11 +191,11 @@ type CampaignKey = string
 
 function groupByCampaign(
   rows: MartineeUnionRow[],
-  type: 'campaign' | 'canvas',
 ): Map<CampaignKey, MartineeUnionRow[]> {
   const map = new Map<CampaignKey, MartineeUnionRow[]>()
   for (const r of rows) {
-    const key = type === 'canvas' ? (r.canvas_name ?? r.campaign_name) : r.campaign_name
+    const key = r.campaign_depth_1
+    if (!key) continue  // 이름 없는 항목 스킵
     const existing = map.get(key) ?? []
     existing.push(r)
     map.set(key, existing)
@@ -209,7 +209,7 @@ export function buildTop10(
   metric: Top10Metric,
   type: 'campaign' | 'canvas',
 ): Top10Item[] {
-  const byName = groupByCampaign(rows, type)
+  const byName = groupByCampaign(rows)
 
   const scored: { name: string; value: number }[] = []
   byName.forEach((campaignRows, name) => {
@@ -286,7 +286,9 @@ function filterByDateRange(rows: DailyKpiRow[], start: string, end: string) {
 }
 
 function shiftDays(dateStr: string, n: number): string {
+  if (!dateStr) return ''
   const d = new Date(dateStr)
+  if (isNaN(d.getTime())) return ''
   d.setDate(d.getDate() + n)
   return d.toISOString().slice(0, 10)
 }

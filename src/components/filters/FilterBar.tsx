@@ -8,18 +8,18 @@ export type { Preset }
 interface Props {
   filters: FilterState
   onFiltersChange: (f: FilterState) => void
-  variantOptions: string[]
+  campaignDepth1Options: string[]
   osOptions: string[]
   minDate: string
   maxDate: string
   activePreset: Preset | null
-  onPresetChange: (p: Preset) => void
+  onPresetChange: (p: Preset | null) => void
 }
 
 export function FilterBar({
   filters,
   onFiltersChange,
-  variantOptions,
+  campaignDepth1Options,
   osOptions,
   minDate,
   maxDate,
@@ -40,10 +40,10 @@ export function FilterBar({
       <div className="h-7 w-px bg-[#E5E7EB]" />
 
       <MultiSelectFilter
-        label="Variant Depth 1"
-        options={variantOptions}
-        selected={filters.variantDepth1}
-        onChange={variantDepth1 => onFiltersChange({ ...filters, variantDepth1 })}
+        label="Campaign Depth 1"
+        options={campaignDepth1Options}
+        selected={filters.campaignDepth1}
+        onChange={campaignDepth1 => onFiltersChange({ ...filters, campaignDepth1 })}
       />
 
       <MultiSelectFilter

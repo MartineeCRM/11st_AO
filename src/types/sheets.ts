@@ -3,6 +3,7 @@ export interface MartineeUnionRow {
   campaign_id?: string
   campaign_name: string
   canvas_name?: string
+  campaign_depth_1: string
   variant_depth_1: string
   os: string
   sent: number
@@ -44,6 +45,6 @@ export interface DateRange {
 
 export interface FilterState {
   dateRange: DateRange
-  variantDepth1: string[]   // empty = all
+  campaignDepth1: string[]  // empty = all
   os: string[]              // empty = all
 }

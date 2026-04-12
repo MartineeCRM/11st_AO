@@ -22,7 +22,9 @@ function parseRows<T>(raw: string[][]): T[] {
     const obj: Record<string, string | number> = {}
     headers.forEach((h, i) => {
       const cell = row[i] ?? ''
-      const num = parseFloat(cell.replace(/,/g, ''))
+      const stripped = cell.replace(/,/g, '')
+      // 순수 숫자 형식만 number로 변환. "2024-03-15" 같은 날짜 문자열은 string 유지
+      const num = /^\s*-?\d+\.?\d*\s*$/.test(stripped) ? parseFloat(stripped) : NaN
       obj[h] = isNaN(num) ? cell : num
     })
     return obj as T
@@ -35,6 +37,7 @@ function normalizeMartinee(rows: Record<string, string | number>[]): MartineeUni
     campaign_id: String(r['campaign_id'] ?? r['id'] ?? ''),
     campaign_name: String(r['campaign_name'] ?? r['name'] ?? r['campaign'] ?? ''),
     canvas_name: String(r['canvas_name'] ?? r['canvas'] ?? ''),
+    campaign_depth_1: String(r['campaign_depth_1'] ?? ''),
     variant_depth_1: String(r['variant_depth_1'] ?? r['variant'] ?? ''),
     os: String(r['os'] ?? ''),
     sent: Number(r['sent'] ?? 0),

@@ -13,7 +13,7 @@ import type { Top10Metric } from '@/types/metrics'
 import type { FunnelFieldKey } from '@/lib/metrics'
 import { presetToRange } from '@/components/filters/DatePresetFilter'
 
-const DEFAULT_FUNNEL_STEPS: [FunnelFieldKey, FunnelFieldKey] = ['dau', 'purchase_cnt']
+const DEFAULT_FUNNEL_STEPS: FunnelFieldKey[] = ['dau', 'purchase_cnt']
 const DEFAULT_TOP10_METRIC: Top10Metric = 'Revenue'
 const DEFAULT_PRESET: Preset = '30d'
 
@@ -68,7 +68,7 @@ export function CRMPerformance() {
   const [activePreset, setActivePreset] = useState<Preset | null>(DEFAULT_PRESET)
   const [filters, setFilters] = useState<FilterState>({
     dateRange: { start: '', end: '' },
-    variantDepth1: [],
+    campaignDepth1: [],
     os: [],
   })
 
@@ -85,9 +85,9 @@ export function CRMPerformance() {
   const [top10Type, setTop10Type] = useState<'campaign' | 'canvas'>('campaign')
 
   // 퍼널 단계 상태
-  const [funnelSteps, setFunnelSteps] = useState<[FunnelFieldKey, FunnelFieldKey]>(DEFAULT_FUNNEL_STEPS)
+  const [funnelSteps, setFunnelSteps] = useState<FunnelFieldKey[]>(DEFAULT_FUNNEL_STEPS)
 
-  const { filteredMartinee, filteredKpi, variantOptions, osOptions } = useFilteredData(
+  const { filteredMartinee, filteredKpi, campaignDepth1Options, osOptions } = useFilteredData(
     martinee,
     kpi,
     filters,
@@ -127,7 +127,7 @@ export function CRMPerformance() {
       <FilterBar
         filters={filters}
         onFiltersChange={setFilters}
-        variantOptions={variantOptions}
+        campaignDepth1Options={campaignDepth1Options}
         osOptions={osOptions}
         minDate={minDate}
         maxDate={maxDate}
@@ -151,7 +151,7 @@ export function CRMPerformance() {
           <Row3FunnelEvents
             funnel={funnel}
             funnelSteps={funnelSteps}
-            onFunnelStepsChange={steps => setFunnelSteps(steps as [FunnelFieldKey, FunnelFieldKey])}
+            onFunnelStepsChange={setFunnelSteps}
             kpiRows={filteredKpi}
           />
           <Row4TableOptIn bizKpiTable={bizKpiTable} optInData={optInData} />
