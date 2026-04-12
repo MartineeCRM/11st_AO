@@ -225,9 +225,9 @@ export function buildTop10(
     else if (metric === '구매 CVR') value = calcCVR(campaignRows)
     else if (metric === 'Revenue') value = campaignRows.reduce((s, r) => s + r.revenue, 0)
     else if (metric === 'AOV') {
-      // AOV는 daily_kpi 전체 기준
-      const total = kpiRows.reduce((s, r) => s + r.aov, 0)
-      value = kpiRows.length > 0 ? total / kpiRows.length : 0
+      const rev = campaignRows.reduce((s, r) => s + r.revenue, 0)
+      const conv = campaignRows.reduce((s, r) => s + r.conversion_a, 0)
+      value = conv > 0 ? rev / conv : 0
     }
     scored.push({ name, value })
   })
