@@ -8,14 +8,14 @@ import * as LucideIcons from 'lucide-react'
 
 type LucideIconName = keyof typeof LucideIcons
 
-function DynamicIcon({ name, className }: { name: string; className?: string }) {
+function DynamicIcon({ name, className, style }: { name: string; className?: string; style?: React.CSSProperties }) {
   const pascal = name
     .split('-')
     .map(s => s.charAt(0).toUpperCase() + s.slice(1))
     .join('') as LucideIconName
-  const Icon = LucideIcons[pascal] as React.ComponentType<{ className?: string }> | undefined
+  const Icon = LucideIcons[pascal] as React.ComponentType<{ className?: string; style?: React.CSSProperties }> | undefined
   if (!Icon) return null
-  return <Icon className={className} />
+  return <Icon className={className} style={style} />
 }
 
 function MiniTrendChart({ data, color }: { data: number[]; color: string }) {

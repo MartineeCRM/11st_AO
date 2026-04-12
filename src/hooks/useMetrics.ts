@@ -4,7 +4,6 @@ import type { KpiCardData, OptInData } from '@/types/metrics'
 import {
   calcSentImpression,
   calcCTR,
-  calcCVR,
   calcMsgPerUser,
   calcWoW,
   calcTrend14d,
