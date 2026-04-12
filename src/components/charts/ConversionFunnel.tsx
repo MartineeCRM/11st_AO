@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { ChevronDown } from 'lucide-react'
+import { ChevronDown, Plus, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { formatNumber } from '@/lib/formatters'
 import { FUNNEL_FIELD_LABELS, type FunnelFieldKey } from '@/lib/metrics'
@@ -64,22 +64,59 @@ function StepDropdown({
 export function ConversionFunnel({ data, steps, onStepsChange }: Props) {
   const maxVal = Math.max(...data.map(d => d.value), 1)
 
+  function handleStepChange(i: number, f: FunnelFieldKey) {
+    const next = [...steps]
+    next[i] = f
+    onStepsChange(next)
+  }
+
+  function handleAddStep() {
+    const available = SELECTABLE_FIELDS.find(f => !steps.includes(f))
+    if (available) onStepsChange([...steps, available])
+  }
+
+  function handleRemoveStep(i: number) {
+    onStepsChange(steps.filter((_, j) => j !== i))
+  }
+
   return (
     <div className="rounded-xl border border-[#E5E7EB] bg-white p-5 flex flex-col h-full">
-      <div className="mb-4 flex items-center justify-between">
-        <h3 className="text-sm font-semibold text-[#111827]">전환 퍼널</h3>
-        <div className="flex items-center gap-1.5">
-          <StepDropdown
-            value={steps[0]}
-            onChange={f => onStepsChange([f, steps[1]])}
-            exclude={[steps[1]]}
-          />
-          <span className="text-[11px] text-[#9CA3AF]">→</span>
-          <StepDropdown
-            value={steps[1]}
-            onChange={f => onStepsChange([steps[0], f])}
-            exclude={[steps[0]]}
-          />
+      {/* 헤더 */}
+      <div className="mb-4">
+        <div className="flex items-center justify-between mb-2">
+          <h3 className="text-sm font-semibold text-[#111827]">퍼널 차트</h3>
+          {steps.length < 4 && (
+            <button
+              onClick={handleAddStep}
+              className="flex items-center gap-1 rounded-lg border border-[#E5E7EB] bg-[#F9FAFB] px-2 py-1 text-[11px] font-medium text-[#374151] hover:bg-[#EEF1FF] hover:text-[#4361EE] hover:border-[#4361EE] transition-colors"
+            >
+              <Plus className="h-3 w-3" />
+              단계 추가
+            </button>
+          )}
+        </div>
+        {/* 단계 드롭다운 */}
+        <div className="flex items-center gap-1 flex-wrap">
+          {steps.map((step, i) => (
+            <div key={i} className="flex items-center gap-1">
+              {i > 0 && <span className="text-[11px] text-[#9CA3AF]">→</span>}
+              <div className="flex items-center gap-0.5">
+                <StepDropdown
+                  value={step}
+                  onChange={f => handleStepChange(i, f)}
+                  exclude={steps.filter((_, j) => j !== i)}
+                />
+                {steps.length > 2 && (
+                  <button
+                    onClick={() => handleRemoveStep(i)}
+                    className="rounded p-0.5 text-[#9CA3AF] hover:text-[#EF4444] transition-colors"
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                )}
+              </div>
+            </div>
+          ))}
         </div>
       </div>
 
@@ -101,7 +138,7 @@ export function ConversionFunnel({ data, steps, onStepsChange }: Props) {
                     width: `${widthPct}%`,
                     background: i === 0
                       ? '#4361EE'
-                      : `rgba(67, 97, 238, ${0.4 + 0.6 * (1 - i * 0.3)})`,
+                      : `rgba(67, 97, 238, ${Math.max(0.2, 0.85 - i * 0.2)})`,
                   }}
                 />
               </div>

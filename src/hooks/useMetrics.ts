@@ -21,8 +21,7 @@ import type { Top10Metric } from '@/types/metrics'
 
 interface UseMetricsOptions {
   top10Metric: Top10Metric
-  top10Type: 'campaign' | 'canvas'
-  funnelSteps: [FunnelFieldKey, FunnelFieldKey]
+  funnelSteps: FunnelFieldKey[]
   currentStart: string
   currentEnd: string
 }
@@ -170,8 +169,8 @@ export function useMetrics(
   const dailyCombo = useMemo(() => buildDailyComboData(filteredMartinee), [filteredMartinee])
 
   const top10 = useMemo(
-    () => buildTop10(filteredMartinee, filteredKpi, opts.top10Metric, opts.top10Type),
-    [filteredMartinee, filteredKpi, opts.top10Metric, opts.top10Type],
+    () => buildTop10(filteredMartinee, filteredKpi, opts.top10Metric, 'campaign'),
+    [filteredMartinee, filteredKpi, opts.top10Metric],
   )
 
   const funnel = useMemo(
@@ -185,8 +184,8 @@ export function useMetrics(
   )
 
   const bizKpiTable = useMemo(
-    () => buildBusinessKpiTable(allKpi, opts.currentStart, opts.currentEnd),
-    [allKpi, opts.currentStart, opts.currentEnd],
+    () => buildBusinessKpiTable(allKpi, startDate, endDate),
+    [allKpi, startDate, endDate],
   )
 
   return { kpiCards, optInData, dailyCombo, top10, funnel, dailyRevenue, bizKpiTable }

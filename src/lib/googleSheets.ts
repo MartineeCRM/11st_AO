@@ -31,9 +31,11 @@ function parseRows<T>(raw: string[][]): T[] {
   })
 }
 
+import { normalizeDate } from './formatters'
+
 function normalizeMartinee(rows: Record<string, string | number>[]): MartineeUnionRow[] {
   return rows.map(r => ({
-    date: String(r['date'] ?? r['날짜'] ?? ''),
+    date: normalizeDate(String(r['date'] ?? r['날짜'] ?? '')),
     campaign_id: String(r['campaign_id'] ?? r['id'] ?? ''),
     campaign_name: String(r['campaign_name'] ?? r['name'] ?? r['campaign'] ?? ''),
     canvas_name: String(r['canvas_name'] ?? r['canvas'] ?? ''),
@@ -54,7 +56,7 @@ function normalizeMartinee(rows: Record<string, string | number>[]): MartineeUni
 
 function normalizeDailyKpi(rows: Record<string, string | number>[]): DailyKpiRow[] {
   return rows.map(r => ({
-    date: String(r['date'] ?? r['날짜'] ?? ''),
+    date: normalizeDate(String(r['date'] ?? r['날짜'] ?? '')),
     push_opt_in: Number(r['push_opt_in'] ?? 0),
     sms_opt_in: Number(r['sms_opt_in'] ?? 0),
     kakao_opt_in: Number(r['kakao_opt_in'] ?? 0),

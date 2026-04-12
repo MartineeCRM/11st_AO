@@ -82,7 +82,6 @@ export function CRMPerformance() {
 
   // Top10 상태
   const [top10Metric, setTop10Metric] = useState<Top10Metric>(DEFAULT_TOP10_METRIC)
-  const [top10Type, setTop10Type] = useState<'campaign' | 'canvas'>('campaign')
 
   // 퍼널 단계 상태
   const [funnelSteps, setFunnelSteps] = useState<FunnelFieldKey[]>(DEFAULT_FUNNEL_STEPS)
@@ -103,7 +102,6 @@ export function CRMPerformance() {
     kpi,
     {
       top10Metric,
-      top10Type,
       funnelSteps,
       currentStart,
       currentEnd,
@@ -144,9 +142,7 @@ export function CRMPerformance() {
             dailyCombo={dailyCombo}
             top10={top10}
             top10Metric={top10Metric}
-            top10Type={top10Type}
             onTop10MetricChange={setTop10Metric}
-            onTop10TypeChange={setTop10Type}
           />
           <Row3FunnelEvents
             funnel={funnel}

@@ -30,10 +30,44 @@ export function formatWoWpp(diff: number): string {
   return diff >= 0 ? `+${pp}%p` : `${pp}%p`
 }
 
-/** YYYY-MM-DD → MM/DD */
+/**
+ * 다양한 날짜 형식(YYYY-MM-DD, YYYY. MM. DD., YYYY/MM/DD 등)을
+ * 일관된 YYYY-MM-DD 형식으로 변환합니다.
+ */
+export function normalizeDate(dateStr: string): string {
+  if (!dateStr) return ''
+
+  // 숫자 이외의 구분자들을 모두 '-'로 통일 (공백 포함 제거)
+  // 예: "2026. 4. 10" -> "2026-4-10"
+  // 예: "2026/04/10" -> "2026-04-10"
+  let normalized = dateStr
+    .trim()
+    .replace(/[.\/\s]+/g, '-') // . / 공백을 -로 변경
+    .replace(/-+$/, '') // 끝에 남은 - 제거
+
+  const parts = normalized.split('-')
+  if (parts.length >= 3) {
+    const y = parts[0]
+    const m = parts[1].padStart(2, '0')
+    const d = parts[2].padStart(2, '0')
+    return `${y}-${m}-${d}`
+  }
+
+  // YYYYMMDD 형태 대응 (8자리 숫자만 있는 경우)
+  if (dateStr.length === 8 && /^\d+$/.test(dateStr)) {
+    return `${dateStr.slice(0, 4)}-${dateStr.slice(4, 6)}-${dateStr.slice(6, 8)}`
+  }
+
+  return dateStr
+}
+
+/** YYYY-MM-DD (또는 변종) → MM/DD */
 export function formatDateShort(dateStr: string): string {
-  const [, m, d] = dateStr.split('-')
-  return `${m}/${d}`
+  if (!dateStr) return ''
+  const normalized = normalizeDate(dateStr)
+  const parts = normalized.split('-')
+  if (parts.length >= 3) return `${parts[1]}/${parts[2]}`
+  return dateStr
 }
 
 /** Date 객체 → YYYY-MM-DD */

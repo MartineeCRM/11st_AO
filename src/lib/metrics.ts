@@ -357,6 +357,26 @@ export function buildBusinessKpiTable(
       wowVal = wowDau > 0 ? sumKpi(wowPeriod, 'purchase_cnt') / wowDau : 0
       momVal = momDau > 0 ? sumKpi(momPeriod, 'purchase_cnt') / momDau : 0
       yoyVal = yoyDau > 0 ? sumKpi(yoyPeriod, 'purchase_cnt') / yoyDau : 0
+    } else if (def.metric === 'AOV' || def.metric === 'ARPPU') {
+      const getVal = (rows: DailyKpiRow[]) => {
+        const rev = sumKpi(rows, 'revenue')
+        const cnt = sumKpi(rows, 'purchase_cnt')
+        return cnt > 0 ? rev / cnt : 0
+      }
+      curVal = getVal(current)
+      wowVal = getVal(wowPeriod)
+      momVal = getVal(momPeriod)
+      yoyVal = getVal(yoyPeriod)
+    } else if (def.metric === 'ARPU') {
+      const getVal = (rows: DailyKpiRow[]) => {
+        const rev = sumKpi(rows, 'revenue')
+        const dau = sumKpi(rows, 'dau')
+        return dau > 0 ? rev / dau : 0
+      }
+      curVal = getVal(current)
+      wowVal = getVal(wowPeriod)
+      momVal = getVal(momPeriod)
+      yoyVal = getVal(yoyPeriod)
     } else if (def.isAvg) {
       curVal = avgKpi(current, def.field)
       wowVal = avgKpi(wowPeriod, def.field)
