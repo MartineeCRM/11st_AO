@@ -1,0 +1,84 @@
+import {
+  ComposedChart,
+  Bar,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+} from 'recharts'
+import { formatNumber } from '@/lib/formatters'
+import type { DailyRevenuePoint } from '@/types/metrics'
+
+interface Props {
+  data: DailyRevenuePoint[]
+}
+
+export function RevenueRewardComboChart({ data }: Props) {
+  return (
+    <div className="rounded-xl border border-[#E5E7EB] bg-white p-5 flex flex-col h-full">
+      <h3 className="mb-4 text-sm font-semibold text-[#111827]">발송당 Revenue / 예상 Reward 추이</h3>
+      <div className="flex-1 min-h-0">
+        <ResponsiveContainer width="100%" height="100%">
+          <ComposedChart data={data} margin={{ top: 4, right: 52, left: 8, bottom: 4 }}>
+            <CartesianGrid strokeDasharray="3 3" stroke="#F3F4F6" />
+            <XAxis
+              dataKey="date"
+              tick={{ fontSize: 11, fill: '#9CA3AF' }}
+              tickLine={false}
+              axisLine={false}
+              interval="preserveStartEnd"
+            />
+            {/* 왼쪽 Y축: 발송당 Revenue */}
+            <YAxis
+              yAxisId="left"
+              tickFormatter={v => formatNumber(v as number)}
+              tick={{ fontSize: 11, fill: '#9CA3AF' }}
+              tickLine={false}
+              axisLine={false}
+              width={48}
+            />
+            {/* 오른쪽 Y축: 예상 Reward (%) */}
+            <YAxis
+              yAxisId="right"
+              orientation="right"
+              tickFormatter={v => `${(v as number).toFixed(3)}%`}
+              tick={{ fontSize: 11, fill: '#9CA3AF' }}
+              tickLine={false}
+              axisLine={false}
+              width={52}
+            />
+            <Tooltip
+              formatter={(value: number, name: string) => {
+                if (name === '발송당 Revenue') return [formatNumber(value), name]
+                return [`${value.toFixed(4)}%`, name]
+              }}
+              contentStyle={{ fontSize: 12, borderRadius: 8, border: '1px solid #E5E7EB' }}
+            />
+            <Legend iconSize={10} wrapperStyle={{ fontSize: 12, paddingTop: 8 }} />
+            <Bar
+              yAxisId="left"
+              dataKey="revenuePerSend"
+              name="발송당 Revenue"
+              fill="#6EE7B7"
+              radius={[2, 2, 0, 0]}
+              maxBarSize={20}
+            />
+            <Line
+              yAxisId="right"
+              type="monotone"
+              dataKey="expectedReward"
+              name="예상 Reward"
+              stroke="#EC4899"
+              strokeWidth={2}
+              dot={false}
+              activeDot={{ r: 4 }}
+            />
+          </ComposedChart>
+        </ResponsiveContainer>
+      </div>
+    </div>
+  )
+}
