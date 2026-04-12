@@ -175,11 +175,16 @@ export function buildDailyRevenueData(
     const kRow = byDateK.get(date)
     const ctr = calcCTR(mRows)
     const cvr = calcCVR(mRows)
+
+    const dayRevenue = kRow?.revenue ?? mRows.reduce((s, r) => s + r.revenue, 0)
+    const dayPurchaseCnt = kRow?.purchase_cnt ?? 0
+    const daySI = calcSentImpression(mRows)
+
     return {
       date: formatDateShort(date),
-      revenue: kRow?.revenue ?? mRows.reduce((s, r) => s + r.revenue, 0),
-      aov: kRow?.aov ?? 0,
-      revenuePerSend: parseFloat(calcRevenuePerSend(mRows).toFixed(0)),
+      revenue: dayRevenue,
+      aov: dayPurchaseCnt > 0 ? dayRevenue / dayPurchaseCnt : 0,
+      revenuePerSend: daySI > 0 ? dayRevenue / daySI : 0,
       expectedReward: parseFloat((calcExpectedReward(ctr, cvr) * 100).toFixed(4)),
     }
   })
