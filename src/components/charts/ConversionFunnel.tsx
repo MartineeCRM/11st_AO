@@ -3,12 +3,6 @@ import {
   ChevronDown,
   Plus,
   X,
-  Eye,
-  MousePointerClick,
-  ShoppingBag,
-  ShoppingCart,
-  Users,
-  Target,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { formatNumber } from '@/lib/formatters'
@@ -26,19 +20,6 @@ const SELECTABLE_FIELDS: FunnelFieldKey[] = [
   'first_purchase',
 ]
 
-const STEP_META: Record<
-  string,
-  { title: string; sub: string; icon: any; color: string }
-> = {
-  dau: { title: 'Awareness', sub: 'Daily Active Users', icon: Eye, color: '#0066FF' },
-  mau: { title: 'Awareness', sub: 'Monthly Active Users', icon: Users, color: '#0066FF' },
-  view_promotion_list_page: { title: 'Discovery', sub: 'Promotion List Views', icon: Target, color: '#0055DD' },
-  view_product_detail: { title: 'Consideration', sub: 'Product Interactions', icon: MousePointerClick, color: '#0044BB' },
-  view_cartpage: { title: 'Intent', sub: 'Cart Additions', icon: ShoppingCart, color: '#003399' },
-  purchase_cnt: { title: 'Conversion', sub: 'First Purchase', icon: ShoppingBag, color: '#006D77' },
-  complete_order_product: { title: 'Growth', sub: 'Product Upselling', icon: ShoppingBag, color: '#005A63' },
-  first_purchase: { title: 'Conversion', sub: 'New Customer Acquisition', icon: ShoppingBag, color: '#00484F' },
-}
 
 interface Props {
   data: FunnelStep[]
