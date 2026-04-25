@@ -10,8 +10,8 @@ const ALLOWED_BRAZE_PATHS = new Set([
 ])
 
 function brazeDevProxy(env: Record<string, string>): Plugin {
-  const endpoint = (env.BRAZE_REST_ENDPOINT || env.VITE_BRAZE_REST_ENDPOINT || '').replace(/\/+$/, '')
-  const apiKey = env.BRAZE_API_KEY || env.VITE_BRAZE_API_KEY || ''
+  const endpoint = (env.BRAZE_REST_ENDPOINT || '').replace(/\/+$/, '')
+  const apiKey = env.BRAZE_API_KEY || ''
 
   return {
     name: 'braze-dev-proxy',
@@ -36,7 +36,9 @@ function brazeDevProxy(env: Record<string, string>): Plugin {
         if (!endpoint || !apiKey) {
           res.statusCode = 500
           res.setHeader('Content-Type', 'application/json')
-          res.end(JSON.stringify({ message: 'Braze server environment variables are not configured' }))
+          res.end(JSON.stringify({
+            message: 'Braze server environment variables are not configured. Required: BRAZE_REST_ENDPOINT, BRAZE_API_KEY',
+          }))
           return
         }
 

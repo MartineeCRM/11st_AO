@@ -11,8 +11,8 @@ const REQUIRED_PERMISSIONS = {
 }
 
 function getBrazeConfig() {
-  const endpoint = (process.env.BRAZE_REST_ENDPOINT || process.env.VITE_BRAZE_REST_ENDPOINT || '').replace(/\/+$/, '')
-  const apiKey = process.env.BRAZE_API_KEY || process.env.VITE_BRAZE_API_KEY || ''
+  const endpoint = (process.env.BRAZE_REST_ENDPOINT || '').replace(/\/+$/, '')
+  const apiKey = process.env.BRAZE_API_KEY || ''
   return { endpoint, apiKey }
 }
 
@@ -48,7 +48,9 @@ export default async function handler(req, res) {
 
   const { endpoint, apiKey } = getBrazeConfig()
   if (!endpoint || !apiKey) {
-    res.status(500).json({ message: 'Braze server environment variables are not configured' })
+    res.status(500).json({
+      message: 'Braze server environment variables are not configured. Required: BRAZE_REST_ENDPOINT, BRAZE_API_KEY',
+    })
     return
   }
 
