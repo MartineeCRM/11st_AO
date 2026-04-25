@@ -58,6 +58,7 @@ export interface OptInData {
 export interface DailyComboPoint {
   date: string
   sentImpression: number
+  openClick: number
   ctr: number
   cvr: number
 }

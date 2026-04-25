@@ -1,9 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { cn } from '@/lib/utils'
-import { toDateStr } from '@/lib/formatters'
 import type { DateRange } from '@/types/sheets'
-
-export type Preset = 'yesterday' | '7d' | '30d' | 'all'
+import { PRESETS, type Preset, presetToRange } from './datePresets'
 
 interface Props {
   value: DateRange
@@ -12,34 +10,6 @@ interface Props {
   maxDate: string
   activePreset: Preset | null
   onPresetChange: (p: Preset | null) => void
-}
-
-const PRESETS: { key: Preset; label: string }[] = [
-  { key: 'yesterday', label: '어제' },
-  { key: '7d', label: '최근 7일' },
-  { key: '30d', label: '최근 30일' },
-  { key: 'all', label: '전체 기간' },
-]
-
-export function presetToRange(preset: Preset, maxDate: string): DateRange {
-  const end = maxDate
-  if (preset === 'yesterday') {
-    const d = new Date(maxDate)
-    d.setDate(d.getDate() - 1)
-    const y = toDateStr(d)
-    return { start: y, end: y }
-  }
-  if (preset === '7d') {
-    const d = new Date(maxDate)
-    d.setDate(d.getDate() - 6)
-    return { start: toDateStr(d), end }
-  }
-  if (preset === '30d') {
-    const d = new Date(maxDate)
-    d.setDate(d.getDate() - 29)
-    return { start: toDateStr(d), end }
-  }
-  return { start: '', end: '' } // 'all' - handled by caller
 }
 
 export function DatePresetFilter({ value, minDate, maxDate, activePreset, onPresetChange, onChange }: Props) {

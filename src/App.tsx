@@ -2,8 +2,9 @@ import { useState, Component, type ReactNode, type ErrorInfo } from 'react'
 import { TopNav } from '@/components/TopNav'
 import { CRMPerformance } from '@/pages/CRMPerformance'
 import { CRMAttribution } from '@/pages/CRMAttribution'
+import { CRMCampaignOps } from '@/pages/CRMCampaignOps'
 
-type Tab = 'performance' | 'attribution'
+type Tab = 'performance' | 'attribution' | 'ops'
 
 class ErrorBoundary extends Component<{ children: ReactNode }, { error: Error | null }> {
   constructor(props: { children: ReactNode }) {
@@ -48,7 +49,9 @@ export default function App() {
       <TopNav activeTab={activeTab} onTabChange={setActiveTab} />
       <main>
         <ErrorBoundary>
-          {activeTab === 'performance' ? <CRMPerformance /> : <CRMAttribution />}
+          {activeTab === 'performance' && <CRMPerformance />}
+          {activeTab === 'attribution' && <CRMAttribution />}
+          {activeTab === 'ops' && <CRMCampaignOps />}
         </ErrorBoundary>
       </main>
     </div>

@@ -14,6 +14,11 @@ const cache: {
   kpi?: CacheEntry<DailyKpiRow[]>
 } = {}
 
+const pendingRequests: {
+  martinee?: Promise<MartineeUnionRow[]>
+  kpi?: Promise<DailyKpiRow[]>
+} = {}
+
 export interface SheetData {
   martinee: MartineeUnionRow[]
   kpi: DailyKpiRow[]
@@ -41,9 +46,20 @@ export function useSheetData(): SheetData {
         const needsMartinee = !cache.martinee || now - cache.martinee.fetchedAt > CACHE_TTL_MS
         const needsKpi = !cache.kpi || now - cache.kpi.fetchedAt > CACHE_TTL_MS
 
+        if (needsMartinee && !pendingRequests.martinee) {
+          pendingRequests.martinee = fetchMartineeUnion().finally(() => {
+            pendingRequests.martinee = undefined
+          })
+        }
+        if (needsKpi && !pendingRequests.kpi) {
+          pendingRequests.kpi = fetchDailyKpi().finally(() => {
+            pendingRequests.kpi = undefined
+          })
+        }
+
         const [mData, kData] = await Promise.all([
-          needsMartinee ? fetchMartineeUnion() : Promise.resolve(cache.martinee!.data),
-          needsKpi ? fetchDailyKpi() : Promise.resolve(cache.kpi!.data),
+          needsMartinee ? pendingRequests.martinee! : Promise.resolve(cache.martinee!.data),
+          needsKpi ? pendingRequests.kpi! : Promise.resolve(cache.kpi!.data),
         ])
 
         if (needsMartinee) cache.martinee = { data: mData, fetchedAt: Date.now() }
@@ -66,10 +82,7 @@ export function useSheetData(): SheetData {
     return () => { mounted.current = false }
   }, [])
 
-  const allDates = [
-    ...martinee.map(r => r.date),
-    ...kpi.map(r => r.date),
-  ].filter(Boolean).sort()
+  const allDates = [...martinee.map(r => r.date), ...kpi.map(r => r.date)].filter(Boolean).sort()
 
   const dateRange =
     allDates.length > 0

@@ -15,7 +15,7 @@ import {
   buildBusinessKpiTable,
   type FunnelFieldKey,
 } from '@/lib/metrics'
-import { formatNumber, formatRate, daysAgo } from '@/lib/formatters'
+import { formatNumber, formatRate, daysAgo, toDateStr } from '@/lib/formatters'
 import type { Top10Metric } from '@/types/metrics'
 
 interface UseMetricsOptions {
@@ -32,7 +32,7 @@ export function useMetrics(
   allKpi: DailyKpiRow[],
   opts: UseMetricsOptions,
 ) {
-  const today = new Date().toISOString().slice(0, 10)
+  const today = toDateStr(new Date())
   const endDate = opts.currentEnd || today
   const startDate = opts.currentStart || today
   const wowStart = daysAgo(7, new Date(startDate))

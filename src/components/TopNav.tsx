@@ -1,6 +1,6 @@
 import { cn } from '@/lib/utils'
 
-type Tab = 'performance' | 'attribution'
+type Tab = 'performance' | 'attribution' | 'ops'
 
 interface Props {
   activeTab: Tab
@@ -49,6 +49,21 @@ export function TopNav({ activeTab, onTabChange }: Props) {
             준비중
           </span>
           {activeTab === 'attribution' && (
+            <span className="absolute bottom-0 left-0 right-0 h-0.5 rounded-full bg-[#4361EE]" />
+          )}
+        </button>
+
+        <button
+          onClick={() => onTabChange('ops')}
+          className={cn(
+            'relative px-3 py-1.5 text-sm font-medium transition-colors',
+            activeTab === 'ops'
+              ? 'text-[#4361EE]'
+              : 'text-[#6B7280] hover:text-[#374151]',
+          )}
+        >
+          캠페인 운영 현황
+          {activeTab === 'ops' && (
             <span className="absolute bottom-0 left-0 right-0 h-0.5 rounded-full bg-[#4361EE]" />
           )}
         </button>

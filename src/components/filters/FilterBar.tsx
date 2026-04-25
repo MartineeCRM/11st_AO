@@ -1,7 +1,7 @@
 import type { FilterState } from '@/types/sheets'
 import { DatePresetFilter } from './DatePresetFilter'
 import { MultiSelectFilter } from './MultiSelectFilter'
-import type { Preset } from './DatePresetFilter'
+import type { Preset } from './datePresets'
 
 export type { Preset }
 

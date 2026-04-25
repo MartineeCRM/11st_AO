@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { FilterBar, type Preset } from '@/components/filters/FilterBar'
+import { FilterBar } from '@/components/filters/FilterBar'
 import { Row1KpiSummary } from '@/components/rows/Row1KpiSummary'
 import { Row2TrendsTop10 } from '@/components/rows/Row2TrendsTop10'
 import { Row3FunnelEvents } from '@/components/rows/Row3FunnelEvents'
@@ -11,7 +11,7 @@ import { useMetrics } from '@/hooks/useMetrics'
 import type { FilterState } from '@/types/sheets'
 import type { Top10Metric } from '@/types/metrics'
 import type { FunnelFieldKey } from '@/lib/metrics'
-import { presetToRange } from '@/components/filters/DatePresetFilter'
+import { presetToRange, type Preset } from '@/components/filters/datePresets'
 
 const DEFAULT_FUNNEL_STEPS: FunnelFieldKey[] = ['dau', 'purchase_cnt']
 const DEFAULT_TOP10_METRIC: Top10Metric = 'Revenue'

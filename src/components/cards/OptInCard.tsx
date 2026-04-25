@@ -1,19 +1,35 @@
 import { useState } from 'react'
-import { TrendingUp, TrendingDown, Minus } from 'lucide-react'
+import {
+  Bell,
+  BellRing,
+  CircleDollarSign,
+  MessageCircle,
+  MessageSquare,
+  Minus,
+  MousePointerClick,
+  Send,
+  TrendingDown,
+  TrendingUp,
+  Users,
+} from 'lucide-react'
 import { LineChart, Line, ResponsiveContainer, Tooltip as RTooltip } from 'recharts'
 import { cn } from '@/lib/utils'
 import { formatNumber, formatWoW } from '@/lib/formatters'
 import type { OptInData } from '@/types/metrics'
-import * as LucideIcons from 'lucide-react'
 
-type LucideIconName = keyof typeof LucideIcons
+const ICON_MAP = {
+  bell: Bell,
+  'bell-ring': BellRing,
+  'circle-dollar-sign': CircleDollarSign,
+  'message-circle': MessageCircle,
+  'message-square': MessageSquare,
+  'mouse-pointer-click': MousePointerClick,
+  send: Send,
+  users: Users,
+} as const
 
 function DynamicIcon({ name, className, style }: { name: string; className?: string; style?: React.CSSProperties }) {
-  const pascal = name
-    .split('-')
-    .map(s => s.charAt(0).toUpperCase() + s.slice(1))
-    .join('') as LucideIconName
-  const Icon = LucideIcons[pascal] as React.ComponentType<{ className?: string; style?: React.CSSProperties }> | undefined
+  const Icon = ICON_MAP[name as keyof typeof ICON_MAP]
   if (!Icon) return null
   return <Icon className={className} style={style} />
 }

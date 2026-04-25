@@ -7,7 +7,7 @@ import type {
   FunnelStep,
   BusinessKpiRow,
 } from '@/types/metrics'
-import { formatNumber, formatRate, formatCurrency, formatDateShort } from './formatters'
+import { addDays, formatNumber, formatRate, formatCurrency, formatDateShort, toDateStr } from './formatters'
 
 // ─── 기본 집계 ────────────────────────────────────────────────
 
@@ -88,13 +88,10 @@ function groupKpiByDate(rows: DailyKpiRow[]): Map<string, DailyKpiRow> {
 
 /** 최근 N일 날짜 목록 (오래된 순) */
 function lastNDates(n: number, endDate: string): string[] {
-  const parsed = endDate ? new Date(endDate) : new Date()
-  const end = isNaN(parsed.getTime()) ? new Date() : parsed
+  const end = endDate || toDateStr(new Date())
   const dates: string[] = []
   for (let i = n - 1; i >= 0; i--) {
-    const d = new Date(end)
-    d.setDate(d.getDate() - i)
-    dates.push(d.toISOString().slice(0, 10))
+    dates.push(addDays(end, -i))
   }
   return dates
 }
@@ -153,6 +150,7 @@ export function buildDailyComboData(rows: MartineeUnionRow[]): DailyComboPoint[]
     return {
       date: formatDateShort(date),
       sentImpression: calcSentImpression(dayRows),
+      openClick: calcOpenClick(dayRows),
       ctr: parseFloat((calcCTR(dayRows) * 100).toFixed(2)),
       cvr: parseFloat((calcCVR(dayRows) * 100).toFixed(2)),
     }
@@ -291,11 +289,23 @@ function filterByDateRange(rows: DailyKpiRow[], start: string, end: string) {
 }
 
 function shiftDays(dateStr: string, n: number): string {
-  if (!dateStr) return ''
-  const d = new Date(dateStr)
-  if (isNaN(d.getTime())) return ''
-  d.setDate(d.getDate() + n)
-  return d.toISOString().slice(0, 10)
+  return addDays(dateStr, n)
+}
+
+function calcRatioTrend30d(
+  rows: DailyKpiRow[],
+  numeratorField: FunnelFieldKey,
+  denominatorField: FunnelFieldKey,
+  endDate: string,
+): number[] {
+  const byDate = groupKpiByDate(rows)
+  return lastNDates(30, endDate).map(date => {
+    const row = byDate.get(date)
+    if (!row) return 0
+    const numerator = Number(row[numeratorField])
+    const denominator = Number(row[denominatorField])
+    return denominator > 0 ? numerator / denominator : 0
+  })
 }
 
 export function buildBusinessKpiTable(
@@ -326,7 +336,7 @@ export function buildBusinessKpiTable(
     return (cur - prev) / prev
   }
 
-  const endDate = currentEnd || (rows[rows.length - 1]?.date ?? new Date().toISOString().slice(0, 10))
+  const endDate = currentEnd || rows[rows.length - 1]?.date || toDateStr(new Date())
 
   const definitions: {
     metric: string
@@ -402,7 +412,10 @@ export function buildBusinessKpiTable(
     else if (def.isCurrency) formattedCurrent = `₩${formatNumber(curVal)}`
     else formattedCurrent = formatNumber(curVal)
 
-    const trend = calcKpiTrend30d(rows, def.field, endDate)
+    const trend =
+      def.isRate && def.field === 'purchase_cnt'
+        ? calcRatioTrend30d(rows, 'purchase_cnt', 'dau', endDate)
+        : calcKpiTrend30d(rows, def.field, endDate)
 
     return {
       metric: def.metric,
