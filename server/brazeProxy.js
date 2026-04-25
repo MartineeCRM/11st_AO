@@ -1,15 +1,3 @@
-const ALLOWED_PATHS = new Set([
-  '/campaigns/list',
-  '/campaigns/details',
-  '/campaigns/data_series',
-])
-
-const REQUIRED_PERMISSIONS = {
-  '/campaigns/list': 'campaigns.list',
-  '/campaigns/details': 'campaigns.details',
-  '/campaigns/data_series': 'campaigns.data_series',
-}
-
 function getBrazeConfig() {
   const endpoint = (process.env.BRAZE_REST_ENDPOINT || '').replace(/\/+$/, '')
   const apiKey = process.env.BRAZE_API_KEY || ''
@@ -28,21 +16,10 @@ async function readBrazeError(response) {
   }
 }
 
-function getProxyPath(req) {
-  const url = new URL(req.url || '', 'http://localhost')
-  return url.pathname.replace(/^\/api\/braze/, '') || '/'
-}
-
-export default async function handler(req, res) {
+export async function handleBrazeProxy(req, res, brazePath, permission) {
   if (req.method !== 'GET') {
     res.setHeader('Allow', 'GET')
     res.status(405).json({ message: 'Method not allowed' })
-    return
-  }
-
-  const proxyPath = getProxyPath(req)
-  if (!ALLOWED_PATHS.has(proxyPath)) {
-    res.status(404).json({ message: 'Unsupported Braze endpoint' })
     return
   }
 
@@ -55,7 +32,7 @@ export default async function handler(req, res) {
   }
 
   const incomingUrl = new URL(req.url || '', 'http://localhost')
-  const brazeUrl = new URL(proxyPath, `${endpoint}/`)
+  const brazeUrl = new URL(brazePath, `${endpoint}/`)
   incomingUrl.searchParams.forEach((value, key) => {
     brazeUrl.searchParams.append(key, value)
   })
@@ -70,7 +47,6 @@ export default async function handler(req, res) {
 
   if (!brazeResponse.ok) {
     const body = await readBrazeError(brazeResponse)
-    const permission = REQUIRED_PERMISSIONS[proxyPath]
     res.status(brazeResponse.status).json({
       message: body || `Braze request failed with ${brazeResponse.status}`,
       permission,
