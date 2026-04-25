@@ -8,6 +8,14 @@ import {
 
 export interface EnrichedCampaign extends BrazeCampaign {
   schedule_type: string
+  channels: string[]
+  created_at: string
+  updated_at: string
+  enabled: boolean
+  archived: boolean
+  draft: boolean
+  is_active: boolean
+  is_archived: boolean
   trigger_action?: string
 }
 
@@ -18,6 +26,7 @@ export interface UseBrazeCampaignsResult {
 }
 
 const CACHE_TTL_MS = 3 * 60 * 1000
+const DETAIL_LIMIT = 100
 
 let cachedAt = 0
 let cached: EnrichedCampaign[] = []
@@ -40,24 +49,39 @@ export function useBrazeCampaigns(): UseBrazeCampaignsResult {
       setLoading(true)
       setError(null)
       try {
-        // 1단계: 전체 목록 (active only)
+        // 1단계: 전체 목록. /campaigns/list에는 활성 상태와 채널 정보가 없다.
         const list = await fetchAllCampaigns()
-        const active = list.filter(c => c.is_active && !c.is_archived)
 
-        // 2단계: 상세 정보 병렬 fetch (최대 50개, 과도한 요청 방지)
-        const targets = active.slice(0, 50)
+        // 2단계: 최신 캠페인 상세 정보 병렬 fetch (과도한 요청 방지)
+        const targets = list.slice(0, DETAIL_LIMIT)
         const detailResults = await Promise.allSettled(
           targets.map(c => fetchCampaignDetails(c.id)),
         )
 
-        const enriched: EnrichedCampaign[] = targets.map((c, i) => {
+        const enriched: EnrichedCampaign[] = targets.flatMap((c, i) => {
           const detail =
             detailResults[i].status === 'fulfilled'
               ? (detailResults[i] as PromiseFulfilledResult<BrazeCampaignDetails>).value
               : null
+
+          if (!detail) return []
+
+          const isLive = detail.enabled && !detail.archived && !detail.draft
+          if (!isLive) return []
+
           return {
             ...c,
-            schedule_type: detail?.schedule_type ?? 'unknown',
+            name: detail.name || c.name,
+            schedule_type: detail.schedule_type ?? 'unknown',
+            channels: detail.channels ?? [],
+            created_at: detail.created_at,
+            updated_at: detail.updated_at,
+            tags: detail.tags ?? c.tags,
+            enabled: detail.enabled,
+            archived: detail.archived,
+            draft: detail.draft,
+            is_active: isLive,
+            is_archived: detail.archived,
             trigger_action: detail?.trigger_action,
           }
         })

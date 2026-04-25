@@ -1,26 +1,75 @@
-const ENDPOINT = import.meta.env.VITE_BRAZE_REST_ENDPOINT as string
-const API_KEY = import.meta.env.VITE_BRAZE_API_KEY as string
+const ENDPOINT = (import.meta.env.VITE_BRAZE_REST_ENDPOINT as string | undefined)?.replace(/\/+$/, '')
+const API_KEY = import.meta.env.VITE_BRAZE_API_KEY as string | undefined
 
-const headers = {
-  Authorization: `Bearer ${API_KEY}`,
+const REQUIRED_PERMISSIONS: Record<string, string> = {
+  '/campaigns/list': 'campaigns.list',
+  '/campaigns/details': 'campaigns.details',
+  '/campaigns/data_series': 'campaigns.data_series',
+}
+
+function assertBrazeConfig() {
+  if (!ENDPOINT) throw new Error('Braze REST endpoint is not configured')
+  if (!API_KEY) throw new Error('Braze API key is not configured')
+}
+
+function buildUrl(path: string, params: Record<string, string | number | boolean>) {
+  assertBrazeConfig()
+  const url = new URL(path, `${ENDPOINT}/`)
+  Object.entries(params).forEach(([key, value]) => {
+    url.searchParams.set(key, String(value))
+  })
+  return url.toString()
+}
+
+async function parseErrorBody(res: Response) {
+  const text = await res.text().catch(() => '')
+  if (!text) return ''
+
+  try {
+    const json = JSON.parse(text) as { message?: unknown; error?: unknown; errors?: unknown }
+    return String(json.message ?? json.error ?? json.errors ?? text)
+  } catch {
+    return text
+  }
+}
+
+async function brazeGet<T>(path: string, params: Record<string, string | number | boolean>, label: string): Promise<T> {
+  assertBrazeConfig()
+  const res = await fetch(buildUrl(path, params), {
+    headers: {
+      Authorization: `Bearer ${API_KEY}`,
+    },
+  })
+
+  if (!res.ok) {
+    const body = await parseErrorBody(res)
+    const requiredPermission = REQUIRED_PERMISSIONS[path]
+    const permissionHint =
+      res.status === 403 && requiredPermission
+        ? `; required Braze permission: ${requiredPermission}`
+        : ''
+    const bodyHint = body ? ` (${body})` : ''
+    throw new Error(`${label} failed: ${res.status}${bodyHint}${permissionHint}`)
+  }
+
+  return res.json() as Promise<T>
 }
 
 export interface BrazeCampaign {
   id: string
   name: string
-  is_active: boolean
-  is_archived: boolean
-  created_at: string
-  updated_at: string
-  channels: string[]
+  is_api_campaign: boolean
+  last_edited: string
   tags: string[]
 }
 
 export interface BrazeCampaignDetails {
-  id: string
+  id?: string
   name: string
-  is_active: boolean
-  schedule_type: string          // 'scheduled' | 'action_based' | 'api_triggered'
+  archived: boolean
+  enabled: boolean
+  draft: boolean
+  schedule_type: string          // 'time_based' | 'action_based' | 'api_triggered'
   channels: string[]
   tags: string[]
   created_at: string
@@ -46,12 +95,25 @@ export interface BrazeCampaignStats {
   }
 }
 
+interface CampaignListResponse {
+  campaigns?: BrazeCampaign[]
+}
+
+interface CampaignDetailsResponse extends BrazeCampaignDetails {
+  campaign?: BrazeCampaignDetails
+}
+
+interface CampaignDataSeriesResponse {
+  data?: { time: string; messages?: Record<string, unknown> }[]
+}
+
 /** 전체 캠페인 목록 (페이지 단위) */
 export async function fetchCampaignList(page = 0): Promise<BrazeCampaign[]> {
-  const url = `${ENDPOINT}/campaigns/list?page=${page}&include_archived=false`
-  const res = await fetch(url, { headers })
-  if (!res.ok) throw new Error(`Braze /campaigns/list failed: ${res.status}`)
-  const json = await res.json()
+  const json = await brazeGet<CampaignListResponse>(
+    '/campaigns/list',
+    { page, include_archived: false, sort_direction: 'desc' },
+    'Braze /campaigns/list',
+  )
   return json.campaigns ?? []
 }
 
@@ -71,10 +133,11 @@ export async function fetchAllCampaigns(): Promise<BrazeCampaign[]> {
 
 /** 특정 캠페인 상세 (schedule_type, trigger_action 포함) */
 export async function fetchCampaignDetails(campaignId: string): Promise<BrazeCampaignDetails> {
-  const url = `${ENDPOINT}/campaigns/details?campaign_id=${campaignId}`
-  const res = await fetch(url, { headers })
-  if (!res.ok) throw new Error(`Braze /campaigns/details failed: ${res.status}`)
-  const json = await res.json()
+  const json = await brazeGet<CampaignDetailsResponse>(
+    '/campaigns/details',
+    { campaign_id: campaignId },
+    'Braze /campaigns/details',
+  )
   return json.campaign ?? json
 }
 
@@ -83,10 +146,11 @@ export async function fetchCampaignDataSeries(
   campaignId: string,
   length = 14,
 ): Promise<{ time: string; messages?: Record<string, unknown> }[]> {
-  const url = `${ENDPOINT}/campaigns/data_series?campaign_id=${campaignId}&length=${length}`
-  const res = await fetch(url, { headers })
-  if (!res.ok) throw new Error(`Braze /campaigns/data_series failed: ${res.status}`)
-  const json = await res.json()
+  const json = await brazeGet<CampaignDataSeriesResponse>(
+    '/campaigns/data_series',
+    { campaign_id: campaignId, length },
+    'Braze /campaigns/data_series',
+  )
   return json.data ?? []
 }
 
@@ -121,6 +185,7 @@ export function channelBadgeColor(channel: string): { bg: string; text: string }
 /** schedule_type → 발송 유형 한글 */
 export function scheduleTypeLabel(t: string): string {
   const map: Record<string, string> = {
+    time_based: 'Scheduled',
     scheduled: 'Scheduled',
     action_based: 'Action-Based',
     api_triggered: 'API Triggered',
