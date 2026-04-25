@@ -1,20 +1,11 @@
-const ENDPOINT = (import.meta.env.VITE_BRAZE_REST_ENDPOINT as string | undefined)?.replace(/\/+$/, '')
-const API_KEY = import.meta.env.VITE_BRAZE_API_KEY as string | undefined
-
 const REQUIRED_PERMISSIONS: Record<string, string> = {
   '/campaigns/list': 'campaigns.list',
   '/campaigns/details': 'campaigns.details',
   '/campaigns/data_series': 'campaigns.data_series',
 }
 
-function assertBrazeConfig() {
-  if (!ENDPOINT) throw new Error('Braze REST endpoint is not configured')
-  if (!API_KEY) throw new Error('Braze API key is not configured')
-}
-
 function buildUrl(path: string, params: Record<string, string | number | boolean>) {
-  assertBrazeConfig()
-  const url = new URL(path, `${ENDPOINT}/`)
+  const url = new URL(`/api/braze${path}`, window.location.origin)
   Object.entries(params).forEach(([key, value]) => {
     url.searchParams.set(key, String(value))
   })
@@ -34,12 +25,7 @@ async function parseErrorBody(res: Response) {
 }
 
 async function brazeGet<T>(path: string, params: Record<string, string | number | boolean>, label: string): Promise<T> {
-  assertBrazeConfig()
-  const res = await fetch(buildUrl(path, params), {
-    headers: {
-      Authorization: `Bearer ${API_KEY}`,
-    },
-  })
+  const res = await fetch(buildUrl(path, params))
 
   if (!res.ok) {
     const body = await parseErrorBody(res)

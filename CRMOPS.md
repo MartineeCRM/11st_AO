@@ -61,8 +61,8 @@ Braze REST API
 
 | 변수명                       | 설명                                   |
 | ---------------------------- | -------------------------------------- |
-| `VITE_BRAZE_REST_ENDPOINT`   | `https://rest.iad-07.braze.com`        |
-| `VITE_BRAZE_API_KEY`         | Braze REST API 키                      |
+| `BRAZE_REST_ENDPOINT`        | `https://rest.iad-07.braze.com`        |
+| `BRAZE_API_KEY`              | Braze REST API 키                      |
 
 > `.env` 파일에 로컬 설정, Vercel에는 Environment Variables에 별도 등록 필요.
 > API 키는 Braze 대시보드 → **Settings → API Keys**에서 관리.
@@ -76,6 +76,8 @@ Braze REST API
 
 ### 주의사항
 
+- Braze REST API는 서버사이드에서만 호출한다. 클라이언트는 `/api/braze/*` 내부 API 프록시만 호출한다
+- Braze API 키는 `VITE_` prefix를 붙이지 않는다. `VITE_` 환경변수는 브라우저 번들에 노출될 수 있다
 - GET 요청에 `Content-Type: application/json` 헤더를 **붙이지 않는다** → 브라우저 CORS preflight(OPTIONS)가 발생해 Braze가 403을 반환함
 - API 클라이언트: [`src/lib/braze.ts`](src/lib/braze.ts)
 
