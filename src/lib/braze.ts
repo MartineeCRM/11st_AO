@@ -2,7 +2,6 @@ const ENDPOINT = import.meta.env.VITE_BRAZE_REST_ENDPOINT as string
 const API_KEY = import.meta.env.VITE_BRAZE_API_KEY as string
 
 const headers = {
-  'Content-Type': 'application/json',
   Authorization: `Bearer ${API_KEY}`,
 }
 
