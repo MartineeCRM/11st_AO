@@ -1,8 +1,10 @@
 import { MetricToggleGroup } from './MetricToggleGroup'
 import { PurchaseTrendChart } from './AttributionTrendChart'
 import { AttributionKpiCard } from './AttributionKpiCard'
+import { PurchaseDataTable } from './PurchaseDataTable'
 import { formatNumber, formatRate, formatCurrency } from '@/lib/formatters'
 import type { PurchaseMetricKey, PurchaseMetrics, KpiDelta, TrendPoint } from '@/hooks/useAttributionMetrics'
+import type { AttDataRow } from '@/types/sheets'
 
 const PURCHASE_METRIC_OPTIONS: { key: PurchaseMetricKey; label: string }[] = [
   { key: 'user_cvr', label: 'CVR' },
@@ -56,6 +58,7 @@ interface Props {
   trendData: TrendPoint[]
   current: PurchaseMetrics
   delta: Record<PurchaseMetricKey, KpiDelta>
+  filteredRows: AttDataRow[]
 }
 
 export function PurchaseMetricsSection({
@@ -64,6 +67,7 @@ export function PurchaseMetricsSection({
   trendData,
   current,
   delta,
+  filteredRows,
 }: Props) {
   const formatter = (v: number) => formatMetricValue(activeMetric, v)
 
@@ -137,6 +141,8 @@ export function PurchaseMetricsSection({
           highlighted={activeMetric === 'items_per_user'}
         />
       </div>
+
+      <PurchaseDataTable rows={filteredRows} />
     </div>
   )
 }

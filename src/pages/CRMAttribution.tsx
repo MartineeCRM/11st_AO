@@ -51,7 +51,7 @@ export function CRMAttribution() {
   const [activeMetric, setActiveMetric] = useState<PurchaseMetricKey>('user_cvr')
   const [activeEvent, setActiveEvent] = useState<EventKey>('add_to_cart')
 
-  const { kpis, trendData, eventCvr, eventTrend } = useAttributionMetrics(
+  const { kpis, trendData, eventCvr, eventRawCount, eventImpression, eventTrend } = useAttributionMetrics(
     filteredRows,
     extendedRows,
     resolvedFilters.dateRange.start,
@@ -126,6 +126,7 @@ export function CRMAttribution() {
             trendData={trendData}
             current={kpis.current}
             delta={kpis.delta}
+            filteredRows={filteredRows}
           />
         )}
 
@@ -134,6 +135,8 @@ export function CRMAttribution() {
             activeEvent={activeEvent}
             onEventChange={setActiveEvent}
             eventCvr={eventCvr}
+            eventRawCount={eventRawCount}
+            eventImpression={eventImpression}
             eventTrend={eventTrend}
           />
         )}
