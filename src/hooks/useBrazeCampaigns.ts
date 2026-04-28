@@ -109,16 +109,18 @@ export function useBrazeCampaigns(): UseBrazeCampaignsResult {
           console.log('[useBrazeCampaigns] action_based sample:', triggerSample)
           console.log('[useBrazeCampaigns] all schedule_types:', [...new Set(enriched.map(c => c.schedule_type))])
 
-          // raw detail log for first action_based campaign
-          const firstActionIdx = targets.findIndex((_, i) => {
+          // raw detail log for first LIVE action_based campaign
+          const firstLiveActionIdx = targets.findIndex((_, i) => {
             const d = detailResults[i].status === 'fulfilled'
               ? (detailResults[i] as PromiseFulfilledResult<BrazeCampaignDetails>).value
               : null
-            return d?.schedule_type === 'action_based'
+            return d?.schedule_type === 'action_based' && d?.enabled && !d?.archived && !d?.draft
           })
-          if (firstActionIdx >= 0 && detailResults[firstActionIdx].status === 'fulfilled') {
-            const rawDetail = (detailResults[firstActionIdx] as PromiseFulfilledResult<BrazeCampaignDetails>).value
-            console.log('[useBrazeCampaigns] raw action_based detail:', JSON.stringify(rawDetail, null, 2))
+          if (firstLiveActionIdx >= 0 && detailResults[firstLiveActionIdx].status === 'fulfilled') {
+            const rawDetail = (detailResults[firstLiveActionIdx] as PromiseFulfilledResult<BrazeCampaignDetails>).value
+            console.log('[useBrazeCampaigns] raw LIVE action_based detail:', JSON.stringify(rawDetail, null, 2))
+          } else {
+            console.log('[useBrazeCampaigns] no live action_based campaigns in first', targets.length, 'campaigns')
           }
           cached = enriched
           cachedAt = Date.now()
