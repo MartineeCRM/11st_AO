@@ -1,4 +1,4 @@
-import type { MartineeUnionRow, DailyKpiRow } from '@/types/sheets'
+import type { MartineeUnionRow, DailyKpiRow, AttDataRow } from '@/types/sheets'
 import { normalizeDate } from './formatters'
 
 const SPREADSHEET_ID = import.meta.env.VITE_SPREADSHEET_ID as string
@@ -90,4 +90,50 @@ export async function fetchDailyKpi(): Promise<DailyKpiRow[]> {
   const raw = await fetchSheet('daily_kpi')
   const parsed = parseRows<Record<string, string | number>>(raw)
   return normalizeDailyKpi(parsed)
+}
+
+function normalizeAttData(rows: Record<string, string | number>[]): AttDataRow[] {
+  return rows
+    .map(r => ({
+      date: normalizeDate(String(r['kst_date'] ?? r['date'] ?? '')),
+      source_id: String(r['source_id'] ?? ''),
+      source_type: String(r['source_type'] ?? ''),
+      message_variation_id: String(r['message_variation_id'] ?? ''),
+      message_type: String(r['message_type'] ?? ''),
+      os: String(r['os'] ?? ''),
+      source_alias: String(r['source_alias'] ?? ''),
+      variant_alias: String(r['variant_alias'] ?? ''),
+      category: String(r['분류'] ?? r['category'] ?? ''),
+      impression_or_send_user: Number(r['impression_or_send_user'] ?? 0),
+      open_or_click_user: Number(r['open_or_click_user'] ?? 0),
+      purchase_item_count_6h: Number(r['purchase_item_count_6h'] ?? 0),
+      purchase_count_6h: Number(r['purchase_count_6h'] ?? 0),
+      purchase_user_count_6h: Number(r['purchase_user_count_6h'] ?? 0),
+      purchase_amount_6h: Number(r['purchase_amount_6h'] ?? 0),
+      join_membership: Number(r['join_membership'] ?? 0),
+      add_to_cart: Number(r['add_to_cart'] ?? 0),
+      pdp_view: Number(r['pdp_view'] ?? 0),
+      exhibition_view: Number(r['exhibition_view'] ?? 0),
+      push_subscribe: Number(r['push_subscribe'] ?? 0),
+      coupon_used: Number(r['coupon_used'] ?? 0),
+      promo_event_complete: Number(r['promo_event_complete'] ?? 0),
+      promo_page_view: Number(r['promo_page_view'] ?? 0),
+      plus_subscribe_start: Number(r['11plus_subscribe_start'] ?? 0),
+      family_member_join: Number(r['family_member_join'] ?? 0),
+      family_order_complete: Number(r['family_order_complete'] ?? 0),
+      family_order_request: Number(r['family_order_request'] ?? 0),
+      family_order_request_received: Number(r['family_order_request_received'] ?? 0),
+      lotto_issued: Number(r['11lotto_issued'] ?? 0),
+      lotto_my_page_view: Number(r['11lotto_my_page_view'] ?? 0),
+      lotto_attendance_check: Number(r['11lotto_attendance_check'] ?? 0),
+      noti_setting_view: Number(r['noti_setting_view'] ?? 0),
+      my_11st_view: Number(r['my_11st_view'] ?? 0),
+    }))
+    .sort((a, b) => a.date.localeCompare(b.date))
+}
+
+export async function fetchAttData(): Promise<AttDataRow[]> {
+  const raw = await fetchSheet('ATT_DATA')
+  const parsed = parseRows<Record<string, string | number>>(raw)
+  return normalizeAttData(parsed)
 }

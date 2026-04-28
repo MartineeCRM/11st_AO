@@ -38,6 +38,42 @@ export interface DailyKpiRow {
   view_promotion_list_page: number
 }
 
+export interface AttDataRow {
+  date: string                        // YYYY-MM-DD (KST_DATE)
+  source_id: string
+  source_type: string
+  message_variation_id: string
+  message_type: string                // Push | IAM
+  os: string
+  source_alias: string
+  variant_alias: string
+  category: string                    // 분류
+  impression_or_send_user: number
+  open_or_click_user: number
+  purchase_item_count_6h: number
+  purchase_count_6h: number
+  purchase_user_count_6h: number
+  purchase_amount_6h: number
+  join_membership: number
+  add_to_cart: number
+  pdp_view: number
+  exhibition_view: number
+  push_subscribe: number
+  coupon_used: number
+  promo_event_complete: number
+  promo_page_view: number
+  plus_subscribe_start: number        // 11plus_subscribe_start
+  family_member_join: number
+  family_order_complete: number
+  family_order_request: number
+  family_order_request_received: number
+  lotto_issued: number                // 11lotto_issued
+  lotto_my_page_view: number          // 11lotto_my_page_view
+  lotto_attendance_check: number      // 11lotto_attendance_check
+  noti_setting_view: number
+  my_11st_view: number
+}
+
 export interface DateRange {
   start: string   // YYYY-MM-DD
   end: string     // YYYY-MM-DD
