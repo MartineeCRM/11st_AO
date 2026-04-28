@@ -1,6 +1,6 @@
 import { MetricToggleGroup } from './MetricToggleGroup'
 import { EventTrendChart } from './AttributionTrendChart'
-import { formatRate } from '@/lib/formatters'
+import { formatRate, formatNumber } from '@/lib/formatters'
 import type { EventKey, EventTrendPoint } from '@/hooks/useAttributionMetrics'
 
 const EVENT_OPTIONS: { key: EventKey; label: string }[] = [
@@ -28,6 +28,8 @@ interface Props {
   activeEvent: EventKey
   onEventChange: (key: EventKey) => void
   eventCvr: number
+  eventRawCount: number
+  eventImpression: number
   eventTrend: EventTrendPoint[]
 }
 
@@ -35,6 +37,8 @@ export function EventMetricsSection({
   activeEvent,
   onEventChange,
   eventCvr,
+  eventRawCount,
+  eventImpression,
   eventTrend,
 }: Props) {
   const activeLabel = EVENT_OPTIONS.find(o => o.key === activeEvent)?.label ?? activeEvent
@@ -54,13 +58,21 @@ export function EventMetricsSection({
         <EventTrendChart data={eventTrend} eventLabel={activeLabel} />
       </div>
 
-      <div className="flex items-center gap-3 rounded-xl border border-[#E5E7EB] bg-white px-4 py-3">
-        <div>
-          <p className="text-[11px] text-[#9CA3AF]">{activeLabel} CVR (기간 내)</p>
+      <div className="grid grid-cols-3 gap-3">
+        <div className="rounded-xl border border-[#E5E7EB] bg-white px-4 py-3">
+          <p className="text-[11px] text-[#9CA3AF]">{activeLabel} CVR</p>
           <p className="text-xl font-bold text-[#111827]">{formatRate(eventCvr)}</p>
-          <p className="mt-0.5 text-[10px] text-[#9CA3AF]">
-            이벤트 수 ÷ 노출+발송 유저
-          </p>
+          <p className="mt-0.5 text-[10px] text-[#9CA3AF]">이벤트 수 ÷ 노출+발송 유저</p>
+        </div>
+        <div className="rounded-xl border border-[#E5E7EB] bg-white px-4 py-3">
+          <p className="text-[11px] text-[#9CA3AF]">{activeLabel} 발생수</p>
+          <p className="text-xl font-bold text-[#111827]">{formatNumber(eventRawCount)}</p>
+          <p className="mt-0.5 text-[10px] text-[#9CA3AF]">기간 내 이벤트 합계</p>
+        </div>
+        <div className="rounded-xl border border-[#E5E7EB] bg-white px-4 py-3">
+          <p className="text-[11px] text-[#9CA3AF]">노출+발송 유저</p>
+          <p className="text-xl font-bold text-[#111827]">{formatNumber(eventImpression)}</p>
+          <p className="mt-0.5 text-[10px] text-[#9CA3AF]">IMPRESSION_OR_SEND_USER</p>
         </div>
       </div>
     </div>

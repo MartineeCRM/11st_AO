@@ -34,6 +34,8 @@ export interface AttributionMetricsResult {
   kpis: PurchaseKpis
   trendData: TrendPoint[]
   eventCvr: number
+  eventRawCount: number       // 이벤트 발생 수 (분모 확인용)
+  eventImpression: number     // impression_or_send_user (분모)
   eventTrend: EventTrendPoint[]
 }
 
@@ -78,12 +80,16 @@ export function useAttributionMetrics(
 
     const trendData = buildTrendData(extendedRows, activeMetric, startDate, endDate)
     const eventCvr = calcEventCvr(curSums, activeEvent)
+    const eventRawCount = curSums[activeEvent]
+    const eventImpression = curSums.impression_or_send_user
     const eventTrend = buildEventTrendData(filteredRows, activeEvent, startDate, endDate)
 
     return {
       kpis: { current, wow, mom, delta },
       trendData,
       eventCvr,
+      eventRawCount,
+      eventImpression,
       eventTrend,
     }
   }, [filteredRows, extendedRows, startDate, endDate, activeMetric, activeEvent])

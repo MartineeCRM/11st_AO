@@ -39,7 +39,14 @@ export function PurchaseTrendChart({ data, yLabel, formatter }: PurchaseTrendCha
             label={{ value: yLabel, angle: -90, position: 'insideLeft', fontSize: 10, fill: '#9CA3AF' }}
           />
           <Tooltip
-            formatter={(v: number) => [formatter(v), '']}
+            formatter={(v: number, name: string) => {
+              const nameMap: Record<string, string> = {
+                value: '현재',
+                wow_value: 'WoW (-7일)',
+                mom_value: 'MoM (-30일)',
+              }
+              return [formatter(v), nameMap[name] ?? name]
+            }}
             labelFormatter={formatDateShort}
             contentStyle={{ fontSize: 12, borderColor: '#E5E7EB', borderRadius: 8 }}
           />

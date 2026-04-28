@@ -64,9 +64,19 @@ export function AttributionKpiCard({
           <span className="ml-1 text-[10px]">{subLabel}</span>
         </p>
       )}
-      <div className="flex flex-col gap-0.5">
-        <DeltaBadge value={delta.wow} label="WoW" />
-        <DeltaBadge value={delta.mom} label="MoM" />
+      <div className="flex flex-col gap-1 pt-1">
+        {delta.wow !== null && (
+          <div className="flex items-center gap-1 rounded-md bg-[#FFFBEB] px-1.5 py-0.5">
+            <span className="text-[9px] font-semibold text-[#D97706]">WoW</span>
+            <DeltaBadge value={delta.wow} label="" />
+          </div>
+        )}
+        {delta.mom !== null && (
+          <div className="flex items-center gap-1 rounded-md bg-[#F0FDF4] px-1.5 py-0.5">
+            <span className="text-[9px] font-semibold text-[#16A34A]">MoM</span>
+            <DeltaBadge value={delta.mom} label="" />
+          </div>
+        )}
       </div>
     </div>
   )
