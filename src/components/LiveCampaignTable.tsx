@@ -109,7 +109,7 @@ export function LiveCampaignTable({ campaigns, loading, error }: Props) {
                   </td>
                 </tr>
               )}
-              {filtered.slice(0, MAX_ROWS).map(c => {
+              {filtered.map(c => {
                 const ch = primaryChannel(c)
                 const badge = channelBadgeColor(ch)
                 return (
@@ -157,11 +157,6 @@ export function LiveCampaignTable({ campaigns, loading, error }: Props) {
             </tbody>
           </table>
           </div>
-          {filtered.length > MAX_ROWS && (
-            <div className="px-4 py-2.5 text-center text-xs text-[#9CA3AF] border-t border-[#F3F4F6]">
-              {filtered.length - MAX_ROWS}개 더 있습니다 (스크롤하여 확인)
-            </div>
-          )}
         </div>
       )}
     </div>

@@ -52,7 +52,7 @@ export function useBrazeCampaigns(): UseBrazeCampaignsResult {
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    if (Date.now() - cachedAt < CACHE_TTL_MS && cached.length > 0) {
+    if (false && Date.now() - cachedAt < CACHE_TTL_MS && cached.length > 0) {
       setCampaigns(cached)
       setLoading(false)
       return
@@ -102,6 +102,12 @@ export function useBrazeCampaigns(): UseBrazeCampaignsResult {
         })
 
         if (!cancelled) {
+          const triggerSample = enriched
+            .filter(c => c.schedule_type === 'action_based')
+            .slice(0, 5)
+            .map(c => ({ name: c.name, schedule_type: c.schedule_type, trigger_action: c.trigger_action }))
+          console.log('[useBrazeCampaigns] action_based sample:', triggerSample)
+          console.log('[useBrazeCampaigns] all schedule_types:', [...new Set(enriched.map(c => c.schedule_type))])
           cached = enriched
           cachedAt = Date.now()
           setCampaigns(enriched)
