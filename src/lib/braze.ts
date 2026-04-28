@@ -150,15 +150,16 @@ export async function fetchCampaignDataSeries(
 export function channelLabel(channel: string): string {
   const map: Record<string, string> = {
     push: '푸시',
-    email: '이메일',
-    sms: 'SMS',
-    in_app_message: '인앱',
-    webhook: '웹훅',
-    content_card: '콘텐츠카드',
-    whats_app: 'WhatsApp',
     android_push: '푸시',
     ios_push: '푸시',
     kindle_push: '푸시',
+    email: '이메일',
+    sms: 'SMS',
+    in_app_message: '인앱',
+    trigger_in_app_message: '인앱',
+    webhook: '웹훅',
+    content_card: '콘텐츠카드',
+    whats_app: 'WhatsApp',
   }
   return map[channel.toLowerCase()] ?? channel
 }
@@ -167,7 +168,7 @@ export function channelLabel(channel: string): string {
 export function channelBadgeColor(channel: string): { bg: string; text: string } {
   const c = channel.toLowerCase()
   if (c.includes('push')) return { bg: '#EEF2FF', text: '#4361EE' }
-  if (c.includes('in_app')) return { bg: '#EDE9FE', text: '#7C3AED' }
+  if (c.includes('in_app_message')) return { bg: '#EDE9FE', text: '#7C3AED' }
   if (c.includes('email')) return { bg: '#F0FDF4', text: '#15803D' }
   if (c.includes('sms')) return { bg: '#FEF3C7', text: '#D97706' }
   if (c.includes('kakao')) return { bg: '#FEF9C3', text: '#A16207' }

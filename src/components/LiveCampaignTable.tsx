@@ -10,7 +10,7 @@ type ChannelTab = (typeof CHANNEL_TABS)[number]
 const CHANNEL_FILTER_MAP: Record<ChannelTab, string[]> = {
   전체: [],
   푸시: ['push', 'android_push', 'ios_push', 'kindle_push'],
-  인앱: ['in_app_message'],
+  인앱: ['in_app_message', 'trigger_in_app_message'],
   이메일: ['email'],
   SMS: ['sms'],
   카카오: ['kakao'],
