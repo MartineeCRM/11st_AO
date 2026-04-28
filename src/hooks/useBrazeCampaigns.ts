@@ -6,6 +6,21 @@ import {
   type BrazeCampaignDetails,
 } from '@/lib/braze'
 
+/**
+ * Braze /campaigns/details 응답에서 트리거 이벤트명을 추출한다.
+ * API는 최상위 trigger_action 또는 triggers 배열 중 하나로 반환할 수 있다.
+ */
+function resolveTriggerAction(detail: BrazeCampaignDetails): string | undefined {
+  // 최상위 필드가 있으면 우선 사용
+  if (detail.trigger_action) return detail.trigger_action
+
+  // triggers 배열에서 첫 번째 항목의 event_name → trigger_action 순으로 추출
+  const first = detail.triggers?.[0]
+  if (!first) return undefined
+
+  return first.event_name ?? first.trigger_action ?? first.trigger_type ?? undefined
+}
+
 export interface EnrichedCampaign extends BrazeCampaign {
   schedule_type: string
   channels: string[]
@@ -82,7 +97,7 @@ export function useBrazeCampaigns(): UseBrazeCampaignsResult {
             draft: detail.draft,
             is_active: isLive,
             is_archived: detail.archived,
-            trigger_action: detail?.trigger_action,
+            trigger_action: resolveTriggerAction(detail),
           }
         })
 

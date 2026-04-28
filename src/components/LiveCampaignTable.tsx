@@ -4,17 +4,20 @@ import type { EnrichedCampaign } from '@/hooks/useBrazeCampaigns'
 import { channelLabel, channelBadgeColor, scheduleTypeLabel, brazeCampaignUrl } from '@/lib/braze'
 import { cn } from '@/lib/utils'
 
-const CHANNEL_TABS = ['전체', '푸시', '이메일', 'SMS', '카카오', '인앱'] as const
+const CHANNEL_TABS = ['전체', '푸시', '인앱', '이메일', 'SMS', '카카오', '웹훅'] as const
 type ChannelTab = (typeof CHANNEL_TABS)[number]
 
 const CHANNEL_FILTER_MAP: Record<ChannelTab, string[]> = {
   전체: [],
   푸시: ['push', 'android_push', 'ios_push', 'kindle_push'],
+  인앱: ['in_app_message'],
   이메일: ['email'],
   SMS: ['sms'],
   카카오: ['kakao'],
-  인앱: ['in_app_message'],
+  웹훅: ['webhook'],
 }
+
+const MAX_ROWS = 15
 
 interface Props {
   campaigns: EnrichedCampaign[]
@@ -85,8 +88,9 @@ export function LiveCampaignTable({ campaigns, loading, error }: Props) {
       {/* 테이블 */}
       {!loading && !error && (
         <div className="overflow-x-auto">
+          <div className="max-h-[520px] overflow-y-auto">
           <table className="w-full text-sm">
-            <thead>
+            <thead className="sticky top-0 z-10">
               <tr className="bg-[#F9FAFB] text-[#6B7280] text-xs font-semibold">
                 <th className="px-4 py-3 text-left w-64">캠페인명</th>
                 <th className="px-3 py-3 text-left w-20">채널</th>
@@ -105,7 +109,7 @@ export function LiveCampaignTable({ campaigns, loading, error }: Props) {
                   </td>
                 </tr>
               )}
-              {filtered.map(c => {
+              {filtered.slice(0, MAX_ROWS).map(c => {
                 const ch = primaryChannel(c)
                 const badge = channelBadgeColor(ch)
                 return (
@@ -152,6 +156,12 @@ export function LiveCampaignTable({ campaigns, loading, error }: Props) {
               })}
             </tbody>
           </table>
+          </div>
+          {filtered.length > MAX_ROWS && (
+            <div className="px-4 py-2.5 text-center text-xs text-[#9CA3AF] border-t border-[#F3F4F6]">
+              {filtered.length - MAX_ROWS}개 더 있습니다 (스크롤하여 확인)
+            </div>
+          )}
         </div>
       )}
     </div>

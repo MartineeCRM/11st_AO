@@ -60,9 +60,15 @@ export interface BrazeCampaignDetails {
   tags: string[]
   created_at: string
   updated_at: string
-  // Action-Based 전용
+  // Action-Based 전용 — Braze API는 triggers 배열로 반환
   trigger_type?: string
   trigger_action?: string
+  triggers?: Array<{
+    trigger_type?: string
+    trigger_action?: string
+    event_name?: string
+    event_type?: string
+  }>
   // 성과 지표 (details API에 포함)
   messages?: Record<string, unknown>
 }
@@ -161,10 +167,11 @@ export function channelLabel(channel: string): string {
 export function channelBadgeColor(channel: string): { bg: string; text: string } {
   const c = channel.toLowerCase()
   if (c.includes('push')) return { bg: '#EEF2FF', text: '#4361EE' }
+  if (c.includes('in_app')) return { bg: '#EDE9FE', text: '#7C3AED' }
   if (c.includes('email')) return { bg: '#F0FDF4', text: '#15803D' }
   if (c.includes('sms')) return { bg: '#FEF3C7', text: '#D97706' }
-  if (c.includes('in_app')) return { bg: '#EDE9FE', text: '#7C3AED' }
   if (c.includes('kakao')) return { bg: '#FEF9C3', text: '#A16207' }
+  if (c.includes('webhook')) return { bg: '#F1F5F9', text: '#475569' }
   return { bg: '#F3F4F6', text: '#6B7280' }
 }
 
