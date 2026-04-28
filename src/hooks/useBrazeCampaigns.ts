@@ -108,6 +108,18 @@ export function useBrazeCampaigns(): UseBrazeCampaignsResult {
             .map(c => ({ name: c.name, schedule_type: c.schedule_type, trigger_action: c.trigger_action }))
           console.log('[useBrazeCampaigns] action_based sample:', triggerSample)
           console.log('[useBrazeCampaigns] all schedule_types:', [...new Set(enriched.map(c => c.schedule_type))])
+
+          // raw detail log for first action_based campaign
+          const firstActionIdx = targets.findIndex((_, i) => {
+            const d = detailResults[i].status === 'fulfilled'
+              ? (detailResults[i] as PromiseFulfilledResult<BrazeCampaignDetails>).value
+              : null
+            return d?.schedule_type === 'action_based'
+          })
+          if (firstActionIdx >= 0 && detailResults[firstActionIdx].status === 'fulfilled') {
+            const rawDetail = (detailResults[firstActionIdx] as PromiseFulfilledResult<BrazeCampaignDetails>).value
+            console.log('[useBrazeCampaigns] raw action_based detail:', JSON.stringify(rawDetail, null, 2))
+          }
           cached = enriched
           cachedAt = Date.now()
           setCampaigns(enriched)
