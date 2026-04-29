@@ -1,10 +1,6 @@
-/** 큰 숫자를 K/M/B로 축약 (발송량, DAU 등) */
+/** 숫자 전체 표기 (K/M/B 축약 없음) */
 export function formatNumber(n: number): string {
   if (n === 0) return '0'
-  const abs = Math.abs(n)
-  if (abs >= 1_000_000_000) return `${(n / 1_000_000_000).toFixed(1)}B`
-  if (abs >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`
-  if (abs >= 1_000) return `${(n / 1_000).toFixed(1)}K`
   return n.toLocaleString('ko-KR')
 }
 
@@ -13,9 +9,9 @@ export function formatRate(n: number): string {
   return `${(Math.round(n * 10000) / 100).toFixed(2)}%`
 }
 
-/** 단가성 지표 전체 숫자 표기 (AOV, ARPU, ARPPU, 노출당 Rev 등) */
+/** 단가성 지표 전체 숫자 표기 (AOV, ARPU, ARPPU, 노출당 Rev 등) — 정수 반올림 */
 export function formatCurrency(n: number): string {
-  return `₩${n.toLocaleString('ko-KR')}`
+  return `₩${Math.round(n).toLocaleString('ko-KR')}`
 }
 
 /** WoW 변화율을 "+2.3%" 형태로 표기 */

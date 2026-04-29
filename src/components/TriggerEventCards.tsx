@@ -81,8 +81,8 @@ export function TriggerEventCards({ campaigns, loading, error }: Props) {
                 </div>
 
                 {/* 캠페인 목록 */}
-                <div className="divide-y divide-[#F9FAFB]">
-                  {group.campaigns.slice(0, 5).map(c => {
+                <div className="divide-y divide-[#F9FAFB] max-h-64 overflow-y-auto">
+                  {group.campaigns.map(c => {
                     const ch = c.channels[0] ?? 'unknown'
                     const badge = channelBadgeColor(ch)
                     return (
@@ -106,11 +106,6 @@ export function TriggerEventCards({ campaigns, loading, error }: Props) {
                       </div>
                     )
                   })}
-                  {group.campaigns.length > 5 && (
-                    <div className="px-4 py-2 text-[11px] text-[#9CA3AF] text-center">
-                      외 {group.campaigns.length - 5}개
-                    </div>
-                  )}
                 </div>
               </div>
             )

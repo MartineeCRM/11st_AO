@@ -45,9 +45,6 @@ export function TopNav({ activeTab, onTabChange }: Props) {
           )}
         >
           CRM Attribution
-          <span className="rounded-full bg-[#F3F4F6] px-1.5 py-0.5 text-[10px] font-semibold text-[#9CA3AF]">
-            준비중
-          </span>
           {activeTab === 'attribution' && (
             <span className="absolute bottom-0 left-0 right-0 h-0.5 rounded-full bg-[#4361EE]" />
           )}
