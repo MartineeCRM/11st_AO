@@ -239,7 +239,7 @@ export function buildEventTrendData(
   while (cur <= end) {
     const dateStr = cur.toISOString().slice(0, 10)
     const curRows = byDate.get(dateStr) ?? []
-    const value = calcEventCvr(sumRows(curRows), eventKey)
+    const value = sumRows(curRows)[eventKey]
     points.push({ date: dateStr, value })
     cur.setDate(cur.getDate() + 1)
   }

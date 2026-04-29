@@ -60,7 +60,7 @@ export function EventMetricsSection({
 
       <div className="rounded-xl border border-[#E5E7EB] bg-white p-4">
         <p className="mb-3 text-xs font-semibold text-[#374151]">
-          {activeLabel} CVR 트렌드
+          {activeLabel} 발생수 트렌드
         </p>
         <EventTrendChart data={eventTrend} eventLabel={activeLabel} />
       </div>
