@@ -99,8 +99,20 @@ interface EventTrendChartProps {
 }
 
 export function EventTrendChart({ data, eventLabel }: EventTrendChartProps) {
+  const avg = data.length > 0
+    ? data.reduce((sum, d) => sum + d.value, 0) / data.length
+    : 0
+
+  // 평균값 크기에 따라 소수점 자릿수 결정
+  const decimals = avg === 0 ? 2
+    : avg * 100 < 0.001 ? 6
+    : avg * 100 < 0.01 ? 5
+    : avg * 100 < 0.1 ? 4
+    : avg * 100 < 1 ? 3
+    : 2
+
   function formatPct(v: number) {
-    return `${(v * 100).toFixed(2)}%`
+    return `${(v * 100).toFixed(decimals)}%`
   }
 
   return (
@@ -120,7 +132,7 @@ export function EventTrendChart({ data, eventLabel }: EventTrendChartProps) {
             tick={{ fontSize: 11, fill: '#9CA3AF' }}
             tickLine={false}
             axisLine={false}
-            width={60}
+            width={70}
           />
           <Tooltip
             formatter={(v: number) => [formatPct(v), eventLabel]}

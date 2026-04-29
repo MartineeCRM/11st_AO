@@ -1,7 +1,14 @@
 import { MetricToggleGroup } from './MetricToggleGroup'
 import { EventTrendChart } from './AttributionTrendChart'
-import { formatRate, formatNumber } from '@/lib/formatters'
+import { formatNumber } from '@/lib/formatters'
 import type { EventKey, EventTrendPoint } from '@/hooks/useAttributionMetrics'
+
+function formatAdaptiveRate(v: number): string {
+  const pct = v * 100
+  if (pct === 0) return '0.00%'
+  const decimals = pct < 0.001 ? 6 : pct < 0.01 ? 5 : pct < 0.1 ? 4 : pct < 1 ? 3 : 2
+  return `${pct.toFixed(decimals)}%`
+}
 
 const EVENT_OPTIONS: { key: EventKey; label: string }[] = [
   { key: 'join_membership', label: '회원가입' },
@@ -61,7 +68,7 @@ export function EventMetricsSection({
       <div className="grid grid-cols-3 gap-3">
         <div className="rounded-xl border border-[#E5E7EB] bg-white px-4 py-3">
           <p className="text-[11px] text-[#9CA3AF]">{activeLabel} CVR</p>
-          <p className="text-xl font-bold text-[#111827]">{formatRate(eventCvr)}</p>
+          <p className="text-xl font-bold text-[#111827]">{formatAdaptiveRate(eventCvr)}</p>
           <p className="mt-0.5 text-[10px] text-[#9CA3AF]">이벤트 수 ÷ 노출+발송 유저</p>
         </div>
         <div className="rounded-xl border border-[#E5E7EB] bg-white px-4 py-3">
