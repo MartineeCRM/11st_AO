@@ -1,4 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
+import { DayPicker } from 'react-day-picker'
+import type { DateRange as DayRange } from 'react-day-picker'
+import 'react-day-picker/dist/style.css'
 import { cn } from '@/lib/utils'
 import type { DateRange } from '@/types/sheets'
 import { PRESETS, type Preset, presetToRange } from './datePresets'
@@ -12,9 +15,22 @@ interface Props {
   onPresetChange: (p: Preset | null) => void
 }
 
+function toDate(s: string) {
+  const d = new Date(s)
+  return isNaN(d.getTime()) ? undefined : d
+}
+
+function toStr(d: Date | undefined) {
+  if (!d) return ''
+  return d.toISOString().slice(0, 10)
+}
+
 export function DatePresetFilter({ value, minDate, maxDate, activePreset, onPresetChange, onChange }: Props) {
   const [calOpen, setCalOpen] = useState(false)
-  const [draft, setDraft] = useState<DateRange>({ start: '', end: '' })
+  const [range, setRange] = useState<DayRange>({
+    from: toDate(value.start),
+    to: toDate(value.end),
+  })
   const calRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -30,21 +46,26 @@ export function DatePresetFilter({ value, minDate, maxDate, activePreset, onPres
     setCalOpen(false)
     if (p === 'all') {
       onChange({ start: minDate, end: maxDate })
+      setRange({ from: toDate(minDate), to: toDate(maxDate) })
     } else {
-      onChange(presetToRange(p, maxDate))
+      const r = presetToRange(p, maxDate)
+      onChange(r)
+      setRange({ from: toDate(r.start), to: toDate(r.end) })
+    }
+  }
+
+  function handleDayPickerSelect(selected: DayRange | undefined) {
+    setRange(selected ?? {})
+    if (selected?.from && selected?.to) {
+      onChange({ start: toStr(selected.from), end: toStr(selected.to) })
+      onPresetChange(null)
+      setCalOpen(false)
     }
   }
 
   function openCalendar() {
-    setDraft({ start: value.start || minDate, end: value.end || maxDate })
+    setRange({ from: toDate(value.start), to: toDate(value.end) })
     setCalOpen(o => !o)
-  }
-
-  function applyCustom() {
-    if (!draft.start || !draft.end) return
-    onChange(draft)
-    onPresetChange(null)
-    setCalOpen(false)
   }
 
   const displayStart = value.start || minDate
@@ -93,36 +114,27 @@ export function DatePresetFilter({ value, minDate, maxDate, activePreset, onPres
           </button>
 
           {calOpen && (
-            <div className="absolute top-full left-0 z-50 mt-1 w-60 rounded-xl border border-[#E5E7EB] bg-white p-4 shadow-lg">
-              <div className="mb-3 flex flex-col gap-1.5">
-                <label className="text-[10px] font-semibold uppercase tracking-wide text-[#6B7280]">시작일</label>
-                <input
-                  type="date"
-                  value={draft.start}
-                  min={minDate}
-                  max={draft.end || maxDate}
-                  onChange={e => setDraft(d => ({ ...d, start: e.target.value }))}
-                  className="rounded-lg border border-[#E5E7EB] px-2.5 py-1.5 text-xs text-[#374151] focus:border-[#4361EE] focus:outline-none"
-                />
-              </div>
-              <div className="mb-4 flex flex-col gap-1.5">
-                <label className="text-[10px] font-semibold uppercase tracking-wide text-[#6B7280]">종료일</label>
-                <input
-                  type="date"
-                  value={draft.end}
-                  min={draft.start || minDate}
-                  max={maxDate}
-                  onChange={e => setDraft(d => ({ ...d, end: e.target.value }))}
-                  className="rounded-lg border border-[#E5E7EB] px-2.5 py-1.5 text-xs text-[#374151] focus:border-[#4361EE] focus:outline-none"
-                />
-              </div>
-              <button
-                onClick={applyCustom}
-                disabled={!draft.start || !draft.end}
-                className="w-full rounded-lg bg-[#4361EE] py-1.5 text-xs font-semibold text-white transition-colors hover:bg-[#3451D1] disabled:opacity-40"
-              >
-                적용
-              </button>
+            <div className="absolute top-full left-0 z-50 mt-1 rounded-xl border border-[#E5E7EB] bg-white shadow-lg">
+              <DayPicker
+                mode="range"
+                selected={range}
+                onSelect={handleDayPickerSelect}
+                fromDate={toDate(minDate)}
+                toDate={toDate(maxDate)}
+                numberOfMonths={2}
+                defaultMonth={toDate(value.start ?? minDate)}
+                styles={{
+                  root: { margin: 0, padding: '12px 16px', fontSize: 13 },
+                }}
+                classNames={{
+                  day_selected: 'bg-[#4361EE] text-white rounded-md',
+                  day_range_middle: 'bg-[#EEF1FF] text-[#4361EE] rounded-none',
+                  day_range_start: 'bg-[#4361EE] text-white rounded-l-md',
+                  day_range_end: 'bg-[#4361EE] text-white rounded-r-md',
+                  day_today: 'font-bold text-[#4361EE]',
+                  button: 'hover:bg-[#F3F4F6] rounded-md',
+                }}
+              />
             </div>
           )}
         </div>
