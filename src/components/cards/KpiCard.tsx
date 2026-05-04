@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import {
+  AlertTriangle,
   Bell,
   BellRing,
   CircleDollarSign,
@@ -34,6 +35,30 @@ function DynamicIcon({ name, className }: { name: string; className?: string }) 
   return <Icon className={className} />
 }
 
+function WowBadge({ value }: { value: number }) {
+  const isPositive = value > 0
+  const isNegative = value < 0
+  return (
+    <div className="flex items-center gap-1">
+      {isPositive ? (
+        <TrendingUp className="h-3.5 w-3.5 text-[#10B981]" />
+      ) : isNegative ? (
+        <TrendingDown className="h-3.5 w-3.5 text-[#EF4444]" />
+      ) : (
+        <Minus className="h-3.5 w-3.5 text-[#9CA3AF]" />
+      )}
+      <span
+        className={cn(
+          'text-[11px] font-medium',
+          isPositive ? 'text-[#10B981]' : isNegative ? 'text-[#EF4444]' : 'text-[#9CA3AF]',
+        )}
+      >
+        {formatWoW(value)}
+      </span>
+    </div>
+  )
+}
+
 function MiniTrendChart({ data }: { data: number[] }) {
   const points = data.map((v, i) => ({ i, v }))
   return (
@@ -65,9 +90,7 @@ interface Props {
 
 export function KpiCard({ data }: Props) {
   const [hovered, setHovered] = useState(false)
-  const { label, formattedValue, wow, trendData, icon } = data
-  const isPositive = wow > 0
-  const isNegative = wow < 0
+  const { label, formattedValue, wow, mom, trendData, icon, anomaly } = data
 
   return (
     <div
@@ -77,36 +100,37 @@ export function KpiCard({ data }: Props) {
     >
       <div
         className={cn(
-          'rounded-xl border border-[#E5E7EB] bg-white p-4 transition-shadow',
+          'rounded-xl border bg-white p-4 transition-shadow',
+          anomaly ? 'border-[#FCA5A5]' : 'border-[#E5E7EB]',
           hovered && 'shadow-md',
         )}
       >
         {/* 레이블 + 아이콘 */}
         <div className="mb-2 flex items-center justify-between">
           <span className="text-xs font-medium text-[#6B7280]">{label}</span>
-          <DynamicIcon name={icon} className="h-3.5 w-3.5 text-[#9CA3AF]" />
+          <div className="flex items-center gap-1">
+            {anomaly && (
+              <AlertTriangle className="h-3.5 w-3.5 text-[#F59E0B]" title="이상 감지: WoW 변동 과다" />
+            )}
+            <DynamicIcon name={icon} className="h-3.5 w-3.5 text-[#9CA3AF]" />
+          </div>
         </div>
 
         {/* 값 */}
         <p className="mb-2 text-2xl font-bold text-[#111827] leading-none">{formattedValue}</p>
 
-        {/* WoW */}
-        <div className="flex items-center gap-1">
-          {isPositive ? (
-            <TrendingUp className="h-3.5 w-3.5 text-[#10B981]" />
-          ) : isNegative ? (
-            <TrendingDown className="h-3.5 w-3.5 text-[#EF4444]" />
-          ) : (
-            <Minus className="h-3.5 w-3.5 text-[#9CA3AF]" />
+        {/* WoW + MoM */}
+        <div className="flex flex-col gap-0.5">
+          <div className="flex items-center gap-1">
+            <WowBadge value={wow} />
+            <span className="text-[10px] text-[#9CA3AF]">vs 지난주</span>
+          </div>
+          {mom != null && (
+            <div className="flex items-center gap-1">
+              <WowBadge value={mom} />
+              <span className="text-[10px] text-[#9CA3AF]">vs 전월</span>
+            </div>
           )}
-          <span
-            className={cn(
-              'text-[11px] font-medium',
-              isPositive ? 'text-[#10B981]' : isNegative ? 'text-[#EF4444]' : 'text-[#9CA3AF]',
-            )}
-          >
-            {formatWoW(wow)} vs 지난주
-          </span>
         </div>
       </div>
 

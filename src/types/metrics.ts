@@ -3,10 +3,12 @@ export interface KpiCardData {
   value: number
   formattedValue: string
   wow: number           // ratio: 0.05 = +5%
+  mom?: number | null   // ratio: month-over-month, null if insufficient data
   trendData: number[]   // 14-day daily values (oldest → newest)
   icon: string          // lucide icon name
   isRate?: boolean
   isCurrency?: boolean
+  anomaly?: boolean     // true if WoW change exceeds anomaly threshold
 }
 
 export interface DailyMetricPoint {

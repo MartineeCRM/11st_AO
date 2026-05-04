@@ -16,6 +16,7 @@ import {
   type FunnelFieldKey,
 } from '@/lib/metrics'
 import { formatNumber, formatRate, daysAgo, toDateStr } from '@/lib/formatters'
+import { isAnomaly } from '@/lib/anomalyThresholds'
 import type { Top10Metric } from '@/types/metrics'
 
 interface UseMetricsOptions {
@@ -37,6 +38,8 @@ export function useMetrics(
   const startDate = opts.currentStart || today
   const wowStart = daysAgo(7, new Date(startDate))
   const wowEnd = daysAgo(7, new Date(endDate))
+  const momStart = daysAgo(30, new Date(startDate))
+  const momEnd = daysAgo(30, new Date(endDate))
 
   // WoW 비교용 이전 주 데이터
   const prevMartinee = useMemo(
@@ -48,46 +51,75 @@ export function useMetrics(
     [allKpi, wowStart, wowEnd],
   )
 
+  // MoM 비교용 전월 데이터
+  const momMartinee = useMemo(
+    () => allMartinee.filter(r => r.date >= momStart && r.date <= momEnd),
+    [allMartinee, momStart, momEnd],
+  )
+  const momKpi = useMemo(
+    () => allKpi.filter(r => r.date >= momStart && r.date <= momEnd),
+    [allKpi, momStart, momEnd],
+  )
+
   // ── KPI 카드 데이터 ──────────────────────────────────────
   const kpiCards: KpiCardData[] = useMemo(() => {
     const curSI = calcSentImpression(filteredMartinee)
     const prevSI = calcSentImpression(prevMartinee)
+    const momSI = calcSentImpression(momMartinee)
     const curCTR = calcCTR(filteredMartinee)
     const prevCTR = calcCTR(prevMartinee)
+    const momCTR = calcCTR(momMartinee)
     const curMsg = calcMsgPerUser(filteredMartinee)
     const prevMsg = calcMsgPerUser(prevMartinee)
+    const momMsg = calcMsgPerUser(momMartinee)
 
     const curPush = filteredKpi.reduce((s, r) => s + r.push_opt_in, 0) / (filteredKpi.length || 1)
     const prevPush = prevKpi.reduce((s, r) => s + r.push_opt_in, 0) / (prevKpi.length || 1)
+    const momPush = momKpi.reduce((s, r) => s + r.push_opt_in, 0) / (momKpi.length || 1)
     const curDAU = filteredKpi.reduce((s, r) => s + r.dau, 0) / (filteredKpi.length || 1)
     const prevDAU = prevKpi.reduce((s, r) => s + r.dau, 0) / (prevKpi.length || 1)
+    const momDAU = momKpi.reduce((s, r) => s + r.dau, 0) / (momKpi.length || 1)
     const curMAU = filteredKpi.length > 0 ? filteredKpi[filteredKpi.length - 1].mau : 0
     const prevMAU = prevKpi.length > 0 ? prevKpi[prevKpi.length - 1].mau : 0
+    const momMAU = momKpi.length > 0 ? momKpi[momKpi.length - 1].mau : 0
     const curRev = filteredKpi.reduce((s, r) => s + r.revenue, 0)
     const prevRev = prevKpi.reduce((s, r) => s + r.revenue, 0)
+    const momRev = momKpi.reduce((s, r) => s + r.revenue, 0)
+
+    const wowPush = calcWoW(curPush, prevPush)
+    const wowDAU = calcWoW(curDAU, prevDAU)
+    const wowRev = calcWoW(curRev, prevRev)
+    const wowSI = calcWoW(curSI, prevSI)
+    const wowCTR = calcWoW(curCTR, prevCTR)
+    const wowMsg = calcWoW(curMsg, prevMsg)
 
     return [
       {
         label: '푸시 수신동의',
         value: curPush,
         formattedValue: formatNumber(Math.round(curPush)),
-        wow: calcWoW(curPush, prevPush),
+        wow: wowPush,
+        mom: momKpi.length > 0 ? calcWoW(curPush, momPush) : null,
         trendData: calcKpiTrend14d(allKpi, 'push_opt_in', endDate),
         icon: 'bell',
+        anomaly: isAnomaly('push_opt_in', wowPush),
       },
       {
         label: 'DAU',
         value: curDAU,
         formattedValue: formatNumber(Math.round(curDAU)),
-        wow: calcWoW(curDAU, prevDAU),
+        wow: wowDAU,
+        mom: momKpi.length > 0 ? calcWoW(curDAU, momDAU) : null,
         trendData: calcKpiTrend14d(allKpi, 'dau', endDate),
         icon: 'users',
+        anomaly: isAnomaly('dau', wowDAU),
       },
       {
         label: 'MAU',
         value: curMAU,
         formattedValue: formatNumber(curMAU),
         wow: calcWoW(curMAU, prevMAU),
+        mom: momKpi.length > 0 ? calcWoW(curMAU, momMAU) : null,
         trendData: calcKpiTrend14d(allKpi, 'mau', endDate),
         icon: 'users',
       },
@@ -95,38 +127,45 @@ export function useMetrics(
         label: 'Revenue',
         value: curRev,
         formattedValue: `₩${formatNumber(curRev)}`,
-        wow: calcWoW(curRev, prevRev),
+        wow: wowRev,
+        mom: momKpi.length > 0 ? calcWoW(curRev, momRev) : null,
         trendData: calcKpiTrend14d(allKpi, 'revenue', endDate),
         icon: 'circle-dollar-sign',
         isCurrency: true,
+        anomaly: isAnomaly('revenue', wowRev),
       },
       {
         label: '전체 발송/노출',
         value: curSI,
         formattedValue: formatNumber(curSI),
-        wow: calcWoW(curSI, prevSI),
+        wow: wowSI,
+        mom: momMartinee.length > 0 ? calcWoW(curSI, momSI) : null,
         trendData: calcTrend14d(allMartinee, 'sentImpression', endDate),
         icon: 'send',
+        anomaly: isAnomaly('sentImpression', wowSI),
       },
       {
         label: '전체 평균 CTR',
         value: curCTR,
         formattedValue: formatRate(curCTR),
-        wow: calcWoW(curCTR, prevCTR),
+        wow: wowCTR,
+        mom: momMartinee.length > 0 ? calcWoW(curCTR, momCTR) : null,
         trendData: calcTrend14d(allMartinee, 'ctr', endDate),
         icon: 'mouse-pointer-click',
         isRate: true,
+        anomaly: isAnomaly('ctr', wowCTR),
       },
       {
         label: '유저당 메시지 수',
         value: curMsg,
         formattedValue: curMsg.toFixed(1),
-        wow: calcWoW(curMsg, prevMsg),
+        wow: wowMsg,
+        mom: momMartinee.length > 0 ? calcWoW(curMsg, momMsg) : null,
         trendData: [],
         icon: 'message-square',
       },
     ]
-  }, [filteredMartinee, filteredKpi, prevMartinee, prevKpi, allKpi, allMartinee, endDate])
+  }, [filteredMartinee, filteredKpi, prevMartinee, prevKpi, momMartinee, momKpi, allKpi, allMartinee, endDate])
 
   // ── 수신동의 카드 ─────────────────────────────────────────
   const optInData: OptInData[] = useMemo(() => {

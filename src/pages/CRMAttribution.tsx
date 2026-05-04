@@ -3,6 +3,7 @@ import { useAttributionData } from '@/hooks/useAttributionData'
 import { useAttributionFiltered, type AttributionFilterState } from '@/hooks/useAttributionFiltered'
 import { useAttributionMetrics, type PurchaseMetricKey, type EventKey } from '@/hooks/useAttributionMetrics'
 import { AttributionFilterBar } from '@/components/attribution/AttributionFilterBar'
+import { AttributionSummaryBanner } from '@/components/attribution/AttributionSummaryBanner'
 import { PurchaseMetricsSection } from '@/components/attribution/PurchaseMetricsSection'
 import { EventMetricsSection } from '@/components/attribution/EventMetricsSection'
 import type { Preset } from '@/components/filters/datePresets'
@@ -95,6 +96,11 @@ export function CRMAttribution() {
           setActivePreset(p)
           if (p) setFilters(prev => ({ ...prev, dateRange: presetToRange(p, maxDate) }))
         }}
+      />
+
+      <AttributionSummaryBanner
+        current={kpis.current}
+        hasData={filteredRows.length > 0}
       />
 
       <div className="px-6 py-5">
