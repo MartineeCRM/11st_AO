@@ -2,6 +2,7 @@ import { MetricToggleGroup } from './MetricToggleGroup'
 import { PurchaseTrendChart } from './AttributionTrendChart'
 import { AttributionKpiCard } from './AttributionKpiCard'
 import { PurchaseDataTable } from './PurchaseDataTable'
+import { CampaignRoiTable } from './CampaignRoiTable'
 import { formatNumber, formatRate, formatCurrency } from '@/lib/formatters'
 import type { PurchaseMetricKey, PurchaseMetrics, KpiDelta, TrendPoint } from '@/hooks/useAttributionMetrics'
 import type { AttDataRow } from '@/types/sheets'
@@ -143,6 +144,7 @@ export function PurchaseMetricsSection({
       </div>
 
       <PurchaseDataTable rows={filteredRows} />
+      <CampaignRoiTable rows={filteredRows} />
     </div>
   )
 }

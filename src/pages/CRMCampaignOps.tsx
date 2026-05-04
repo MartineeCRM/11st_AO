@@ -4,6 +4,7 @@ import { useBrazeCampaigns } from '@/hooks/useBrazeCampaigns'
 import { SendOpenTrendChart } from '@/components/charts/SendOpenTrendChart'
 import { LiveCampaignTable } from '@/components/LiveCampaignTable'
 import { TriggerEventCards } from '@/components/TriggerEventCards'
+import { ScheduledCampaignList } from '@/components/ScheduledCampaignList'
 import { buildDailyComboData } from '@/lib/metrics'
 
 export function CRMCampaignOps() {
@@ -35,6 +36,13 @@ export function CRMCampaignOps() {
 
       {/* Row 3: Action-Based 트리거 이벤트 현황 */}
       <TriggerEventCards
+        campaigns={campaigns}
+        loading={brazeLoading}
+        error={brazeError}
+      />
+
+      {/* Row 4: Scheduled 캠페인 현황 */}
+      <ScheduledCampaignList
         campaigns={campaigns}
         loading={brazeLoading}
         error={brazeError}

@@ -5,6 +5,7 @@ import { Row2TrendsTop10 } from '@/components/rows/Row2TrendsTop10'
 import { Row3FunnelEvents } from '@/components/rows/Row3FunnelEvents'
 import { Row4TableOptIn } from '@/components/rows/Row4TableOptIn'
 import { Row5RevenueCharts } from '@/components/rows/Row5RevenueCharts'
+import { ChannelPerformanceTable } from '@/components/charts/ChannelPerformanceTable'
 import { useSheetData } from '@/hooks/useSheetData'
 import { useFilteredData } from '@/hooks/useFilteredData'
 import { useMetrics } from '@/hooks/useMetrics'
@@ -144,6 +145,9 @@ export function CRMPerformance() {
             top10Metric={top10Metric}
             onTop10MetricChange={setTop10Metric}
           />
+          <div className="px-6 pb-4">
+            <ChannelPerformanceTable rows={filteredMartinee} />
+          </div>
           <Row3FunnelEvents
             funnel={funnel}
             funnelSteps={funnelSteps}
