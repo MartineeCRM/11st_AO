@@ -37,23 +37,30 @@ export async function handleBrazeProxy(req, res, brazePath, permission) {
     brazeUrl.searchParams.append(key, value)
   })
 
-  const brazeResponse = await fetch(brazeUrl, {
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-    },
-  })
+  try {
+    const brazeResponse = await fetch(brazeUrl, {
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+      },
+    })
 
-  res.setHeader('Cache-Control', 's-maxage=60, stale-while-revalidate=180')
+    res.setHeader('Cache-Control', 's-maxage=60, stale-while-revalidate=180')
 
-  if (!brazeResponse.ok) {
-    const body = await readBrazeError(brazeResponse)
-    res.status(brazeResponse.status).json({
-      message: body || `Braze request failed with ${brazeResponse.status}`,
+    if (!brazeResponse.ok) {
+      const body = await readBrazeError(brazeResponse)
+      res.status(brazeResponse.status).json({
+        message: body || `Braze request failed with ${brazeResponse.status}`,
+        permission,
+      })
+      return
+    }
+
+    const data = await brazeResponse.json()
+    res.status(200).json(data)
+  } catch (error) {
+    res.status(502).json({
+      message: error instanceof Error ? error.message : 'Braze proxy request failed',
       permission,
     })
-    return
   }
-
-  const data = await brazeResponse.json()
-  res.status(200).json(data)
 }

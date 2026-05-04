@@ -142,10 +142,11 @@ export function calcKpiTrend30d(
 // ─── 콤보차트 데이터 ───────────────────────────────────────────
 
 /** 일별 발송량/CTR/CVR 추이 (Row2 콤보차트) */
-export function buildDailyComboData(rows: MartineeUnionRow[]): DailyComboPoint[] {
+export function buildDailyComboData(rows: MartineeUnionRow[], limitDays?: number): DailyComboPoint[] {
   const byDate = groupByDate(rows)
   const dates = Array.from(byDate.keys()).sort()
-  return dates.map(date => {
+  const visibleDates = limitDays ? dates.slice(-limitDays) : dates
+  return visibleDates.map(date => {
     const dayRows = byDate.get(date)!
     return {
       date: formatDateShort(date),

@@ -17,8 +17,6 @@ const CHANNEL_FILTER_MAP: Record<ChannelTab, string[]> = {
   웹훅: ['webhook'],
 }
 
-const MAX_ROWS = 15
-
 interface Props {
   campaigns: EnrichedCampaign[]
   loading: boolean
