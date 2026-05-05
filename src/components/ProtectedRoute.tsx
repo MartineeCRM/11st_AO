@@ -39,7 +39,22 @@ export function ProtectedRoute({ children }: Props) {
     return <ProjectSelect projects={availableProjects} onSelect={setProjectId} />
   }
 
-  if (!project) return null
+  if (!project) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-[#F4F5F7]">
+        <div className="rounded-xl border border-[#E5E7EB] bg-white p-8 text-center max-w-sm">
+          <p className="text-sm font-semibold text-[#111827]">접근 가능한 프로젝트가 없습니다</p>
+          <p className="mt-1 text-xs text-[#9CA3AF]">관리자에게 프로젝트 접근 권한을 요청하세요.</p>
+          <button
+            onClick={() => { localStorage.removeItem('crm_project_id'); window.location.reload() }}
+            className="mt-4 text-xs text-[#4361EE] hover:underline"
+          >
+            로그아웃
+          </button>
+        </div>
+      </div>
+    )
+  }
 
   return <>{children(project)}</>
 }
