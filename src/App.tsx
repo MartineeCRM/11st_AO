@@ -3,9 +3,10 @@ import { TopNav } from '@/components/TopNav'
 import { CRMPerformance } from '@/pages/CRMPerformance'
 import { CRMAttribution } from '@/pages/CRMAttribution'
 import { CRMCampaignOps } from '@/pages/CRMCampaignOps'
+import { CRMSettings } from '@/pages/CRMSettings'
 import { ProtectedRoute } from '@/components/ProtectedRoute'
 
-type Tab = 'performance' | 'attribution' | 'ops'
+type Tab = 'performance' | 'attribution' | 'ops' | 'settings'
 
 class ErrorBoundary extends Component<{ children: ReactNode }, { error: Error | null }> {
   constructor(props: { children: ReactNode }) {
@@ -55,6 +56,7 @@ export default function App() {
               {activeTab === 'performance' && <CRMPerformance />}
               {activeTab === 'attribution' && <CRMAttribution />}
               {activeTab === 'ops' && <CRMCampaignOps />}
+              {activeTab === 'settings' && <CRMSettings project={project} />}
             </ErrorBoundary>
           </main>
         </div>
