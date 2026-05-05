@@ -69,8 +69,13 @@ export interface BrazeCampaignDetails {
     event_name?: string
     event_type?: string
   }>
+  // 발송 스케줄 (Scheduled 캠페인)
+  first_sent?: string
+  last_sent?: string
   // 성과 지표 (details API에 포함)
   messages?: Record<string, unknown>
+  // 스케줄 상세 (Braze API 원본 그대로 보존)
+  schedule?: Record<string, unknown>
 }
 
 export interface BrazeCampaignStats {

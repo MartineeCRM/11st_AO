@@ -1,5 +1,5 @@
-import { useMemo, useState } from 'react'
-import { ArrowDownUp } from 'lucide-react'
+import { useMemo, useState, useRef } from 'react'
+import { ArrowDownUp, ChevronDown } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { formatNumber, formatRate, formatCurrency } from '@/lib/formatters'
 import { sumRows, calcPurchaseMetrics } from '@/lib/attributionMetrics'
@@ -42,8 +42,12 @@ interface Props {
   rows: AttDataRow[]
 }
 
+const INITIAL_ROWS = 10
+
 export function CampaignRoiTable({ rows }: Props) {
   const [sortKey, setSortKey] = useState<SortKey>('revenue')
+  const [expanded, setExpanded] = useState(false)
+  const scrollRef = useRef<HTMLDivElement>(null)
 
   const campaignRows = useMemo(() => {
     const data = buildCampaignRows(rows)
@@ -53,6 +57,9 @@ export function CampaignRoiTable({ rows }: Props) {
   if (campaignRows.length === 0) {
     return null
   }
+
+  const visibleRows = expanded ? campaignRows : campaignRows.slice(0, INITIAL_ROWS)
+  const hasMore = campaignRows.length > INITIAL_ROWS
 
   const cols: { key: SortKey; label: string; fmt: (r: CampaignRow) => string }[] = [
     { key: 'revenue', label: '기여 매출', fmt: r => `₩${formatNumber(Math.round(r.revenue))}` },
@@ -70,7 +77,7 @@ export function CampaignRoiTable({ rows }: Props) {
         <span className="text-[11px] text-[#9CA3AF]">— 6h Attribution 기준</span>
       </div>
 
-      <div className="overflow-x-auto">
+      <div ref={scrollRef} className="overflow-x-auto">
         <table className="w-full min-w-[640px]">
           <thead>
             <tr className="border-b border-[#E5E7EB] bg-[#F9FAFB]">
@@ -91,7 +98,7 @@ export function CampaignRoiTable({ rows }: Props) {
             </tr>
           </thead>
           <tbody>
-            {campaignRows.map((row, i) => {
+            {visibleRows.map((row, i) => {
               const revenueShare = totalRevenue > 0 ? row.revenue / totalRevenue : 0
               return (
                 <tr key={row.alias} className="border-b border-[#F3F4F6] hover:bg-[#F9FAFB]">
@@ -132,6 +139,18 @@ export function CampaignRoiTable({ rows }: Props) {
           </tbody>
         </table>
       </div>
+
+      {hasMore && (
+        <div className="border-t border-[#F3F4F6] px-4 py-2">
+          <button
+            onClick={() => setExpanded(e => !e)}
+            className="flex w-full items-center justify-center gap-1.5 rounded-lg py-2 text-xs text-[#6B7280] hover:bg-[#F9FAFB]"
+          >
+            <ChevronDown className={`h-3.5 w-3.5 transition-transform ${expanded ? 'rotate-180' : ''}`} />
+            {expanded ? '접기' : `나머지 ${campaignRows.length - INITIAL_ROWS}개 캠페인 더 보기`}
+          </button>
+        </div>
+      )}
     </div>
   )
 }

@@ -32,6 +32,9 @@ export interface EnrichedCampaign extends BrazeCampaign {
   is_active: boolean
   is_archived: boolean
   trigger_action?: string
+  first_sent?: string
+  last_sent?: string
+  schedule?: Record<string, unknown>
 }
 
 export interface UseBrazeCampaignsResult {
@@ -108,6 +111,9 @@ async function fetchLiveCampaigns(): Promise<EnrichedCampaign[]> {
       is_active: isLive,
       is_archived: detail.archived,
       trigger_action: resolveTriggerAction(detail),
+      first_sent: detail.first_sent,
+      last_sent: detail.last_sent,
+      schedule: detail.schedule,
     }
   })
 }
