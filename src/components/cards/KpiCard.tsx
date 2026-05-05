@@ -90,34 +90,35 @@ interface Props {
 
 export function KpiCard({ data }: Props) {
   const [hovered, setHovered] = useState(false)
-  const { label, formattedValue, wow, mom, trendData, icon, anomaly } = data
+  const { label, formattedValue, wow, mom, trendData, icon, anomaly, primary } = data
 
   return (
     <div
-      className="relative flex-1 min-w-0"
+      className={cn('relative min-w-0', primary ? 'flex-[1.6]' : 'flex-1')}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
     >
       <div
         className={cn(
-          'rounded-xl border bg-white p-4 transition-shadow',
+          'rounded-xl border bg-white transition-shadow',
+          primary ? 'p-5' : 'p-4',
           anomaly ? 'border-[#FCA5A5]' : 'border-[#E5E7EB]',
           hovered && 'shadow-md',
         )}
       >
         {/* 레이블 + 아이콘 */}
         <div className="mb-2 flex items-center justify-between">
-          <span className="text-xs font-medium text-[#6B7280]">{label}</span>
+          <span className={cn('font-medium text-[#6B7280]', primary ? 'text-sm' : 'text-xs')}>{label}</span>
           <div className="flex items-center gap-1">
             {anomaly && (
               <AlertTriangle className="h-3.5 w-3.5 text-[#F59E0B]" title="이상 감지: WoW 변동 과다" />
             )}
-            <DynamicIcon name={icon} className="h-3.5 w-3.5 text-[#9CA3AF]" />
+            <DynamicIcon name={icon} className={cn(primary ? 'h-4 w-4' : 'h-3.5 w-3.5', 'text-[#9CA3AF]')} />
           </div>
         </div>
 
         {/* 값 */}
-        <p className="mb-2 text-2xl font-bold text-[#111827] leading-none">{formattedValue}</p>
+        <p className={cn('mb-2 font-bold text-[#111827] leading-none', primary ? 'text-3xl' : 'text-2xl')}>{formattedValue}</p>
 
         {/* WoW + MoM */}
         <div className="flex flex-col gap-0.5">

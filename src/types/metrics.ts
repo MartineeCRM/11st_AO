@@ -9,6 +9,7 @@ export interface KpiCardData {
   isRate?: boolean
   isCurrency?: boolean
   anomaly?: boolean     // true if WoW change exceeds anomaly threshold
+  primary?: boolean     // renders larger in the KPI row
 }
 
 export interface DailyMetricPoint {

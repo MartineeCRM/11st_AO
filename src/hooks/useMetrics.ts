@@ -103,6 +103,7 @@ export function useMetrics(
         trendData: calcKpiTrend14d(allKpi, 'push_opt_in', endDate),
         icon: 'bell',
         anomaly: isAnomaly('push_opt_in', wowPush),
+        primary: true,
       },
       {
         label: 'DAU',
@@ -133,6 +134,7 @@ export function useMetrics(
         icon: 'circle-dollar-sign',
         isCurrency: true,
         anomaly: isAnomaly('revenue', wowRev),
+        primary: true,
       },
       {
         label: '전체 발송/노출',
