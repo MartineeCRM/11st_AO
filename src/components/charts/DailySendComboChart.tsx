@@ -11,6 +11,7 @@ import {
 } from 'recharts'
 import type { DailyComboPoint } from '@/types/metrics'
 import { formatNumber } from '@/lib/formatters'
+import { EmptyChartState } from '@/components/EmptyChartState'
 
 interface Props {
   data: DailyComboPoint[]
@@ -21,7 +22,7 @@ export function DailySendComboChart({ data }: Props) {
     <div className="rounded-xl border border-[#E5E7EB] bg-white p-5 flex flex-col h-full">
       <h3 className="mb-4 text-sm font-semibold text-[#111827]">일별 발송량 / CTR / CVR 추이</h3>
       <div className="flex-1 min-h-0">
-        <ResponsiveContainer width="100%" height="100%">
+        {data.length === 0 ? <EmptyChartState /> : <ResponsiveContainer width="100%" height="100%">
           <ComposedChart data={data} margin={{ top: 4, right: 48, left: 8, bottom: 4 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="#F3F4F6" />
             <XAxis
@@ -90,7 +91,7 @@ export function DailySendComboChart({ data }: Props) {
               activeDot={{ r: 4 }}
             />
           </ComposedChart>
-        </ResponsiveContainer>
+        </ResponsiveContainer>}
       </div>
     </div>
   )
