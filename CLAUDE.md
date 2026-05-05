@@ -155,6 +155,18 @@ CRM 캠페인/캔버스별 채널 성과 데이터. 주요 컬럼:
 ---
 
 
+## 알려진 함정 (Gotchas)
+
+- **NODE_ENV=production 고정**: 이 환경은 `NODE_ENV=production`으로 고정되어 있음. `npm install` 시 반드시 `--include=dev` 플래그 필요. 스크립트 실행 시 `NODE_ENV=development` 접두사 필요
+- **Tailwind v4 `border-border` 오류**: shadcn/ui 기본 `index.css`의 `@apply border-border` 줄을 삭제해야 함. Tailwind v4에서 빌드 오류 발생
+- **nullish coalescing 혼용 시 괄호 필수**: `a || b ?? c` 패턴은 `a || (b ?? c)`로 괄호 명시. `tsc`는 통과해도 `vite build`에서 오류 발생
+- **빈 문자열로 Date 생성 금지**: `new Date('').toISOString()` 호출 시 `RangeError` → React 흰 화면. 날짜 함수에 항상 Invalid Date 방어 처리 필요
+- **Vercel 배포 시 Co-Authored-By 태그 제거**: 커밋 메시지에 `Co-Authored-By` 태그가 있으면 Vercel Hobby에서 배포 차단됨
+- **Braze GET 요청에 Content-Type 헤더 금지**: `Content-Type: application/json`을 GET에 붙이면 CORS preflight → Braze 403. `Authorization` 헤더만 사용
+- **Braze API 키는 VITE_ prefix 사용 금지**: `VITE_` 변수는 브라우저에 노출됨. 시크릿은 서버사이드 프록시로 분리 필요
+
+---
+
 ## 코딩 컨벤션
 
 - 컴포넌트 파일명: PascalCase (예: `KpiCard.tsx`)

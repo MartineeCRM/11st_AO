@@ -1,16 +1,21 @@
 import type { MartineeUnionRow, DailyKpiRow, AttDataRow } from '@/types/sheets'
 import { normalizeDate } from './formatters'
+import { supabase } from './supabase'
 
-const SPREADSHEET_ID = import.meta.env.VITE_SPREADSHEET_ID as string
-const API_KEY = import.meta.env.VITE_GOOGLE_SHEETS_API_KEY as string
-const BASE_URL = 'https://sheets.googleapis.com/v4/spreadsheets'
-
+// /api/sheets 프록시를 통해 시트 데이터를 가져옴
+// Authorization + X-Project-Id 헤더를 자동 주입
 async function fetchSheet(sheetName: string): Promise<string[][]> {
-  const url = `${BASE_URL}/${SPREADSHEET_ID}/values/${encodeURIComponent(sheetName)}?key=${API_KEY}`
-  const res = await fetch(url)
+  const { data: { session } } = await supabase.auth.getSession()
+  const projectId = localStorage.getItem('crm_project_id')
+
+  const headers: Record<string, string> = {}
+  if (session?.access_token) headers['Authorization'] = `Bearer ${session.access_token}`
+  if (projectId) headers['X-Project-Id'] = projectId
+
+  const res = await fetch(`/api/sheets?sheet=${encodeURIComponent(sheetName)}`, { headers })
   if (!res.ok) {
-    const text = await res.text()
-    throw new Error(`Google Sheets API 오류 [${sheetName}]: ${res.status} ${text}`)
+    const json = await res.json().catch(() => ({}))
+    throw new Error(`Google Sheets API 오류 [${sheetName}]: ${res.status} ${json.error ?? ''}`)
   }
   const json = (await res.json()) as { values?: string[][] }
   return json.values ?? []

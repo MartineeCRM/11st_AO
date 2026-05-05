@@ -9,15 +9,14 @@ interface CacheEntry<T> {
   fetchedAt: number
 }
 
-const cache: {
-  martinee?: CacheEntry<MartineeUnionRow[]>
-  kpi?: CacheEntry<DailyKpiRow[]>
-} = {}
+// 캐시 키에 project_id 포함 — 프로젝트 전환 시 다른 슬롯 사용
+type CacheKey = `${string}:martinee` | `${string}:kpi`
+const cache = new Map<CacheKey, CacheEntry<MartineeUnionRow[] | DailyKpiRow[]>>()
+const pendingRequests = new Map<CacheKey, Promise<MartineeUnionRow[] | DailyKpiRow[]>>()
 
-const pendingRequests: {
-  martinee?: Promise<MartineeUnionRow[]>
-  kpi?: Promise<DailyKpiRow[]>
-} = {}
+function getProjectId(): string {
+  return localStorage.getItem('crm_project_id') ?? 'default'
+}
 
 export interface SheetData {
   martinee: MartineeUnionRow[]
@@ -43,27 +42,35 @@ export function useSheetData(): SheetData {
       setError(null)
       try {
         const now = Date.now()
-        const needsMartinee = !cache.martinee || now - cache.martinee.fetchedAt > CACHE_TTL_MS
-        const needsKpi = !cache.kpi || now - cache.kpi.fetchedAt > CACHE_TTL_MS
+        const pid = getProjectId()
+        const mKey: CacheKey = `${pid}:martinee`
+        const kKey: CacheKey = `${pid}:kpi`
 
-        if (needsMartinee && !pendingRequests.martinee) {
-          pendingRequests.martinee = fetchMartineeUnion().finally(() => {
-            pendingRequests.martinee = undefined
-          })
+        const cachedM = cache.get(mKey)
+        const cachedK = cache.get(kKey)
+        const needsMartinee = !cachedM || now - cachedM.fetchedAt > CACHE_TTL_MS
+        const needsKpi = !cachedK || now - cachedK.fetchedAt > CACHE_TTL_MS
+
+        if (needsMartinee && !pendingRequests.has(mKey)) {
+          const p = fetchMartineeUnion().finally(() => pendingRequests.delete(mKey))
+          pendingRequests.set(mKey, p as Promise<MartineeUnionRow[]>)
         }
-        if (needsKpi && !pendingRequests.kpi) {
-          pendingRequests.kpi = fetchDailyKpi().finally(() => {
-            pendingRequests.kpi = undefined
-          })
+        if (needsKpi && !pendingRequests.has(kKey)) {
+          const p = fetchDailyKpi().finally(() => pendingRequests.delete(kKey))
+          pendingRequests.set(kKey, p as Promise<DailyKpiRow[]>)
         }
 
         const [mData, kData] = await Promise.all([
-          needsMartinee ? pendingRequests.martinee! : Promise.resolve(cache.martinee!.data),
-          needsKpi ? pendingRequests.kpi! : Promise.resolve(cache.kpi!.data),
+          needsMartinee
+            ? (pendingRequests.get(mKey) as Promise<MartineeUnionRow[]>)
+            : Promise.resolve(cachedM!.data as MartineeUnionRow[]),
+          needsKpi
+            ? (pendingRequests.get(kKey) as Promise<DailyKpiRow[]>)
+            : Promise.resolve(cachedK!.data as DailyKpiRow[]),
         ])
 
-        if (needsMartinee) cache.martinee = { data: mData, fetchedAt: Date.now() }
-        if (needsKpi) cache.kpi = { data: kData, fetchedAt: Date.now() }
+        if (needsMartinee) cache.set(mKey, { data: mData, fetchedAt: Date.now() })
+        if (needsKpi) cache.set(kKey, { data: kData, fetchedAt: Date.now() })
 
         if (mounted.current) {
           setMartinee(mData)

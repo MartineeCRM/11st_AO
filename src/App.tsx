@@ -3,6 +3,7 @@ import { TopNav } from '@/components/TopNav'
 import { CRMPerformance } from '@/pages/CRMPerformance'
 import { CRMAttribution } from '@/pages/CRMAttribution'
 import { CRMCampaignOps } from '@/pages/CRMCampaignOps'
+import { ProtectedRoute } from '@/components/ProtectedRoute'
 
 type Tab = 'performance' | 'attribution' | 'ops'
 
@@ -45,15 +46,19 @@ export default function App() {
   const [activeTab, setActiveTab] = useState<Tab>('performance')
 
   return (
-    <div className="min-h-screen bg-[#F4F5F7]">
-      <TopNav activeTab={activeTab} onTabChange={setActiveTab} />
-      <main>
-        <ErrorBoundary>
-          {activeTab === 'performance' && <CRMPerformance />}
-          {activeTab === 'attribution' && <CRMAttribution />}
-          {activeTab === 'ops' && <CRMCampaignOps />}
-        </ErrorBoundary>
-      </main>
-    </div>
+    <ProtectedRoute>
+      {project => (
+        <div className="min-h-screen bg-[#F4F5F7]">
+          <TopNav activeTab={activeTab} onTabChange={setActiveTab} projectName={project.name} />
+          <main>
+            <ErrorBoundary>
+              {activeTab === 'performance' && <CRMPerformance />}
+              {activeTab === 'attribution' && <CRMAttribution />}
+              {activeTab === 'ops' && <CRMCampaignOps />}
+            </ErrorBoundary>
+          </main>
+        </div>
+      )}
+    </ProtectedRoute>
   )
 }

@@ -1,3 +1,4 @@
+import { supabase } from '@/lib/supabase'
 import { cn } from '@/lib/utils'
 
 type Tab = 'performance' | 'attribution' | 'ops'
@@ -5,9 +6,15 @@ type Tab = 'performance' | 'attribution' | 'ops'
 interface Props {
   activeTab: Tab
   onTabChange: (t: Tab) => void
+  projectName?: string
 }
 
-export function TopNav({ activeTab, onTabChange }: Props) {
+export function TopNav({ activeTab, onTabChange, projectName }: Props) {
+  async function handleSignOut() {
+    await supabase.auth.signOut()
+    localStorage.removeItem('crm_project_id')
+  }
+
   return (
     <header className="sticky top-0 z-40 flex h-14 items-center border-b border-[#E5E7EB] bg-white px-6">
       {/* 로고 */}
@@ -16,6 +23,11 @@ export function TopNav({ activeTab, onTabChange }: Props) {
           <span className="text-xs font-bold text-white">M</span>
         </div>
         <span className="text-sm font-bold text-[#111827]">CRM Dashboard</span>
+        {projectName && (
+          <span className="rounded-full bg-[#EEF2FF] px-2 py-0.5 text-[11px] font-medium text-[#4361EE]">
+            {projectName}
+          </span>
+        )}
       </div>
 
       {/* 탭 */}
@@ -65,6 +77,13 @@ export function TopNav({ activeTab, onTabChange }: Props) {
           )}
         </button>
       </nav>
+
+      <button
+        onClick={handleSignOut}
+        className="ml-auto text-[11px] text-[#9CA3AF] hover:text-[#374151]"
+      >
+        로그아웃
+      </button>
     </header>
   )
 }
