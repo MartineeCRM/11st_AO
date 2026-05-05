@@ -1,4 +1,4 @@
-import { verifyProjectAccess } from './_lib/auth.js'
+import { verifyProjectAccess } from '../api/_lib/auth.js'
 
 async function readBrazeError(response) {
   const text = await response.text().catch(() => '')

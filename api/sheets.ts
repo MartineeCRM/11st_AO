@@ -18,7 +18,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   const { spreadsheet_id, google_api_key } = auth.project
-  const rangeParam = range ? `${sheet}!${range}` : sheet
+  const rangeParam = range ? `${sheet}!${range}` : `${sheet}!A:ZZ`
   const url = `${SHEETS_BASE}/${spreadsheet_id}/values/${encodeURIComponent(rangeParam)}?key=${google_api_key}`
 
   try {
