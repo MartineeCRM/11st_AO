@@ -5,8 +5,14 @@ import { Login } from '@/pages/Login'
 import { ProjectSelect } from '@/pages/ProjectSelect'
 import type { Project } from '@/lib/supabase'
 
+interface ProjectContext {
+  project: Project
+  availableProjects: Project[]
+  setProjectId: (id: string) => void
+}
+
 interface Props {
-  children: (project: Project) => ReactNode
+  children: (ctx: ProjectContext) => ReactNode
 }
 
 export function ProtectedRoute({ children }: Props) {
@@ -56,5 +62,5 @@ export function ProtectedRoute({ children }: Props) {
     )
   }
 
-  return <>{children(project)}</>
+  return <>{children({ project, availableProjects, setProjectId })}</>
 }

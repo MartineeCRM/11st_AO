@@ -48,9 +48,15 @@ export default function App() {
 
   return (
     <ProtectedRoute>
-      {project => (
+      {({ project, availableProjects, setProjectId }) => (
         <div className="min-h-screen bg-[#F4F5F7]">
-          <TopNav activeTab={activeTab} onTabChange={setActiveTab} projectName={project.name} />
+          <TopNav
+            activeTab={activeTab}
+            onTabChange={setActiveTab}
+            project={project}
+            availableProjects={availableProjects}
+            onProjectChange={setProjectId}
+          />
           <main>
             <ErrorBoundary>
               {activeTab === 'performance' && <CRMPerformance />}
