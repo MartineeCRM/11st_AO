@@ -11,12 +11,14 @@ import {
 } from 'recharts'
 import type { DailyComboPoint } from '@/types/metrics'
 import { formatKorean } from '@/lib/formatters'
+import { useChartColors } from '@/lib/chartColors'
 
 interface Props {
   data: DailyComboPoint[]
 }
 
 export function SendOpenTrendChart({ data }: Props) {
+  const colors = useChartColors()
   return (
     <div className="rounded-xl border border-[#E5E7EB] bg-white p-5 flex flex-col h-full">
       <div className="mb-4 flex items-center justify-between">
@@ -58,7 +60,7 @@ export function SendOpenTrendChart({ data }: Props) {
               yAxisId="left"
               dataKey="sentImpression"
               name="Sent/Impression"
-              fill="#4361EE"
+              fill={colors[0]}
               opacity={0.85}
               radius={[3, 3, 0, 0]}
               maxBarSize={40}
@@ -68,9 +70,9 @@ export function SendOpenTrendChart({ data }: Props) {
               type="monotone"
               dataKey="openClick"
               name="Open/Click"
-              stroke="#10B981"
+              stroke={colors[1]}
               strokeWidth={2}
-              dot={{ r: 3, fill: '#10B981' }}
+              dot={{ r: 3, fill: colors[1] }}
               activeDot={{ r: 5 }}
             />
           </ComposedChart>

@@ -12,12 +12,14 @@ import {
 import { formatKorean } from '@/lib/formatters'
 import type { DailyRevenuePoint } from '@/types/metrics'
 import { EmptyChartState } from '@/components/EmptyChartState'
+import { useChartColors } from '@/lib/chartColors'
 
 interface Props {
   data: DailyRevenuePoint[]
 }
 
 export function RevenueRewardComboChart({ data }: Props) {
+  const colors = useChartColors()
   return (
     <div className="rounded-xl border border-[#E5E7EB] bg-white p-5 flex flex-col h-full">
       <h3 className="mb-4 text-sm font-semibold text-[#111827]">발송당 Revenue / 예상 Reward 추이</h3>
@@ -63,7 +65,7 @@ export function RevenueRewardComboChart({ data }: Props) {
               yAxisId="left"
               dataKey="revenuePerSend"
               name="발송당 Revenue"
-              fill="#6EE7B7"
+              fill={colors[1] + '99'}
               radius={[2, 2, 0, 0]}
               maxBarSize={20}
             />
@@ -72,7 +74,7 @@ export function RevenueRewardComboChart({ data }: Props) {
               type="monotone"
               dataKey="expectedReward"
               name="예상 Reward"
-              stroke="#EC4899"
+              stroke={colors[5] ?? colors[4] ?? colors[1]}
               strokeWidth={2}
               dot={false}
               activeDot={{ r: 4 }}

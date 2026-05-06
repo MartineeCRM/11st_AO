@@ -3,8 +3,9 @@ import { LineChart, Line, ResponsiveContainer, Tooltip as RTooltip } from 'recha
 import { cn } from '@/lib/utils'
 import { formatWoW } from '@/lib/formatters'
 import type { BusinessKpiRow } from '@/types/metrics'
+import { useChartColors } from '@/lib/chartColors'
 
-function MiniSparkline({ data }: { data: number[] }) {
+function MiniSparkline({ data, color }: { data: number[]; color: string }) {
   const points = data.map((v, i) => ({ i, v }))
   return (
     <div className="w-20 h-7">
@@ -13,7 +14,7 @@ function MiniSparkline({ data }: { data: number[] }) {
           <Line
             type="monotone"
             dataKey="v"
-            stroke="#4361EE"
+            stroke={color}
             strokeWidth={1.5}
             dot={false}
           />
@@ -50,6 +51,7 @@ interface Props {
 }
 
 export function BusinessKpiTable({ rows }: Props) {
+  const colors = useChartColors()
   return (
     <div className="rounded-xl border border-[#E5E7EB] bg-white p-5 flex flex-col h-full">
       <h3 className="mb-4 text-sm font-semibold text-[#111827]">비즈니스 지표 기간 비교</h3>
@@ -89,7 +91,7 @@ export function BusinessKpiTable({ rows }: Props) {
                 </td>
                 <td className="py-2.5">
                   <div className="flex justify-center">
-                    <MiniSparkline data={row.trend} />
+                    <MiniSparkline data={row.trend} color={colors[0]} />
                   </div>
                 </td>
               </tr>

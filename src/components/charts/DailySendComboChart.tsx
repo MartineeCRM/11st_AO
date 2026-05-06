@@ -14,6 +14,7 @@ import { formatKorean } from '@/lib/formatters'
 import { EmptyChartState } from '@/components/EmptyChartState'
 import { useChartNotes } from '@/hooks/useChartNotes'
 import { NoteMarker } from './ChartNoteOverlay'
+import { useChartColors } from '@/lib/chartColors'
 
 interface Props {
   data: DailyComboPoint[]
@@ -43,6 +44,7 @@ function NoteDot(props: {
 }
 
 export function DailySendComboChart({ data }: Props) {
+  const colors = useChartColors()
   const { notes, upsertNote, deleteNote } = useChartNotes('daily_send')
 
   return (
@@ -93,7 +95,7 @@ export function DailySendComboChart({ data }: Props) {
               yAxisId="left"
               dataKey="sentImpression"
               name="발송/노출"
-              fill="#A5B4FC"
+              fill={colors[0] + '66'}
               radius={[2, 2, 0, 0]}
               maxBarSize={20}
             />
@@ -102,7 +104,7 @@ export function DailySendComboChart({ data }: Props) {
               type="monotone"
               dataKey="ctr"
               name="CTR"
-              stroke="#4361EE"
+              stroke={colors[0]}
               strokeWidth={2}
               dot={(props) => <NoteDot {...props} notes={notes} onSave={upsertNote} onDelete={deleteNote} />}
               activeDot={{ r: 4 }}
@@ -112,7 +114,7 @@ export function DailySendComboChart({ data }: Props) {
               type="monotone"
               dataKey="cvr"
               name="CVR"
-              stroke="#F59E0B"
+              stroke={colors[2]}
               strokeWidth={2}
               dot={false}
               activeDot={{ r: 4 }}

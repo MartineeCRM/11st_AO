@@ -12,12 +12,14 @@ import {
 import { formatKorean, formatCurrency } from '@/lib/formatters'
 import type { DailyRevenuePoint } from '@/types/metrics'
 import { EmptyChartState } from '@/components/EmptyChartState'
+import { useChartColors } from '@/lib/chartColors'
 
 interface Props {
   data: DailyRevenuePoint[]
 }
 
 export function AovRevenueComboChart({ data }: Props) {
+  const colors = useChartColors()
   return (
     <div className="rounded-xl border border-[#E5E7EB] bg-white p-5 flex flex-col h-full">
       <h3 className="mb-4 text-sm font-semibold text-[#111827]">Revenue / AOV 추이</h3>
@@ -63,7 +65,7 @@ export function AovRevenueComboChart({ data }: Props) {
               yAxisId="left"
               dataKey="revenue"
               name="Revenue"
-              fill="#A5B4FC"
+              fill={colors[0] + '99'}
               radius={[2, 2, 0, 0]}
               maxBarSize={20}
             />
@@ -72,7 +74,7 @@ export function AovRevenueComboChart({ data }: Props) {
               type="monotone"
               dataKey="aov"
               name="AOV"
-              stroke="#F59E0B"
+              stroke={colors[2]}
               strokeWidth={2}
               dot={false}
               activeDot={{ r: 4 }}

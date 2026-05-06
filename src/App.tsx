@@ -5,6 +5,7 @@ import { CRMAttribution } from '@/pages/CRMAttribution'
 import { CRMCampaignOps } from '@/pages/CRMCampaignOps'
 import { CRMSettings } from '@/pages/CRMSettings'
 import { ProtectedRoute } from '@/components/ProtectedRoute'
+import { ChartColorsContext, DEFAULT_CHART_COLORS } from '@/lib/chartColors'
 
 type Tab = 'performance' | 'attribution' | 'ops' | 'settings'
 
@@ -49,6 +50,7 @@ export default function App() {
   return (
     <ProtectedRoute>
       {({ project, availableProjects, setProjectId }) => (
+        <ChartColorsContext.Provider value={project?.chart_colors?.length ? project.chart_colors : DEFAULT_CHART_COLORS}>
         <div className="min-h-screen bg-[#F4F5F7]">
           <TopNav
             activeTab={activeTab}
@@ -66,6 +68,7 @@ export default function App() {
             </ErrorBoundary>
           </main>
         </div>
+        </ChartColorsContext.Provider>
       )}
     </ProtectedRoute>
   )

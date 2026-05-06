@@ -171,12 +171,17 @@ export function useMetrics(
 
   // ── 수신동의 카드 ─────────────────────────────────────────
   const optInData: OptInData[] = useMemo(() => {
-    const curPush = filteredKpi.length > 0 ? filteredKpi[filteredKpi.length - 1].push_opt_in : 0
-    const prevPushRow = prevKpi.length > 0 ? prevKpi[prevKpi.length - 1].push_opt_in : 0
-    const curSms = filteredKpi.length > 0 ? filteredKpi[filteredKpi.length - 1].sms_opt_in : 0
-    const prevSms = prevKpi.length > 0 ? prevKpi[prevKpi.length - 1].sms_opt_in : 0
-    const curKakao = filteredKpi.length > 0 ? filteredKpi[filteredKpi.length - 1].kakao_opt_in : 0
-    const prevKakao = prevKpi.length > 0 ? prevKpi[prevKpi.length - 1].kakao_opt_in : 0
+    // endDate에 가장 가까운 날짜의 값을 사용 (정렬 무관)
+    const sortedFiltered = [...filteredKpi].sort((a, b) => a.date.localeCompare(b.date))
+    const sortedPrev = [...prevKpi].sort((a, b) => a.date.localeCompare(b.date))
+    const latestRow = sortedFiltered.length > 0 ? sortedFiltered[sortedFiltered.length - 1] : null
+    const prevLatestRow = sortedPrev.length > 0 ? sortedPrev[sortedPrev.length - 1] : null
+    const curPush = latestRow?.push_opt_in ?? 0
+    const prevPushRow = prevLatestRow?.push_opt_in ?? 0
+    const curSms = latestRow?.sms_opt_in ?? 0
+    const prevSms = prevLatestRow?.sms_opt_in ?? 0
+    const curKakao = latestRow?.kakao_opt_in ?? 0
+    const prevKakao = prevLatestRow?.kakao_opt_in ?? 0
     return [
       {
         label: '푸시 수신 동의',
