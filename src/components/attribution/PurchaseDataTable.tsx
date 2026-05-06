@@ -1,8 +1,9 @@
 import { useState, useMemo } from 'react'
-import { ChevronRight, ChevronDown } from 'lucide-react'
+import { ChevronRight, ChevronDown, Settings2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { formatNumber, formatRate, formatCurrency } from '@/lib/formatters'
-import { sumRows, calcPurchaseMetrics } from '@/lib/attributionMetrics'
+import { formatRate, formatCurrency, formatKorean } from '@/lib/formatters'
+import { sumRows, calcPurchaseMetrics, calcDelta, offsetDate } from '@/lib/attributionMetrics'
+import { getTarget, saveTarget, distributeTarget, calcProgress, type MonthlyTarget } from '@/lib/purchaseTargets'
 import type { AttDataRow } from '@/types/sheets'
 
 type GroupBy = 'day' | 'week' | 'month'
@@ -10,6 +11,8 @@ type GroupBy = 'day' | 'week' | 'month'
 interface RowData {
   label: string
   key: string
+  dateKey: string         // YYYY-MM-DD (일자) or YYYY-MM-DD (주 시작) or YYYY-MM (월)
+  groupBy: GroupBy
   user_cvr: number
   count_cvr: number
   purchase_count: number
@@ -19,6 +22,11 @@ interface RowData {
   frequency: number
   items_per_order: number
   items_per_user: number
+  revenue_mom: number | null
+  revenue_yoy: number | null
+  purchase_mom: number | null
+  purchase_yoy: number | null
+  elapsedDays: number     // 진척도 계산용 경과 일수
   children?: RowData[]
 }
 
@@ -34,19 +42,45 @@ function getWeekLabel(weekStart: string): string {
   const d = new Date(weekStart)
   const end = new Date(d)
   end.setDate(d.getDate() + 6)
-  const mm = (d.getMonth() + 1).toString().padStart(2, '0')
-  const dd = d.getDate().toString().padStart(2, '0')
-  const em = (end.getMonth() + 1).toString().padStart(2, '0')
-  const ed = end.getDate().toString().padStart(2, '0')
-  return `${d.getFullYear()}-${mm}-${dd} ~ ${em}-${ed}`
+  const fmt = (dt: Date) =>
+    `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, '0')}-${String(dt.getDate()).padStart(2, '0')}`
+  return `${fmt(d)} ~ ${fmt(end)}`
 }
 
-function metricsFromRows(rows: AttDataRow[], label: string, key: string): RowData {
+function daysInMonth(monthKey: string): number {
+  const [y, m] = monthKey.split('-').map(Number)
+  return new Date(y, m, 0).getDate()
+}
+
+function metricsFromRows(
+  rows: AttDataRow[],
+  allRows: AttDataRow[],
+  label: string,
+  key: string,
+  dateKey: string,
+  groupBy: GroupBy,
+  elapsedDays: number,
+): RowData {
   const sums = sumRows(rows)
   const m = calcPurchaseMetrics(sums)
+
+  // MoM / YoY: 같은 날짜들에서 -30일/-365일 offset 매핑
+  const dates = [...new Set(rows.map(r => r.date))]
+  const byDate = new Map<string, AttDataRow[]>()
+  for (const r of allRows) {
+    const list = byDate.get(r.date) ?? []
+    list.push(r)
+    byDate.set(r.date, list)
+  }
+
+  const momRows = dates.flatMap(d => byDate.get(offsetDate(d, -30)) ?? [])
+  const yoyRows = dates.flatMap(d => byDate.get(offsetDate(d, -365)) ?? [])
+
+  const momMetrics = momRows.length > 0 ? calcPurchaseMetrics(sumRows(momRows)) : null
+  const yoyMetrics = yoyRows.length > 0 ? calcPurchaseMetrics(sumRows(yoyRows)) : null
+
   return {
-    label,
-    key,
+    label, key, dateKey, groupBy, elapsedDays,
     user_cvr: m.user_cvr,
     count_cvr: m.count_cvr,
     purchase_count: m.purchase_count,
@@ -56,7 +90,23 @@ function metricsFromRows(rows: AttDataRow[], label: string, key: string): RowDat
     frequency: m.frequency,
     items_per_order: m.items_per_order,
     items_per_user: m.items_per_user,
+    revenue_mom: momMetrics ? calcDelta(m.revenue, momMetrics.revenue) : null,
+    revenue_yoy: yoyMetrics ? calcDelta(m.revenue, yoyMetrics.revenue) : null,
+    purchase_mom: momMetrics ? calcDelta(m.purchase_count, momMetrics.purchase_count) : null,
+    purchase_yoy: yoyMetrics ? calcDelta(m.purchase_count, yoyMetrics.purchase_count) : null,
   }
+}
+
+const today = new Date().toISOString().slice(0, 10)
+
+function calcElapsed(dates: string[]): number {
+  const sorted = [...dates].sort()
+  const last = sorted[sorted.length - 1]
+  const first = sorted[0]
+  if (!first || !last) return 0
+  const effectiveLast = last <= today ? last : today
+  const msPerDay = 86_400_000
+  return Math.max(1, Math.round((new Date(effectiveLast).getTime() - new Date(first).getTime()) / msPerDay) + 1)
 }
 
 function buildRows(rows: AttDataRow[], groupBy: GroupBy): RowData[] {
@@ -69,7 +119,9 @@ function buildRows(rows: AttDataRow[], groupBy: GroupBy): RowData[] {
     }
     return [...byDate.entries()]
       .sort(([a], [b]) => b.localeCompare(a))
-      .map(([date, rs]) => metricsFromRows(rs, date, date))
+      .map(([date, rs]) =>
+        metricsFromRows(rs, rows, date, date, date, 'day', calcElapsed([date])),
+      )
   }
 
   if (groupBy === 'week') {
@@ -83,7 +135,8 @@ function buildRows(rows: AttDataRow[], groupBy: GroupBy): RowData[] {
     return [...byWeek.entries()]
       .sort(([a], [b]) => b.localeCompare(a))
       .map(([wk, rs]) => {
-        const parent = metricsFromRows(rs, getWeekLabel(wk), wk)
+        const dates = rs.map(r => r.date)
+        const parent = metricsFromRows(rs, rows, getWeekLabel(wk), wk, wk, 'week', calcElapsed(dates))
         const byDate = new Map<string, AttDataRow[]>()
         for (const r of rs) {
           const list = byDate.get(r.date) ?? []
@@ -92,7 +145,9 @@ function buildRows(rows: AttDataRow[], groupBy: GroupBy): RowData[] {
         }
         parent.children = [...byDate.entries()]
           .sort(([a], [b]) => b.localeCompare(a))
-          .map(([date, drs]) => metricsFromRows(drs, date, `${wk}-${date}`))
+          .map(([date, drs]) =>
+            metricsFromRows(drs, rows, date, `${wk}-${date}`, date, 'day', calcElapsed([date])),
+          )
         return parent
       })
   }
@@ -108,7 +163,8 @@ function buildRows(rows: AttDataRow[], groupBy: GroupBy): RowData[] {
   return [...byMonth.entries()]
     .sort(([a], [b]) => b.localeCompare(a))
     .map(([mo, rs]) => {
-      const parent = metricsFromRows(rs, mo, mo)
+      const dates = rs.map(r => r.date)
+      const parent = metricsFromRows(rs, rows, mo, mo, mo, 'month', calcElapsed(dates))
       const byDate = new Map<string, AttDataRow[]>()
       for (const r of rs) {
         const list = byDate.get(r.date) ?? []
@@ -117,16 +173,53 @@ function buildRows(rows: AttDataRow[], groupBy: GroupBy): RowData[] {
       }
       parent.children = [...byDate.entries()]
         .sort(([a], [b]) => b.localeCompare(a))
-        .map(([date, drs]) => metricsFromRows(drs, date, `${mo}-${date}`))
+        .map(([date, drs]) =>
+          metricsFromRows(drs, rows, date, `${mo}-${date}`, date, 'day', calcElapsed([date])),
+        )
       return parent
     })
 }
 
-const COLS = [
+function DeltaBadge({ value }: { value: number | null }) {
+  if (value === null) return <span className="text-[#9CA3AF]">—</span>
+  const pct = (value * 100).toFixed(1)
+  const positive = value >= 0
+  return (
+    <span className={cn('text-[11px] font-medium', positive ? 'text-[#10B981]' : 'text-[#EF4444]')}>
+      {positive ? '+' : ''}{pct}%
+    </span>
+  )
+}
+
+function ProgressBar({ value, elapsedDays, dailyTarget }: {
+  value: number
+  elapsedDays: number
+  dailyTarget: number
+}) {
+  const progress = calcProgress(value, dailyTarget, elapsedDays)
+  if (progress === null) return <span className="text-[#9CA3AF] text-[11px]">—</span>
+  const pct = progress * 100
+  const barColor = pct >= 100 ? '#10B981' : pct >= 80 ? '#4361EE' : '#EF4444'
+  return (
+    <div className="flex flex-col gap-0.5 min-w-[72px]">
+      <div className="h-1.5 w-full rounded-full bg-[#E5E7EB] overflow-hidden">
+        <div
+          className="h-full rounded-full transition-all"
+          style={{ width: `${Math.min(pct, 100)}%`, backgroundColor: barColor }}
+        />
+      </div>
+      <span className="text-[11px] font-medium tabular-nums" style={{ color: barColor }}>
+        {pct.toFixed(1)}%
+      </span>
+    </div>
+  )
+}
+
+const BASE_COLS = [
   { key: 'user_cvr', label: '유저CVR', fmt: (v: number) => formatRate(v) },
   { key: 'count_cvr', label: '건수CVR', fmt: (v: number) => formatRate(v) },
-  { key: 'purchase_count', label: 'Purchase', fmt: (v: number) => formatNumber(v) },
-  { key: 'revenue', label: 'Revenue', fmt: (v: number) => formatNumber(v) },
+  { key: 'purchase_count', label: 'Purchase', fmt: (v: number) => formatKorean(v) },
+  { key: 'revenue', label: 'Revenue', fmt: (v: number) => formatKorean(v) },
   { key: 'aov', label: 'AOV', fmt: (v: number) => formatCurrency(v) },
   { key: 'arppu', label: 'ARPPU', fmt: (v: number) => formatCurrency(v) },
   { key: 'frequency', label: 'Frequency', fmt: (v: number) => v.toFixed(2) },
@@ -134,13 +227,22 @@ const COLS = [
   { key: 'items_per_user', label: '유저당제품주문수', fmt: (v: number) => v.toFixed(2) },
 ] as const
 
-function TableRow({ row, depth = 0 }: { row: RowData; depth?: number }) {
+interface TableRowProps {
+  row: RowData
+  depth?: number
+  target: MonthlyTarget | null
+  dailyTarget: MonthlyTarget | null
+}
+
+function TableRow({ row, depth = 0, target, dailyTarget }: TableRowProps) {
   const [open, setOpen] = useState(false)
   const hasChildren = (row.children?.length ?? 0) > 0
+  const showProgress = target !== null && dailyTarget !== null && depth === 0
 
   return (
     <>
       <tr className={cn('border-b border-[#F3F4F6] hover:bg-[#F9FAFB]', depth > 0 && 'bg-[#FAFAFA]')}>
+        {/* 날짜 */}
         <td className="sticky left-0 z-10 bg-inherit px-3 py-2">
           <button
             className="flex items-center gap-1 text-left"
@@ -158,14 +260,41 @@ function TableRow({ row, depth = 0 }: { row: RowData; depth?: number }) {
             </span>
           </button>
         </td>
-        {COLS.map(col => (
+
+        {/* 기본 지표 컬럼 */}
+        {BASE_COLS.map(col => (
           <td key={col.key} className="px-3 py-2 text-right text-xs text-[#374151] tabular-nums">
-            {col.fmt(row[col.key])}
+            {col.fmt(row[col.key as keyof RowData] as number)}
           </td>
         ))}
+
+        {/* MoM / YoY — Purchase */}
+        <td className="px-3 py-2 text-right"><DeltaBadge value={row.purchase_mom} /></td>
+        <td className="px-3 py-2 text-right"><DeltaBadge value={row.purchase_yoy} /></td>
+
+        {/* MoM / YoY — Revenue */}
+        <td className="px-3 py-2 text-right"><DeltaBadge value={row.revenue_mom} /></td>
+        <td className="px-3 py-2 text-right"><DeltaBadge value={row.revenue_yoy} /></td>
+
+        {/* 진척도 */}
+        {target !== null && (
+          <>
+            <td className="px-3 py-2 text-right">
+              {showProgress
+                ? <ProgressBar value={row.purchase_count} elapsedDays={row.elapsedDays} dailyTarget={dailyTarget!.purchase_count} />
+                : <span className="text-[#9CA3AF] text-[11px]">—</span>}
+            </td>
+            <td className="px-3 py-2 text-right">
+              {showProgress
+                ? <ProgressBar value={row.revenue} elapsedDays={row.elapsedDays} dailyTarget={dailyTarget!.revenue} />
+                : <span className="text-[#9CA3AF] text-[11px]">—</span>}
+            </td>
+          </>
+        )}
       </tr>
+
       {open && row.children?.map(child => (
-        <TableRow key={child.key} row={child} depth={depth + 1} />
+        <TableRow key={child.key} row={child} depth={depth + 1} target={target} dailyTarget={dailyTarget} />
       ))}
     </>
   )
@@ -175,8 +304,32 @@ interface Props {
   rows: AttDataRow[]
 }
 
+function parseLocaleNumber(s: string): number {
+  return Number(s.replace(/,/g, ''))
+}
+
 export function PurchaseDataTable({ rows }: Props) {
   const [groupBy, setGroupBy] = useState<GroupBy>('day')
+  const [showTargetPanel, setShowTargetPanel] = useState(false)
+
+  // 현재 데이터 기준 월 (최신 날짜 기준)
+  const currentMonth = useMemo(() => {
+    const dates = rows.map(r => r.date).filter(Boolean).sort()
+    const last = dates[dates.length - 1]
+    return last ? last.slice(0, 7) : new Date().toISOString().slice(0, 7)
+  }, [rows])
+
+  const [savedTarget, setSavedTarget] = useState<MonthlyTarget | null>(() => getTarget(currentMonth))
+
+  // 타겟 입력 임시 상태
+  const [inputRevenue, setInputRevenue] = useState(() => savedTarget?.revenue.toString() ?? '')
+  const [inputPurchase, setInputPurchase] = useState(() => savedTarget?.purchase_count.toString() ?? '')
+
+  const dailyTarget = useMemo(() => {
+    if (!savedTarget) return null
+    const { daily } = distributeTarget(currentMonth, savedTarget)
+    return daily
+  }, [savedTarget, currentMonth])
 
   const tableRows = useMemo(() => buildRows(rows, groupBy), [rows, groupBy])
 
@@ -186,51 +339,154 @@ export function PurchaseDataTable({ rows }: Props) {
     { key: 'day', label: '일자별' },
   ]
 
+  function handleSave() {
+    const revenue = parseLocaleNumber(inputRevenue)
+    const purchase_count = parseLocaleNumber(inputPurchase)
+    if (isNaN(revenue) || isNaN(purchase_count)) return
+    const t: MonthlyTarget = { revenue, purchase_count }
+    saveTarget(currentMonth, t)
+    setSavedTarget(t)
+    setShowTargetPanel(false)
+  }
+
+  function handleCancel() {
+    setInputRevenue(savedTarget?.revenue.toString() ?? '')
+    setInputPurchase(savedTarget?.purchase_count.toString() ?? '')
+    setShowTargetPanel(false)
+  }
+
+  // 타겟 설정 패널 열 때 현재 저장값으로 초기화
+  function handleOpenPanel() {
+    const t = getTarget(currentMonth)
+    setSavedTarget(t)
+    setInputRevenue(t?.revenue.toString() ?? '')
+    setInputPurchase(t?.purchase_count.toString() ?? '')
+    setShowTargetPanel(true)
+  }
+
+  const colSpanTotal = BASE_COLS.length + 1 + 4 + (savedTarget ? 2 : 0)
+
   return (
     <div className="rounded-xl border border-[#E5E7EB] bg-white">
+      {/* 헤더 */}
       <div className="flex items-center justify-between border-b border-[#E5E7EB] px-4 py-3">
         <p className="text-xs font-semibold text-[#374151]">일자별 구매 지표</p>
-        <div className="flex gap-1">
-          {GROUP_OPTIONS.map(opt => (
-            <button
-              key={opt.key}
-              onClick={() => setGroupBy(opt.key)}
-              className={cn(
-                'rounded-md px-2.5 py-1 text-xs font-medium transition-colors',
-                groupBy === opt.key
-                  ? 'bg-[#4361EE] text-white'
-                  : 'bg-[#F3F4F6] text-[#6B7280] hover:bg-[#E5E7EB]',
-              )}
-            >
-              {opt.label}
-            </button>
-          ))}
+        <div className="flex items-center gap-2">
+          <button
+            onClick={handleOpenPanel}
+            className="flex items-center gap-1 rounded-md border border-[#E5E7EB] px-2.5 py-1 text-xs font-medium text-[#6B7280] hover:bg-[#F9FAFB] transition-colors"
+          >
+            <Settings2 className="h-3 w-3" />
+            타겟 설정
+          </button>
+          <div className="flex gap-1">
+            {GROUP_OPTIONS.map(opt => (
+              <button
+                key={opt.key}
+                onClick={() => setGroupBy(opt.key)}
+                className={cn(
+                  'rounded-md px-2.5 py-1 text-xs font-medium transition-colors',
+                  groupBy === opt.key
+                    ? 'bg-[#4361EE] text-white'
+                    : 'bg-[#F3F4F6] text-[#6B7280] hover:bg-[#E5E7EB]',
+                )}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 
+      {/* 타겟 설정 패널 */}
+      {showTargetPanel && (
+        <div className="border-b border-[#E5E7EB] bg-[#F9FAFB] px-5 py-4">
+          <p className="mb-3 text-xs font-semibold text-[#374151]">
+            월간 타겟 설정 — {currentMonth.replace('-', '년 ')}월
+          </p>
+          <div className="flex flex-col gap-2.5 max-w-sm">
+            <div className="flex items-center gap-3">
+              <span className="w-20 text-xs text-[#6B7280]">Revenue</span>
+              <input
+                type="text"
+                value={inputRevenue}
+                onChange={e => setInputRevenue(e.target.value.replace(/[^0-9]/g, ''))}
+                placeholder="예: 2000000000"
+                className="flex-1 rounded-lg border border-[#E5E7EB] bg-white px-3 py-1.5 text-xs text-[#374151] focus:border-[#4361EE] focus:outline-none tabular-nums"
+              />
+            </div>
+            <div className="flex items-center gap-3">
+              <span className="w-20 text-xs text-[#6B7280]">구매건수</span>
+              <input
+                type="text"
+                value={inputPurchase}
+                onChange={e => setInputPurchase(e.target.value.replace(/[^0-9]/g, ''))}
+                placeholder="예: 50000"
+                className="flex-1 rounded-lg border border-[#E5E7EB] bg-white px-3 py-1.5 text-xs text-[#374151] focus:border-[#4361EE] focus:outline-none tabular-nums"
+              />
+            </div>
+          </div>
+          <div className="mt-3 flex gap-2">
+            <button
+              onClick={handleCancel}
+              className="rounded-lg border border-[#E5E7EB] px-3 py-1.5 text-xs font-medium text-[#6B7280] hover:bg-white transition-colors"
+            >
+              취소
+            </button>
+            <button
+              onClick={handleSave}
+              className="rounded-lg bg-[#4361EE] px-3 py-1.5 text-xs font-medium text-white hover:bg-[#3451d1] transition-colors"
+            >
+              저장
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* 테이블 */}
       <div className="overflow-x-auto">
-        <table className="w-full min-w-[900px]">
+        <table className="w-full min-w-[1100px]">
           <thead>
             <tr className="border-b border-[#E5E7EB] bg-[#F9FAFB]">
               <th className="sticky left-0 z-10 bg-[#F9FAFB] px-3 py-2 text-left text-[11px] font-semibold text-[#6B7280]">
                 날짜
               </th>
-              {COLS.map(col => (
+              {BASE_COLS.map(col => (
                 <th key={col.key} className="px-3 py-2 text-right text-[11px] font-semibold text-[#6B7280]">
                   {col.label}
                 </th>
               ))}
+              {/* Purchase MoM/YoY */}
+              <th className="px-3 py-2 text-right text-[11px] font-semibold text-[#6B7280]">Purchase MoM</th>
+              <th className="px-3 py-2 text-right text-[11px] font-semibold text-[#6B7280]">Purchase YoY</th>
+              {/* Revenue MoM/YoY */}
+              <th className="px-3 py-2 text-right text-[11px] font-semibold text-[#6B7280]">Revenue MoM</th>
+              <th className="px-3 py-2 text-right text-[11px] font-semibold text-[#6B7280]">Revenue YoY</th>
+              {/* 진척도 */}
+              {savedTarget && (
+                <>
+                  <th className="px-3 py-2 text-right text-[11px] font-semibold text-[#6B7280]">Purchase 진척도</th>
+                  <th className="px-3 py-2 text-right text-[11px] font-semibold text-[#6B7280]">Revenue 진척도</th>
+                </>
+              )}
             </tr>
           </thead>
           <tbody>
             {tableRows.length === 0 ? (
               <tr>
-                <td colSpan={COLS.length + 1} className="py-8 text-center text-xs text-[#9CA3AF]">
+                <td colSpan={colSpanTotal} className="py-8 text-center text-xs text-[#9CA3AF]">
                   데이터 없음
                 </td>
               </tr>
             ) : (
-              tableRows.map(row => <TableRow key={row.key} row={row} />)
+              tableRows.map(row => (
+                <TableRow
+                  key={row.key}
+                  row={row}
+                  target={savedTarget}
+                  dailyTarget={dailyTarget}
+                />
+              ))
             )}
           </tbody>
         </table>
