@@ -10,7 +10,7 @@ import {
   ResponsiveContainer,
 } from 'recharts'
 import type { DailyComboPoint } from '@/types/metrics'
-import { formatNumber } from '@/lib/formatters'
+import { formatKorean } from '@/lib/formatters'
 import { EmptyChartState } from '@/components/EmptyChartState'
 import { useChartNotes } from '@/hooks/useChartNotes'
 import { NoteMarker } from './ChartNoteOverlay'
@@ -62,7 +62,7 @@ export function DailySendComboChart({ data }: Props) {
             {/* 왼쪽 Y축: 발송/노출 */}
             <YAxis
               yAxisId="left"
-              tickFormatter={v => formatNumber(v)}
+              tickFormatter={v => formatKorean(v as number)}
               tick={{ fontSize: 11, fill: '#9CA3AF' }}
               tickLine={false}
               axisLine={false}
@@ -80,7 +80,7 @@ export function DailySendComboChart({ data }: Props) {
             />
             <Tooltip
               formatter={(value: number, name: string) => {
-                if (name === '발송/노출') return [formatNumber(value), name]
+                if (name === '발송/노출') return [formatKorean(value), name]
                 return [`${value.toFixed(2)}%`, name]
               }}
               contentStyle={{ fontSize: 12, borderRadius: 8, border: '1px solid #E5E7EB' }}

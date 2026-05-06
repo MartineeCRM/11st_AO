@@ -109,7 +109,7 @@ function calcElapsed(dates: string[]): number {
   return Math.max(1, Math.round((new Date(effectiveLast).getTime() - new Date(first).getTime()) / msPerDay) + 1)
 }
 
-function buildRows(rows: AttDataRow[], groupBy: GroupBy): RowData[] {
+function buildRows(rows: AttDataRow[], groupBy: GroupBy, allRows: AttDataRow[]): RowData[] {
   if (groupBy === 'day') {
     const byDate = new Map<string, AttDataRow[]>()
     for (const r of rows) {
@@ -120,7 +120,7 @@ function buildRows(rows: AttDataRow[], groupBy: GroupBy): RowData[] {
     return [...byDate.entries()]
       .sort(([a], [b]) => b.localeCompare(a))
       .map(([date, rs]) =>
-        metricsFromRows(rs, rows, date, date, date, 'day', calcElapsed([date])),
+        metricsFromRows(rs, allRows, date, date, date, 'day', calcElapsed([date])),
       )
   }
 
@@ -136,7 +136,7 @@ function buildRows(rows: AttDataRow[], groupBy: GroupBy): RowData[] {
       .sort(([a], [b]) => b.localeCompare(a))
       .map(([wk, rs]) => {
         const dates = rs.map(r => r.date)
-        const parent = metricsFromRows(rs, rows, getWeekLabel(wk), wk, wk, 'week', calcElapsed(dates))
+        const parent = metricsFromRows(rs, allRows, getWeekLabel(wk), wk, wk, 'week', calcElapsed(dates))
         const byDate = new Map<string, AttDataRow[]>()
         for (const r of rs) {
           const list = byDate.get(r.date) ?? []
@@ -146,7 +146,7 @@ function buildRows(rows: AttDataRow[], groupBy: GroupBy): RowData[] {
         parent.children = [...byDate.entries()]
           .sort(([a], [b]) => b.localeCompare(a))
           .map(([date, drs]) =>
-            metricsFromRows(drs, rows, date, `${wk}-${date}`, date, 'day', calcElapsed([date])),
+            metricsFromRows(drs, allRows, date, `${wk}-${date}`, date, 'day', calcElapsed([date])),
           )
         return parent
       })
@@ -164,7 +164,7 @@ function buildRows(rows: AttDataRow[], groupBy: GroupBy): RowData[] {
     .sort(([a], [b]) => b.localeCompare(a))
     .map(([mo, rs]) => {
       const dates = rs.map(r => r.date)
-      const parent = metricsFromRows(rs, rows, mo, mo, mo, 'month', calcElapsed(dates))
+      const parent = metricsFromRows(rs, allRows, mo, mo, mo, 'month', calcElapsed(dates))
       const byDate = new Map<string, AttDataRow[]>()
       for (const r of rs) {
         const list = byDate.get(r.date) ?? []
@@ -174,7 +174,7 @@ function buildRows(rows: AttDataRow[], groupBy: GroupBy): RowData[] {
       parent.children = [...byDate.entries()]
         .sort(([a], [b]) => b.localeCompare(a))
         .map(([date, drs]) =>
-          metricsFromRows(drs, rows, date, `${mo}-${date}`, date, 'day', calcElapsed([date])),
+          metricsFromRows(drs, allRows, date, `${mo}-${date}`, date, 'day', calcElapsed([date])),
         )
       return parent
     })
@@ -302,13 +302,14 @@ function TableRow({ row, depth = 0, target, dailyTarget }: TableRowProps) {
 
 interface Props {
   rows: AttDataRow[]
+  allRows?: AttDataRow[]
 }
 
 function parseLocaleNumber(s: string): number {
   return Number(s.replace(/,/g, ''))
 }
 
-export function PurchaseDataTable({ rows }: Props) {
+export function PurchaseDataTable({ rows, allRows }: Props) {
   const [groupBy, setGroupBy] = useState<GroupBy>('day')
   const [showTargetPanel, setShowTargetPanel] = useState(false)
 
@@ -331,7 +332,8 @@ export function PurchaseDataTable({ rows }: Props) {
     return daily
   }, [savedTarget, currentMonth])
 
-  const tableRows = useMemo(() => buildRows(rows, groupBy), [rows, groupBy])
+  const extRows = allRows ?? rows
+  const tableRows = useMemo(() => buildRows(rows, groupBy, extRows), [rows, groupBy, extRows])
 
   const GROUP_OPTIONS: { key: GroupBy; label: string }[] = [
     { key: 'month', label: '월별' },

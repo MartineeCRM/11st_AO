@@ -3,7 +3,7 @@ import { PurchaseTrendChart } from './AttributionTrendChart'
 import { AttributionKpiCard } from './AttributionKpiCard'
 import { PurchaseDataTable } from './PurchaseDataTable'
 import { CampaignRoiTable } from './CampaignRoiTable'
-import { formatNumber, formatRate, formatCurrency } from '@/lib/formatters'
+import { formatKorean, formatRate, formatCurrency } from '@/lib/formatters'
 import type { PurchaseMetricKey, PurchaseMetrics, KpiDelta, TrendPoint } from '@/hooks/useAttributionMetrics'
 import type { AttDataRow } from '@/types/sheets'
 
@@ -24,7 +24,7 @@ function formatMetricValue(key: PurchaseMetricKey, value: number): string {
     case 'count_cvr':
       return formatRate(value)
     case 'revenue':
-      return formatNumber(value)
+      return formatKorean(value)
     case 'aov':
     case 'arppu':
       return formatCurrency(value)
@@ -33,9 +33,9 @@ function formatMetricValue(key: PurchaseMetricKey, value: number): string {
     case 'items_per_user':
       return value.toFixed(2)
     case 'purchase_count':
-      return formatNumber(value)
+      return formatKorean(value)
     default:
-      return formatNumber(value)
+      return formatKorean(value)
   }
 }
 
@@ -60,6 +60,7 @@ interface Props {
   current: PurchaseMetrics
   delta: Record<PurchaseMetricKey, KpiDelta>
   filteredRows: AttDataRow[]
+  allRows?: AttDataRow[]
 }
 
 export function PurchaseMetricsSection({
@@ -69,6 +70,7 @@ export function PurchaseMetricsSection({
   current,
   delta,
   filteredRows,
+  allRows,
 }: Props) {
   const formatter = (v: number) => formatMetricValue(activeMetric, v)
 
@@ -101,13 +103,13 @@ export function PurchaseMetricsSection({
         />
         <AttributionKpiCard
           title="Purchase"
-          value={formatNumber(current.purchase_count)}
+          value={formatKorean(current.purchase_count)}
           delta={delta.purchase_count}
           highlighted={activeMetric === 'purchase_count'}
         />
         <AttributionKpiCard
           title="Revenue"
-          value={formatNumber(current.revenue)}
+          value={formatKorean(current.revenue)}
           delta={delta.revenue}
           highlighted={activeMetric === 'revenue'}
         />
@@ -143,7 +145,7 @@ export function PurchaseMetricsSection({
         />
       </div>
 
-      <PurchaseDataTable rows={filteredRows} />
+      <PurchaseDataTable rows={filteredRows} allRows={allRows} />
       <CampaignRoiTable rows={filteredRows} />
     </div>
   )

@@ -10,7 +10,7 @@ import {
   ResponsiveContainer,
 } from 'recharts'
 import type { DailyComboPoint } from '@/types/metrics'
-import { formatNumber } from '@/lib/formatters'
+import { formatKorean } from '@/lib/formatters'
 
 interface Props {
   data: DailyComboPoint[]
@@ -38,14 +38,14 @@ export function SendOpenTrendChart({ data }: Props) {
             />
             <YAxis
               yAxisId="left"
-              tickFormatter={v => formatNumber(v)}
+              tickFormatter={v => formatKorean(v)}
               tick={{ fontSize: 11, fill: '#9CA3AF' }}
               tickLine={false}
               axisLine={false}
               width={56}
             />
             <Tooltip
-              formatter={(value: number, name: string) => [formatNumber(value), name]}
+              formatter={(value: number, name: string) => [formatKorean(value), name]}
               contentStyle={{ fontSize: 12, borderRadius: 8, border: '1px solid #E5E7EB' }}
             />
             <Legend

@@ -1,7 +1,7 @@
 import { useMemo, useState, useRef } from 'react'
 import { ArrowDownUp, ChevronDown } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { formatNumber, formatRate, formatCurrency } from '@/lib/formatters'
+import { formatKorean, formatRate, formatCurrency } from '@/lib/formatters'
 import { sumRows, calcPurchaseMetrics } from '@/lib/attributionMetrics'
 import type { AttDataRow } from '@/types/sheets'
 
@@ -62,9 +62,9 @@ export function CampaignRoiTable({ rows }: Props) {
   const hasMore = campaignRows.length > INITIAL_ROWS
 
   const cols: { key: SortKey; label: string; fmt: (r: CampaignRow) => string }[] = [
-    { key: 'revenue', label: '기여 매출', fmt: r => `₩${formatNumber(Math.round(r.revenue))}` },
+    { key: 'revenue', label: '기여 매출', fmt: r => `₩${formatKorean(Math.round(r.revenue))}` },
     { key: 'user_cvr', label: '구매 CVR', fmt: r => formatRate(r.user_cvr) },
-    { key: 'purchase_count', label: '구매 건수', fmt: r => formatNumber(r.purchase_count) },
+    { key: 'purchase_count', label: '구매 건수', fmt: r => formatKorean(r.purchase_count) },
     { key: 'aov', label: 'AOV', fmt: r => formatCurrency(r.aov) },
   ]
 
@@ -109,7 +109,7 @@ export function CampaignRoiTable({ rows }: Props) {
                     </div>
                   </td>
                   <td className="px-3 py-2 text-right text-xs tabular-nums text-[#6B7280]">
-                    {formatNumber(row.impression)}
+                    {formatKorean(row.impression)}
                   </td>
                   <td className="px-3 py-2 text-right text-xs tabular-nums">
                     <div className="flex items-center justify-end gap-1.5">

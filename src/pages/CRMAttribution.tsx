@@ -133,6 +133,7 @@ export function CRMAttribution() {
             current={kpis.current}
             delta={kpis.delta}
             filteredRows={filteredRows}
+            allRows={extendedRows}
           />
         )}
 

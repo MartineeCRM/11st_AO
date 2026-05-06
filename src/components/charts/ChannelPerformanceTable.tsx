@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { cn } from '@/lib/utils'
-import { formatNumber, formatRate } from '@/lib/formatters'
+import { formatKorean, formatRate } from '@/lib/formatters'
 import { calcSentImpression, calcCTR, calcCVR } from '@/lib/metrics'
 import type { MartineeUnionRow } from '@/types/sheets'
 
@@ -84,7 +84,7 @@ export function ChannelPerformanceTable({ rows }: Props) {
                         style={{ width: `${(row.sentImpression / maxSI) * 100}%` }}
                       />
                     </div>
-                    {formatNumber(row.sentImpression)}
+                    {formatKorean(row.sentImpression)}
                   </div>
                 </td>
                 <td className={cn(
@@ -100,7 +100,7 @@ export function ChannelPerformanceTable({ rows }: Props) {
                   {formatRate(row.cvr)}
                 </td>
                 <td className="px-3 py-2 text-right text-xs tabular-nums text-[#374151]">
-                  ₩{formatNumber(Math.round(row.revenue))}
+                  ₩{formatKorean(Math.round(row.revenue))}
                 </td>
                 <td className="px-3 py-2 text-right text-xs tabular-nums text-[#374151]">
                   ₩{row.revenuePerSend.toFixed(1)}

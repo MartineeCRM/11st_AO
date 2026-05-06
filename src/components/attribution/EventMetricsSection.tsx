@@ -1,6 +1,6 @@
 import { MetricToggleGroup } from './MetricToggleGroup'
 import { EventTrendChart } from './AttributionTrendChart'
-import { formatNumber } from '@/lib/formatters'
+import { formatKorean } from '@/lib/formatters'
 import type { EventKey, EventTrendPoint } from '@/hooks/useAttributionMetrics'
 
 function formatAdaptiveRate(v: number): string {
@@ -73,12 +73,12 @@ export function EventMetricsSection({
         </div>
         <div className="rounded-xl border border-[#E5E7EB] bg-white px-4 py-3">
           <p className="text-[11px] text-[#9CA3AF]">{activeLabel} 발생수</p>
-          <p className="text-xl font-bold text-[#111827]">{formatNumber(eventRawCount)}</p>
+          <p className="text-xl font-bold text-[#111827]">{formatKorean(eventRawCount)}</p>
           <p className="mt-0.5 text-[10px] text-[#9CA3AF]">기간 내 이벤트 합계</p>
         </div>
         <div className="rounded-xl border border-[#E5E7EB] bg-white px-4 py-3">
           <p className="text-[11px] text-[#9CA3AF]">노출+발송 유저</p>
-          <p className="text-xl font-bold text-[#111827]">{formatNumber(eventImpression)}</p>
+          <p className="text-xl font-bold text-[#111827]">{formatKorean(eventImpression)}</p>
           <p className="mt-0.5 text-[10px] text-[#9CA3AF]">IMPRESSION_OR_SEND_USER</p>
         </div>
       </div>

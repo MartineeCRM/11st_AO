@@ -69,3 +69,43 @@ brainstorming → writing-plans → dispatching-parallel-agents → simplify →
 - **새 차트** 추가 시 `data:data-visualization` skill로 Recharts 컴포넌트 설계를 먼저 검토한다.
 - **Google Sheets 연동** 관련 작업은 `lib/googleSheets.ts`와 `hooks/useSheetData.ts`만 수정한다.
 - **고객사별 배포** 시 `.env` 파일만 교체하면 되도록 하드코딩을 피한다.
+
+---
+
+## 정답에 가까운 프로젝트 패턴
+
+### Braze REST API
+
+- Braze REST API는 반드시 서버투서버로 호출한다.
+- 클라이언트 코드는 `src/lib/braze.ts`에서 `/api/braze/...` 내부 API만 호출한다.
+- Vercel API route는 명시적 파일을 우선 사용한다.
+  - `api/braze/campaigns/list.js`
+  - `api/braze/campaigns/details.js`
+  - `api/braze/campaigns/data_series.js`
+- Braze 공통 프록시 로직은 `server/brazeProxy.js`에 둔다.
+- Braze 환경변수는 서버 전용 이름만 사용한다.
+
+```env
+BRAZE_REST_ENDPOINT=https://rest.iad-07.braze.com
+BRAZE_API_KEY=...
+```
+
+- `VITE_BRAZE_*` 환경변수는 만들지 않는다. fallback도 두지 않는다.
+- `/campaigns/list`는 목록 ID 확보용으로만 보고, 라이브 여부/채널/생성일/수정일/스케줄 타입은 `/campaigns/details`에서 보강한다.
+- 라이브 캠페인 판단은 `enabled && !archived && !draft`를 기준으로 한다.
+
+### Vercel 배포와 Git author
+
+- 이 repo에서 Vercel 자동 배포용 커밋 author는 GitHub 계정 이메일로 맞춘다.
+
+```bash
+git config user.name "guney69"
+git config user.email "gunhee@martinee.io"
+```
+
+- Vercel 로그인 계정은 `guneylee69@gmail.com`이어도, commit author email은 `gunhee@martinee.io`를 사용한다.
+- 배포 오류가 나면 먼저 최신 커밋 author/committer를 확인한다.
+
+```bash
+git log -3 --format='%h %an <%ae> | committer: %cn <%ce> | %s'
+```

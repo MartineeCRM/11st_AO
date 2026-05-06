@@ -9,7 +9,7 @@ import {
   Legend,
   ResponsiveContainer,
 } from 'recharts'
-import { formatNumber, formatCurrency } from '@/lib/formatters'
+import { formatKorean, formatCurrency } from '@/lib/formatters'
 import type { DailyRevenuePoint } from '@/types/metrics'
 import { EmptyChartState } from '@/components/EmptyChartState'
 
@@ -35,7 +35,7 @@ export function AovRevenueComboChart({ data }: Props) {
             {/* 왼쪽 Y축: Revenue */}
             <YAxis
               yAxisId="left"
-              tickFormatter={v => `₩${formatNumber(v as number)}`}
+              tickFormatter={v => `₩${formatKorean(v as number)}`}
               tick={{ fontSize: 11, fill: '#9CA3AF' }}
               tickLine={false}
               axisLine={false}
@@ -53,7 +53,7 @@ export function AovRevenueComboChart({ data }: Props) {
             />
             <Tooltip
               formatter={(value: number, name: string) => {
-                if (name === 'Revenue') return [`₩${formatNumber(value)}`, name]
+                if (name === 'Revenue') return [`₩${formatKorean(value)}`, name]
                 return [formatCurrency(value), name]
               }}
               contentStyle={{ fontSize: 12, borderRadius: 8, border: '1px solid #E5E7EB' }}

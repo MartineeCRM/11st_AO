@@ -1,5 +1,5 @@
 import { ShoppingBag, TrendingUp, Users } from 'lucide-react'
-import { formatNumber, formatRate } from '@/lib/formatters'
+import { formatKorean, formatRate } from '@/lib/formatters'
 import type { PurchaseMetrics } from '@/lib/attributionMetrics'
 
 interface Props {
@@ -20,13 +20,13 @@ export function AttributionSummaryBanner({ current, hasData }: Props) {
     {
       icon: TrendingUp,
       label: 'CRM 기여 매출',
-      value: `₩${formatNumber(Math.round(current.revenue))}`,
+      value: `₩${formatKorean(Math.round(current.revenue))}`,
       color: '#4361EE',
     },
     {
       icon: ShoppingBag,
       label: '기여 구매 건수',
-      value: `${formatNumber(current.purchase_count)}건`,
+      value: `${formatKorean(current.purchase_count)}건`,
       color: '#10B981',
     },
     {

@@ -9,7 +9,7 @@ import {
   ResponsiveContainer,
   Legend,
 } from 'recharts'
-import { formatNumber, formatDateShort } from '@/lib/formatters'
+import { formatKorean, formatDateShort } from '@/lib/formatters'
 import type { DailyKpiRow } from '@/types/sheets'
 
 const EVENTS: { key: keyof Omit<DailyKpiRow, 'date'>; label: string; color: string }[] = [
@@ -98,14 +98,14 @@ export function CustomEventLineChart({ kpiRows }: Props) {
               interval="preserveStartEnd"
             />
             <YAxis
-              tickFormatter={v => formatNumber(v as number)}
+              tickFormatter={v => formatKorean(v as number)}
               tick={{ fontSize: 11, fill: '#9CA3AF' }}
               tickLine={false}
               axisLine={false}
               width={48}
             />
             <Tooltip
-              formatter={(value: number, name: string) => [formatNumber(value), name]}
+              formatter={(value: number, name: string) => [formatKorean(value), name]}
               contentStyle={{ fontSize: 12, borderRadius: 8, border: '1px solid #E5E7EB' }}
             />
             {activeEvents.length > 1 && (
