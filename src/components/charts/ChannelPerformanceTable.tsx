@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { cn } from '@/lib/utils'
 import { formatNumber, formatRate } from '@/lib/formatters'
 import { calcSentImpression, calcCTR, calcCVR } from '@/lib/metrics'
@@ -41,12 +41,17 @@ interface Props {
   rows: MartineeUnionRow[]
 }
 
+const PAGE_SIZE = 10
+
 export function ChannelPerformanceTable({ rows }: Props) {
   const channelRows = useMemo(() => buildChannelRows(rows), [rows])
+  const [expanded, setExpanded] = useState(false)
 
   if (channelRows.length === 0) return null
 
   const maxSI = Math.max(...channelRows.map(r => r.sentImpression), 1)
+  const visibleRows = expanded ? channelRows : channelRows.slice(0, PAGE_SIZE)
+  const hiddenCount = channelRows.length - PAGE_SIZE
 
   return (
     <div className="rounded-xl border border-[#E5E7EB] bg-white">
@@ -68,7 +73,7 @@ export function ChannelPerformanceTable({ rows }: Props) {
             </tr>
           </thead>
           <tbody>
-            {channelRows.map(row => (
+            {visibleRows.map(row => (
               <tr key={row.channel} className="border-b border-[#F3F4F6] hover:bg-[#F9FAFB]">
                 <td className="px-4 py-2 text-xs font-medium text-[#374151]">{row.channel}</td>
                 <td className="px-3 py-2 text-right text-xs tabular-nums text-[#374151]">
@@ -105,6 +110,17 @@ export function ChannelPerformanceTable({ rows }: Props) {
           </tbody>
         </table>
       </div>
+
+      {hiddenCount > 0 && (
+        <div className="border-t border-[#F3F4F6] px-4 py-2.5 text-center">
+          <button
+            onClick={() => setExpanded(v => !v)}
+            className="text-xs font-medium text-[#4361EE] hover:underline"
+          >
+            {expanded ? '접기' : `나머지 ${hiddenCount}개 더 보기`}
+          </button>
+        </div>
+      )}
     </div>
   )
 }

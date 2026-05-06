@@ -10,6 +10,30 @@ import {
 } from 'recharts'
 import { formatDateShort } from '@/lib/formatters'
 import type { TrendPoint, EventTrendPoint } from '@/hooks/useAttributionMetrics'
+import { useChartNotes, type ChartNote } from '@/hooks/useChartNotes'
+import { NoteMarker } from '@/components/charts/ChartNoteOverlay'
+
+function NoteDot(props: {
+  cx?: number
+  cy?: number
+  payload?: { date: string }
+  notes: Map<string, ChartNote>
+  onSave: (date: string, text: string) => void
+  onDelete: (date: string) => void
+}) {
+  const { cx, cy, payload, notes, onSave, onDelete } = props
+  if (cx == null || cy == null || !payload) return null
+  return (
+    <NoteMarker
+      cx={cx}
+      cy={cy}
+      date={payload.date}
+      note={notes.get(payload.date)}
+      onSave={onSave}
+      onDelete={onDelete}
+    />
+  )
+}
 
 interface PurchaseTrendChartProps {
   data: TrendPoint[]
@@ -18,10 +42,12 @@ interface PurchaseTrendChartProps {
 }
 
 export function PurchaseTrendChart({ data, yLabel, formatter }: PurchaseTrendChartProps) {
+  const { notes, upsertNote, deleteNote } = useChartNotes('purchase_trend')
+
   return (
     <div className="h-[260px] w-full">
       <ResponsiveContainer width="100%" height="100%">
-        <LineChart data={data} margin={{ top: 8, right: 16, left: 8, bottom: 0 }}>
+        <LineChart data={data} margin={{ top: 24, right: 16, left: 8, bottom: 0 }}>
           <CartesianGrid strokeDasharray="3 3" stroke="#F3F4F6" />
           <XAxis
             dataKey="date"
@@ -66,7 +92,7 @@ export function PurchaseTrendChart({ data, yLabel, formatter }: PurchaseTrendCha
             dataKey="value"
             stroke="#4361EE"
             strokeWidth={2}
-            dot={false}
+            dot={(props) => <NoteDot {...props} notes={notes} onSave={upsertNote} onDelete={deleteNote} />}
             connectNulls
           />
           <Line
@@ -99,6 +125,8 @@ interface EventTrendChartProps {
 }
 
 export function EventTrendChart({ data, eventLabel }: EventTrendChartProps) {
+  const { notes, upsertNote, deleteNote } = useChartNotes('event_trend')
+
   function formatCount(v: number) {
     return v.toLocaleString('ko-KR')
   }
@@ -106,7 +134,7 @@ export function EventTrendChart({ data, eventLabel }: EventTrendChartProps) {
   return (
     <div className="h-[220px] w-full">
       <ResponsiveContainer width="100%" height="100%">
-        <LineChart data={data} margin={{ top: 8, right: 16, left: 8, bottom: 0 }}>
+        <LineChart data={data} margin={{ top: 24, right: 16, left: 8, bottom: 0 }}>
           <CartesianGrid strokeDasharray="3 3" stroke="#F3F4F6" />
           <XAxis
             dataKey="date"
@@ -132,7 +160,7 @@ export function EventTrendChart({ data, eventLabel }: EventTrendChartProps) {
             dataKey="value"
             stroke="#4361EE"
             strokeWidth={2}
-            dot={false}
+            dot={(props) => <NoteDot {...props} notes={notes} onSave={upsertNote} onDelete={deleteNote} />}
             connectNulls
           />
         </LineChart>

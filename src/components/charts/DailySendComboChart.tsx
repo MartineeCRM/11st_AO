@@ -12,18 +12,45 @@ import {
 import type { DailyComboPoint } from '@/types/metrics'
 import { formatNumber } from '@/lib/formatters'
 import { EmptyChartState } from '@/components/EmptyChartState'
+import { useChartNotes } from '@/hooks/useChartNotes'
+import { NoteMarker } from './ChartNoteOverlay'
 
 interface Props {
   data: DailyComboPoint[]
 }
 
+// Recharts customized dot — note marker per data point
+function NoteDot(props: {
+  cx?: number
+  cy?: number
+  payload?: { date: string }
+  notes: Map<string, import('@/hooks/useChartNotes').ChartNote>
+  onSave: (date: string, text: string) => void
+  onDelete: (date: string) => void
+}) {
+  const { cx, cy, payload, notes, onSave, onDelete } = props
+  if (cx == null || cy == null || !payload) return null
+  return (
+    <NoteMarker
+      cx={cx}
+      cy={cy}
+      date={payload.date}
+      note={notes.get(payload.date)}
+      onSave={onSave}
+      onDelete={onDelete}
+    />
+  )
+}
+
 export function DailySendComboChart({ data }: Props) {
+  const { notes, upsertNote, deleteNote } = useChartNotes('daily_send')
+
   return (
     <div className="rounded-xl border border-[#E5E7EB] bg-white p-5 flex flex-col h-full">
       <h3 className="mb-4 text-sm font-semibold text-[#111827]">일별 발송량 / CTR / CVR 추이</h3>
       <div className="flex-1 min-h-0">
         {data.length === 0 ? <EmptyChartState /> : <ResponsiveContainer width="100%" height="100%">
-          <ComposedChart data={data} margin={{ top: 4, right: 48, left: 8, bottom: 4 }}>
+          <ComposedChart data={data} margin={{ top: 24, right: 48, left: 8, bottom: 4 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="#F3F4F6" />
             <XAxis
               dataKey="date"
@@ -77,7 +104,7 @@ export function DailySendComboChart({ data }: Props) {
               name="CTR"
               stroke="#4361EE"
               strokeWidth={2}
-              dot={false}
+              dot={(props) => <NoteDot {...props} notes={notes} onSave={upsertNote} onDelete={deleteNote} />}
               activeDot={{ r: 4 }}
             />
             <Line

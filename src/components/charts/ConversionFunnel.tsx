@@ -11,10 +11,14 @@ import type { FunnelStep } from '@/types/metrics'
 
 const SELECTABLE_FIELDS: FunnelFieldKey[] = [
   'dau',
-  'mau',
+  'push_opt_in',
+  'sms_opt_in',
+  'kakao_opt_in',
   'view_promotion_list_page',
   'view_product_detail',
   'view_cartpage',
+  'like_brand',
+  'like_product',
   'purchase_cnt',
   'complete_order_product',
   'first_purchase',
@@ -136,8 +140,10 @@ export function ConversionFunnel({ data, steps, onStepsChange }: Props) {
       {/* 퍼널 메인 영역 */}
       <div className="flex-1 flex flex-col items-center justify-center py-2">
         {data.map((step, i) => {
-          const dropRate = step.rate !== null ? (1 - step.rate) * 100 : 0
-          
+          // 다음 단계의 rate = 현재 → 다음 전환율 → drop = (1 - rate)
+          const nextRate = data[i + 1]?.rate ?? null
+          const dropRate = nextRate !== null ? (1 - nextRate) * 100 : null
+
           // 하단으로 갈수록 카드가 좁아지는 테이퍼링 (95% -> 90% -> 85% ...)
           const widthScale = 1 - (i * 0.08)
 
@@ -172,12 +178,14 @@ export function ConversionFunnel({ data, steps, onStepsChange }: Props) {
               {i < data.length - 1 && (
                 <div className="h-14 relative flex flex-col items-center">
                   <div className="w-px h-full bg-slate-200" />
-                  <div className="absolute top-1/2 -translate-y-1/2 bg-white px-2 py-0.5 border border-slate-100 rounded-full shadow-sm flex items-center gap-1">
-                    <span className="text-[10px] text-red-500 font-bold">↓</span>
-                    <span className="text-[10px] font-bold text-slate-600 whitespace-nowrap">
-                      {dropRate.toFixed(1)}% Drop
-                    </span>
-                  </div>
+                  {dropRate !== null && (
+                    <div className="absolute top-1/2 -translate-y-1/2 bg-white px-2 py-0.5 border border-slate-100 rounded-full shadow-sm flex items-center gap-1">
+                      <span className="text-[10px] text-red-500 font-bold">↓</span>
+                      <span className="text-[10px] font-bold text-slate-600 whitespace-nowrap">
+                        {dropRate.toFixed(1)}% Drop
+                      </span>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
