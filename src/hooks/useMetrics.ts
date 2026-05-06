@@ -73,9 +73,14 @@ export function useMetrics(
     const prevMsg = calcMsgPerUser(prevMartinee)
     const momMsg = calcMsgPerUser(momMartinee)
 
-    const curPush = filteredKpi.reduce((s, r) => s + r.push_opt_in, 0) / (filteredKpi.length || 1)
-    const prevPush = prevKpi.reduce((s, r) => s + r.push_opt_in, 0) / (prevKpi.length || 1)
-    const momPush = momKpi.reduce((s, r) => s + r.push_opt_in, 0) / (momKpi.length || 1)
+    // 수신동의는 누적 지표 — 각 구간 마지막 날의 값 사용
+    const sortedAllKpi = [...allKpi].sort((a, b) => a.date.localeCompare(b.date))
+    const pushRowCur = sortedAllKpi.filter(r => r.date <= endDate)
+    const pushRowPrev = sortedAllKpi.filter(r => r.date <= wowEnd)
+    const pushRowMom = sortedAllKpi.filter(r => r.date <= momEnd)
+    const curPush = pushRowCur.length > 0 ? pushRowCur[pushRowCur.length - 1].push_opt_in : 0
+    const prevPush = pushRowPrev.length > 0 ? pushRowPrev[pushRowPrev.length - 1].push_opt_in : 0
+    const momPush = pushRowMom.length > 0 ? pushRowMom[pushRowMom.length - 1].push_opt_in : 0
     const curDAU = filteredKpi.reduce((s, r) => s + r.dau, 0) / (filteredKpi.length || 1)
     const prevDAU = prevKpi.reduce((s, r) => s + r.dau, 0) / (prevKpi.length || 1)
     const momDAU = momKpi.reduce((s, r) => s + r.dau, 0) / (momKpi.length || 1)
