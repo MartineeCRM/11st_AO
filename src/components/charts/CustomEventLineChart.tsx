@@ -11,15 +11,16 @@ import {
 } from 'recharts'
 import { formatKorean, formatDateShort } from '@/lib/formatters'
 import type { DailyKpiRow } from '@/types/sheets'
+import { useChartColors } from '@/lib/chartColors'
 
-const EVENTS: { key: keyof Omit<DailyKpiRow, 'date'>; label: string; color: string }[] = [
-  { key: 'complete_order_product', label: '구매 제품 수', color: '#4361EE' },
-  { key: 'first_purchase', label: '첫 구매', color: '#F59E0B' },
-  { key: 'like_brand', label: '브랜드 좋아요', color: '#10B981' },
-  { key: 'like_product', label: '제품 좋아요', color: '#EF4444' },
-  { key: 'view_cartpage', label: '카트 조회', color: '#8B5CF6' },
-  { key: 'view_product_detail', label: '제품 상세 조회', color: '#EC4899' },
-  { key: 'view_promotion_list_page', label: '프로모션 조회', color: '#06B6D4' },
+const EVENT_KEYS: { key: keyof Omit<DailyKpiRow, 'date'>; label: string }[] = [
+  { key: 'complete_order_product', label: '구매 제품 수' },
+  { key: 'first_purchase', label: '첫 구매' },
+  { key: 'like_brand', label: '브랜드 좋아요' },
+  { key: 'like_product', label: '제품 좋아요' },
+  { key: 'view_cartpage', label: '카트 조회' },
+  { key: 'view_product_detail', label: '제품 상세 조회' },
+  { key: 'view_promotion_list_page', label: '프로모션 조회' },
 ]
 
 interface DailyEventPoint {
@@ -32,6 +33,9 @@ interface Props {
 }
 
 export function CustomEventLineChart({ kpiRows }: Props) {
+  const colors = useChartColors()
+  const EVENTS = EVENT_KEYS.map((ev, i) => ({ ...ev, color: colors[i % colors.length] }))
+
   const [selected, setSelected] = useState<Set<string>>(
     new Set(['complete_order_product', 'first_purchase']),
   )

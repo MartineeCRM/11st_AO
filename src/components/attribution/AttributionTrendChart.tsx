@@ -12,6 +12,7 @@ import { formatDateShort } from '@/lib/formatters'
 import type { TrendPoint, EventTrendPoint } from '@/hooks/useAttributionMetrics'
 import { useChartNotes, type ChartNote } from '@/hooks/useChartNotes'
 import { NoteMarker } from '@/components/charts/ChartNoteOverlay'
+import { useChartColors } from '@/lib/chartColors'
 
 function NoteDot(props: {
   cx?: number
@@ -42,6 +43,7 @@ interface PurchaseTrendChartProps {
 }
 
 export function PurchaseTrendChart({ data, yLabel, formatter }: PurchaseTrendChartProps) {
+  const colors = useChartColors()
   const { notes, upsertNote, deleteNote } = useChartNotes('purchase_trend')
 
   return (
@@ -90,7 +92,7 @@ export function PurchaseTrendChart({ data, yLabel, formatter }: PurchaseTrendCha
           <Line
             type="monotone"
             dataKey="value"
-            stroke="#4361EE"
+            stroke={colors[0]}
             strokeWidth={2}
             dot={(props) => <NoteDot {...props} notes={notes} onSave={upsertNote} onDelete={deleteNote} />}
             connectNulls
@@ -98,7 +100,7 @@ export function PurchaseTrendChart({ data, yLabel, formatter }: PurchaseTrendCha
           <Line
             type="monotone"
             dataKey="wow_value"
-            stroke="#F59E0B"
+            stroke={colors[2]}
             strokeWidth={1.5}
             strokeDasharray="4 3"
             dot={false}
@@ -107,7 +109,7 @@ export function PurchaseTrendChart({ data, yLabel, formatter }: PurchaseTrendCha
           <Line
             type="monotone"
             dataKey="mom_value"
-            stroke="#10B981"
+            stroke={colors[1]}
             strokeWidth={1.5}
             strokeDasharray="4 3"
             dot={false}
@@ -125,6 +127,7 @@ interface EventTrendChartProps {
 }
 
 export function EventTrendChart({ data, eventLabel }: EventTrendChartProps) {
+  const colors = useChartColors()
   const { notes, upsertNote, deleteNote } = useChartNotes('event_trend')
 
   function formatCount(v: number) {
@@ -158,7 +161,7 @@ export function EventTrendChart({ data, eventLabel }: EventTrendChartProps) {
           <Line
             type="monotone"
             dataKey="value"
-            stroke="#4361EE"
+            stroke={colors[0]}
             strokeWidth={2}
             dot={(props) => <NoteDot {...props} notes={notes} onSave={upsertNote} onDelete={deleteNote} />}
             connectNulls

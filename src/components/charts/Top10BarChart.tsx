@@ -3,6 +3,7 @@ import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, LabelL
 import { ChevronDown } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import type { Top10Item, Top10Metric } from '@/types/metrics'
+import { useChartColors } from '@/lib/chartColors'
 
 const METRICS: Top10Metric[] = ['Revenue', '구매 CVR', '발송/노출량', '오픈/클릭율', 'CTR', 'AOV']
 
@@ -13,6 +14,7 @@ interface Props {
 }
 
 export function Top10BarChart({ data, metric, onMetricChange }: Props) {
+  const colors = useChartColors()
   const [dropdownOpen, setDropdownOpen] = useState(false)
 
   const maxVal = Math.max(...data.map(d => d.value), 1)
@@ -97,7 +99,12 @@ export function Top10BarChart({ data, metric, onMetricChange }: Props) {
                 />
                 {data.map((entry, i) => {
                   const opacity = 0.4 + 0.6 * (entry.value / maxVal)
-                  return <Cell key={i} fill={`rgba(67, 97, 238, ${opacity})`} />
+                  const base = colors[0] ?? '#4361EE'
+                  // hex → rgba
+                  const r = parseInt(base.slice(1, 3), 16)
+                  const g = parseInt(base.slice(3, 5), 16)
+                  const b = parseInt(base.slice(5, 7), 16)
+                  return <Cell key={i} fill={`rgba(${r}, ${g}, ${b}, ${opacity})`} />
                 })}
               </Bar>
             </BarChart>
