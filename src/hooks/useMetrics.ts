@@ -171,11 +171,13 @@ export function useMetrics(
 
   // ── 수신동의 카드 ─────────────────────────────────────────
   const optInData: OptInData[] = useMemo(() => {
-    // endDate에 가장 가까운 날짜의 값을 사용 (정렬 무관)
-    const sortedFiltered = [...filteredKpi].sort((a, b) => a.date.localeCompare(b.date))
-    const sortedPrev = [...prevKpi].sort((a, b) => a.date.localeCompare(b.date))
-    const latestRow = sortedFiltered.length > 0 ? sortedFiltered[sortedFiltered.length - 1] : null
-    const prevLatestRow = sortedPrev.length > 0 ? sortedPrev[sortedPrev.length - 1] : null
+    // 수신동의는 누적 지표 — endDate 이하에서 가장 가까운 날의 값을 allKpi에서 찾음
+    const sortedAll = [...allKpi].sort((a, b) => a.date.localeCompare(b.date))
+    const curRows = sortedAll.filter(r => r.date <= endDate)
+    const latestRow = curRows.length > 0 ? curRows[curRows.length - 1] : null
+    const prevEndDate = wowEnd
+    const prevRows = sortedAll.filter(r => r.date <= prevEndDate)
+    const prevLatestRow = prevRows.length > 0 ? prevRows[prevRows.length - 1] : null
     const curPush = latestRow?.push_opt_in ?? 0
     const prevPushRow = prevLatestRow?.push_opt_in ?? 0
     const curSms = latestRow?.sms_opt_in ?? 0
@@ -208,7 +210,7 @@ export function useMetrics(
         color: '#F59E0B',
       },
     ]
-  }, [filteredKpi, prevKpi, allKpi, endDate])
+  }, [allKpi, endDate, wowEnd])
 
   // ── 차트 데이터 ───────────────────────────────────────────
   const dailyCombo = useMemo(() => buildDailyComboData(filteredMartinee), [filteredMartinee])
