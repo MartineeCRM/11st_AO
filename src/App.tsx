@@ -46,6 +46,13 @@ class ErrorBoundary extends Component<{ children: ReactNode }, { error: Error | 
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<Tab>('performance')
+  const [switching, setSwitching] = useState(false)
+
+  function handleProjectChange(setProjectId: (id: string) => void, id: string) {
+    setSwitching(true)
+    setProjectId(id)
+    setTimeout(() => setSwitching(false), 2000)
+  }
 
   return (
     <ProtectedRoute>
@@ -57,15 +64,22 @@ export default function App() {
             onTabChange={setActiveTab}
             project={project}
             availableProjects={availableProjects}
-            onProjectChange={setProjectId}
+            onProjectChange={(id) => handleProjectChange(setProjectId, id)}
           />
           <main>
-            <ErrorBoundary>
-              {activeTab === 'performance' && <CRMPerformance />}
-              {activeTab === 'attribution' && <CRMAttribution />}
-              {activeTab === 'ops' && <CRMCampaignOps />}
-              {activeTab === 'settings' && <CRMSettings project={project} />}
-            </ErrorBoundary>
+            {switching ? (
+              <div className="flex flex-col items-center justify-center py-40 gap-3">
+                <div className="h-6 w-6 rounded-full border-2 border-[#4361EE] border-t-transparent animate-spin" />
+                <p className="text-sm text-[#6B7280]">프로젝트 변경 중...</p>
+              </div>
+            ) : (
+              <ErrorBoundary key={project.id}>
+                {activeTab === 'performance' && <CRMPerformance key={project.id} />}
+                {activeTab === 'attribution' && <CRMAttribution key={project.id} />}
+                {activeTab === 'ops' && <CRMCampaignOps key={project.id} />}
+                {activeTab === 'settings' && <CRMSettings project={project} />}
+              </ErrorBoundary>
+            )}
           </main>
         </div>
         </ChartColorsContext.Provider>
