@@ -11,4 +11,5 @@ export interface Project {
   spreadsheet_id: string
   chart_colors: string[]
   metric_definitions: { col: string; label: string }[]
+  trigger_mappings: Record<string, string>
 }

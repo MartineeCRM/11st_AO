@@ -11,6 +11,7 @@ interface ProjectState {
   error: string | null
   availableProjects: Project[]
   setProjectId: (id: string) => void
+  saveTriggerMappings: (mappings: Record<string, string>) => Promise<void>
 }
 
 export function useProject(userId: string | null): ProjectState {
@@ -60,7 +61,7 @@ export function useProject(userId: string | null): ProjectState {
 
       const { data: projects, error: projErr } = await supabase
         .from('projects')
-        .select('id, name, chart_colors, metric_definitions, spreadsheet_id')
+        .select('id, name, chart_colors, metric_definitions, spreadsheet_id, trigger_mappings')
         .in('id', projectIds)
 
       if (projErr || !projects) {
@@ -90,5 +91,18 @@ export function useProject(userId: string | null): ProjectState {
     if (found) setProject(found as Project)
   }, [projectId, availableProjects])
 
-  return { project, projectId, loading, error, availableProjects, setProjectId }
+  async function saveTriggerMappings(mappings: Record<string, string>) {
+    if (!project) return
+    const { error } = await supabase
+      .from('projects')
+      .update({ trigger_mappings: mappings })
+      .eq('id', project.id)
+    if (error) throw new Error(error.message)
+    setProject(prev => prev ? { ...prev, trigger_mappings: mappings } : prev)
+    setAvailableProjects(prev =>
+      prev.map(p => p.id === project.id ? { ...p, trigger_mappings: mappings } : p)
+    )
+  }
+
+  return { project, projectId, loading, error, availableProjects, setProjectId, saveTriggerMappings }
 }
