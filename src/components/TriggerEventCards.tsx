@@ -50,9 +50,8 @@ const TRIGGER_COLORS = [
 ]
 
 export function TriggerEventCards({ campaigns, loading, error, triggerMappings, onSaveMappings }: Props) {
-  const [modalOpen, setModalOpen] = useState(false)
+  const [editingGroup, setEditingGroup] = useState<TriggerGroup | null>(null)
   const groups = groupByTrigger(campaigns, triggerMappings)
-  const unknownGroup = groups.find(g => g.isUnknown)
   const knownTriggers = groups.filter(g => !g.isUnknown).map(g => g.triggerAction)
 
   return (
@@ -93,15 +92,13 @@ export function TriggerEventCards({ campaigns, loading, error, triggerMappings, 
                     {group.triggerAction}
                   </span>
                   <div className="flex items-center gap-1.5 shrink-0">
-                    {group.isUnknown && (
-                      <button
-                        onClick={() => setModalOpen(true)}
-                        className="rounded p-0.5 text-[#9CA3AF] hover:text-[#374151] hover:bg-[#E5E7EB]"
-                        title="트리거 이름 수동 매핑"
-                      >
-                        <Pencil size={12} />
-                      </button>
-                    )}
+                    <button
+                      onClick={() => setEditingGroup(group)}
+                      className="rounded p-0.5 text-[#9CA3AF] hover:text-[#374151] hover:bg-[#E5E7EB]"
+                      title="트리거 이름 수동 매핑"
+                    >
+                      <Pencil size={12} />
+                    </button>
                     <span
                       className="rounded-full px-2 py-0.5 text-[11px] font-bold"
                       style={{ background: `${color}18`, color }}
@@ -143,13 +140,13 @@ export function TriggerEventCards({ campaigns, loading, error, triggerMappings, 
         </div>
       )}
 
-      {modalOpen && unknownGroup && (
+      {editingGroup && (
         <TriggerMappingModal
-          campaigns={unknownGroup.campaigns}
+          campaigns={editingGroup.campaigns}
           existingTriggers={knownTriggers}
           savedMappings={triggerMappings}
           onSave={onSaveMappings}
-          onClose={() => setModalOpen(false)}
+          onClose={() => setEditingGroup(null)}
         />
       )}
     </div>
