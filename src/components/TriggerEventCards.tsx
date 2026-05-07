@@ -1,29 +1,47 @@
-import { ExternalLink } from 'lucide-react'
+import { useState } from 'react'
+import { ExternalLink, Pencil } from 'lucide-react'
 import type { EnrichedCampaign } from '@/hooks/useBrazeCampaigns'
 import { channelLabel, channelBadgeColor, brazeCampaignUrl } from '@/lib/braze'
+import { TriggerMappingModal } from '@/components/TriggerMappingModal'
 
 interface Props {
   campaigns: EnrichedCampaign[]
   loading: boolean
   error: string | null
+  triggerMappings: Record<string, string>
+  onSaveMappings: (mappings: Record<string, string>) => Promise<void>
 }
 
 interface TriggerGroup {
   triggerAction: string
   campaigns: EnrichedCampaign[]
+  isUnknown: boolean
 }
 
-function groupByTrigger(campaigns: EnrichedCampaign[]): TriggerGroup[] {
+const UNKNOWN_KEY = '(알 수 없는 트리거)'
+
+function groupByTrigger(
+  campaigns: EnrichedCampaign[],
+  triggerMappings: Record<string, string>,
+): TriggerGroup[] {
   const actionBased = campaigns.filter(c => c.schedule_type === 'action_based')
   const map = new Map<string, EnrichedCampaign[]>()
   for (const c of actionBased) {
-    const key = c.trigger_action ?? '(알 수 없는 트리거)'
+    const key = c.trigger_action || triggerMappings[c.id] || UNKNOWN_KEY
     if (!map.has(key)) map.set(key, [])
     map.get(key)!.push(c)
   }
   return Array.from(map.entries())
-    .sort((a, b) => b[1].length - a[1].length)
-    .map(([triggerAction, campaigns]) => ({ triggerAction, campaigns }))
+    .sort((a, b) => {
+      if (a[0] === UNKNOWN_KEY) return 1
+      if (b[0] === UNKNOWN_KEY) return -1
+      return b[1].length - a[1].length
+    })
+    .map(([triggerAction, campaigns]) => ({
+      triggerAction,
+      campaigns,
+      isUnknown: triggerAction === UNKNOWN_KEY,
+    }))
 }
 
 const TRIGGER_COLORS = [
@@ -31,8 +49,11 @@ const TRIGGER_COLORS = [
   '#8B5CF6', '#06B6D4', '#F97316', '#EC4899',
 ]
 
-export function TriggerEventCards({ campaigns, loading, error }: Props) {
-  const groups = groupByTrigger(campaigns)
+export function TriggerEventCards({ campaigns, loading, error, triggerMappings, onSaveMappings }: Props) {
+  const [modalOpen, setModalOpen] = useState(false)
+  const groups = groupByTrigger(campaigns, triggerMappings)
+  const unknownGroup = groups.find(g => g.isUnknown)
+  const knownTriggers = groups.filter(g => !g.isUnknown).map(g => g.triggerAction)
 
   return (
     <div className="rounded-xl border border-[#E5E7EB] bg-white">
@@ -60,27 +81,36 @@ export function TriggerEventCards({ campaigns, loading, error }: Props) {
       {!loading && !error && groups.length > 0 && (
         <div className="p-5 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {groups.map((group, idx) => {
-            const color = TRIGGER_COLORS[idx % TRIGGER_COLORS.length]
+            const color = group.isUnknown ? '#9CA3AF' : TRIGGER_COLORS[idx % TRIGGER_COLORS.length]
             return (
               <div
                 key={group.triggerAction}
                 className="rounded-lg border border-[#E5E7EB] overflow-hidden"
                 style={{ borderLeftColor: color, borderLeftWidth: 3 }}
               >
-                {/* 그룹 헤더 */}
                 <div className="flex items-center justify-between px-4 py-3 bg-[#F9FAFB] border-b border-[#F3F4F6]">
                   <span className="text-[13px] font-semibold text-[#111827] truncate pr-2">
                     {group.triggerAction}
                   </span>
-                  <span
-                    className="shrink-0 rounded-full px-2 py-0.5 text-[11px] font-bold"
-                    style={{ background: `${color}18`, color }}
-                  >
-                    {group.campaigns.length}개
-                  </span>
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    {group.isUnknown && (
+                      <button
+                        onClick={() => setModalOpen(true)}
+                        className="rounded p-0.5 text-[#9CA3AF] hover:text-[#374151] hover:bg-[#E5E7EB]"
+                        title="트리거 이름 수동 매핑"
+                      >
+                        <Pencil size={12} />
+                      </button>
+                    )}
+                    <span
+                      className="rounded-full px-2 py-0.5 text-[11px] font-bold"
+                      style={{ background: `${color}18`, color }}
+                    >
+                      {group.campaigns.length}개
+                    </span>
+                  </div>
                 </div>
 
-                {/* 캠페인 목록 */}
                 <div className="divide-y divide-[#F9FAFB] max-h-64 overflow-y-auto">
                   {group.campaigns.map(c => {
                     const ch = c.channels[0] ?? 'unknown'
@@ -111,6 +141,16 @@ export function TriggerEventCards({ campaigns, loading, error }: Props) {
             )
           })}
         </div>
+      )}
+
+      {modalOpen && unknownGroup && (
+        <TriggerMappingModal
+          campaigns={unknownGroup.campaigns}
+          existingTriggers={knownTriggers}
+          savedMappings={triggerMappings}
+          onSave={onSaveMappings}
+          onClose={() => setModalOpen(false)}
+        />
       )}
     </div>
   )
