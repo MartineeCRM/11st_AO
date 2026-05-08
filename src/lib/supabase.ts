@@ -6,8 +6,14 @@ const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY as string
 export const supabase = createClient(supabaseUrl, supabaseAnonKey)
 
 export type SectionId =
-  | 'kpi_cards' | 'trends_top10' | 'channel_table' | 'funnel_events' | 'table_optin' | 'revenue'
-  | 'att_filter' | 'att_summary' | 'att_metrics'
+  // performance tab
+  | 'kpi_cards' | 'send_combo' | 'top10_bar' | 'channel_table'
+  | 'funnel' | 'custom_events' | 'biz_kpi_table' | 'opt_in'
+  | 'aov_revenue' | 'revenue_reward'
+  // attribution tab
+  | 'att_filter' | 'att_summary' | 'att_trend' | 'att_kpi_cards'
+  | 'att_data_table' | 'att_roi_table' | 'att_event_metrics'
+  // ops tab
   | 'send_trend' | 'live_table' | 'trigger_cards' | 'scheduled_list'
 
 export interface LayoutSection {

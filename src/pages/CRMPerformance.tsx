@@ -17,12 +17,16 @@ import { Settings2 } from 'lucide-react'
 import { FilterBar } from '@/components/filters/FilterBar'
 import { EditModeBar } from '@/components/EditModeBar'
 import { DraggableSectionWrapper } from '@/components/DraggableSectionWrapper'
-import { Row1KpiSummary } from '@/components/rows/Row1KpiSummary'
-import { Row2TrendsTop10 } from '@/components/rows/Row2TrendsTop10'
-import { Row3FunnelEvents } from '@/components/rows/Row3FunnelEvents'
-import { Row4TableOptIn } from '@/components/rows/Row4TableOptIn'
-import { Row5RevenueCharts } from '@/components/rows/Row5RevenueCharts'
+import { KpiCard } from '@/components/cards/KpiCard'
+import { DailySendComboChart } from '@/components/charts/DailySendComboChart'
+import { Top10BarChart } from '@/components/charts/Top10BarChart'
 import { ChannelPerformanceTable } from '@/components/charts/ChannelPerformanceTable'
+import { ConversionFunnel } from '@/components/charts/ConversionFunnel'
+import { CustomEventLineChart } from '@/components/charts/CustomEventLineChart'
+import { BusinessKpiTable } from '@/components/charts/BusinessKpiTable'
+import { OptInCard } from '@/components/cards/OptInCard'
+import { AovRevenueComboChart } from '@/components/charts/AovRevenueComboChart'
+import { RevenueRewardComboChart } from '@/components/charts/RevenueRewardComboChart'
 import { useSheetData } from '@/hooks/useSheetData'
 import { useFilteredData } from '@/hooks/useFilteredData'
 import { useMetrics } from '@/hooks/useMetrics'
@@ -148,20 +152,17 @@ export function CRMPerformance() {
     reorder(oldIndex, newIndex)
   }
 
-  const sectionContent: Record<SectionId, React.ReactNode> = {
-    kpi_cards:      <Row1KpiSummary kpiCards={kpiCards} />,
-    trends_top10:   <Row2TrendsTop10 dailyCombo={dailyCombo} top10={top10} top10Metric={top10Metric} onTop10MetricChange={setTop10Metric} />,
+  const sectionContent: Partial<Record<SectionId, React.ReactNode>> = {
+    kpi_cards:      <div className="flex gap-3 px-6 py-4">{kpiCards.map((c, i) => <KpiCard key={i} data={c} />)}</div>,
+    send_combo:     <div className="px-6 py-4" style={{ minHeight: 320 }}><DailySendComboChart data={dailyCombo} /></div>,
+    top10_bar:      <div className="px-6 py-4" style={{ minHeight: 320 }}><Top10BarChart data={top10} metric={top10Metric} onMetricChange={setTop10Metric} /></div>,
     channel_table:  <div className="px-6 pb-4"><ChannelPerformanceTable rows={filteredMartinee} /></div>,
-    funnel_events:  <Row3FunnelEvents funnel={funnel} funnelSteps={funnelSteps} onFunnelStepsChange={setFunnelSteps} kpiRows={filteredKpi} />,
-    table_optin:    <Row4TableOptIn bizKpiTable={bizKpiTable} optInData={optInData} />,
-    revenue:        <Row5RevenueCharts dailyRevenue={dailyRevenue} />,
-    att_filter:     null,
-    att_summary:    null,
-    att_metrics:    null,
-    send_trend:     null,
-    live_table:     null,
-    trigger_cards:  null,
-    scheduled_list: null,
+    funnel:         <div className="px-6 py-4" style={{ minHeight: 300 }}><ConversionFunnel data={funnel} steps={funnelSteps} onStepsChange={setFunnelSteps} /></div>,
+    custom_events:  <div className="px-6 py-4" style={{ minHeight: 300 }}><CustomEventLineChart kpiRows={filteredKpi} /></div>,
+    biz_kpi_table:  <div className="px-6 py-4"><BusinessKpiTable rows={bizKpiTable} /></div>,
+    opt_in:         <div className="flex flex-col gap-3 px-6 py-4">{optInData.map(d => <OptInCard key={d.label} data={d} />)}</div>,
+    aov_revenue:    <div className="px-6 py-4" style={{ minHeight: 280 }}><AovRevenueComboChart data={dailyRevenue} /></div>,
+    revenue_reward: <div className="px-6 py-4" style={{ minHeight: 280 }}><RevenueRewardComboChart data={dailyRevenue} /></div>,
   }
 
   if (error) {
@@ -216,9 +217,9 @@ export function CRMPerformance() {
                   id={section.id}
                   visible={section.visible}
                   isEditing={isEditing}
-                  onToggleVisible={() => toggleVisible(section.id as SectionId)}
+                  onToggleVisible={() => toggleVisible(section.id)}
                 >
-                  {sectionContent[section.id as SectionId]}
+                  {sectionContent[section.id]}
                 </DraggableSectionWrapper>
               ))}
             </div>
