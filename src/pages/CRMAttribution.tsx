@@ -10,13 +10,8 @@ import { useAttributionFiltered, type AttributionFilterState } from '@/hooks/use
 import { useAttributionMetrics, type PurchaseMetricKey, type EventKey } from '@/hooks/useAttributionMetrics'
 import { AttributionFilterBar } from '@/components/attribution/AttributionFilterBar'
 import { AttributionSummaryBanner } from '@/components/attribution/AttributionSummaryBanner'
-import { MetricToggleGroup } from '@/components/attribution/MetricToggleGroup'
-import { PurchaseTrendChart } from '@/components/attribution/AttributionTrendChart'
-import { AttributionKpiCard } from '@/components/attribution/AttributionKpiCard'
-import { PurchaseDataTable } from '@/components/attribution/PurchaseDataTable'
-import { CampaignRoiTable } from '@/components/attribution/CampaignRoiTable'
+import { PurchaseMetricsSection } from '@/components/attribution/PurchaseMetricsSection'
 import { EventMetricsSection } from '@/components/attribution/EventMetricsSection'
-import { formatKorean, formatRate, formatCurrency } from '@/lib/formatters'
 import type { Preset } from '@/components/filters/datePresets'
 import { presetToRange } from '@/components/filters/datePresets'
 import { EditModeBar } from '@/components/EditModeBar'
@@ -25,41 +20,7 @@ import { useAuth } from '@/hooks/useAuth'
 import { useProject } from '@/hooks/useProject'
 import { useDashboardLayout } from '@/hooks/useDashboardLayout'
 
-const PURCHASE_METRIC_OPTIONS: { key: PurchaseMetricKey; label: string }[] = [
-  { key: 'user_cvr', label: 'CVR' },
-  { key: 'purchase_count', label: 'Purchase' },
-  { key: 'revenue', label: 'Revenue' },
-  { key: 'aov', label: 'AOV' },
-  { key: 'arppu', label: 'ARPPU' },
-  { key: 'frequency', label: 'Frequency' },
-  { key: 'items_per_order', label: '주문당 제품수' },
-  { key: 'items_per_user', label: '유저당 제품주문수' },
-]
-
-function formatMetricValue(key: PurchaseMetricKey, v: number): string {
-  switch (key) {
-    case 'user_cvr':
-    case 'count_cvr': return formatRate(v)
-    case 'revenue': return formatKorean(v)
-    case 'aov':
-    case 'arppu': return formatCurrency(v)
-    default: return v.toFixed(2)
-  }
-}
-
-function getYLabel(key: PurchaseMetricKey): string {
-  switch (key) {
-    case 'user_cvr': return 'CVR (%)'
-    case 'purchase_count': return '구매수'
-    case 'revenue': return '매출'
-    case 'aov': return 'AOV'
-    case 'arppu': return 'ARPPU'
-    case 'frequency': return 'Frequency'
-    case 'items_per_order': return '주문당제품'
-    case 'items_per_user': return '유저당제품'
-    default: return ''
-  }
-}
+type SectionTab = 'purchase' | 'event'
 
 export function CRMAttribution() {
   const { rows, loading, error, dateRange } = useAttributionData()
@@ -98,6 +59,7 @@ export function CRMAttribution() {
 
   const { filteredRows, extendedRows, filterOptions } = useAttributionFiltered(rows, resolvedFilters)
 
+  const [sectionTab, setSectionTab] = useState<SectionTab>('purchase')
   const [activeMetric, setActiveMetric] = useState<PurchaseMetricKey>('user_cvr')
   const [activeEvent, setActiveEvent] = useState<EventKey>('add_to_cart')
 
@@ -148,9 +110,7 @@ export function CRMAttribution() {
     )
   }
 
-  const formatter = (v: number) => formatMetricValue(activeMetric, v)
-
-  const sectionContent: Partial<Record<string, React.ReactNode>> = {
+  const sectionContent: Record<string, React.ReactNode> = {
     att_filter: (
       <AttributionFilterBar
         filters={resolvedFilters}
@@ -174,55 +134,51 @@ export function CRMAttribution() {
         hasData={filteredRows.length > 0}
       />
     ),
-    att_trend: (
-      <div className="px-6 py-4">
-        <MetricToggleGroup
-          options={PURCHASE_METRIC_OPTIONS}
-          active={activeMetric}
-          onChange={setActiveMetric}
-        />
-        <div className="mt-4 rounded-xl border border-[#E5E7EB] bg-white p-4">
-          <p className="mb-3 text-xs font-semibold text-[#374151]">트렌드 (현재 / WoW / MoM)</p>
-          <PurchaseTrendChart
-            data={trendData}
-            yLabel={getYLabel(activeMetric)}
-            formatter={formatter}
-          />
+    att_metrics: (
+      <div className="px-6 py-5">
+        {/* 섹션 탭 */}
+        <div className="mb-5 flex gap-1 border-b border-[#E5E7EB]">
+          {([
+            { key: 'purchase', label: '구매 지표' },
+            { key: 'event', label: '기타 이벤트' },
+          ] as { key: SectionTab; label: string }[]).map(tab => (
+            <button
+              key={tab.key}
+              onClick={() => setSectionTab(tab.key)}
+              className={[
+                'px-4 py-2 text-sm font-medium transition-colors',
+                sectionTab === tab.key
+                  ? 'border-b-2 border-[#4361EE] text-[#4361EE]'
+                  : 'text-[#6B7280] hover:text-[#374151]',
+              ].join(' ')}
+            >
+              {tab.label}
+            </button>
+          ))}
         </div>
-      </div>
-    ),
-    att_kpi_cards: (
-      <div className="px-6 py-4 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
-        <AttributionKpiCard title="CVR" value={formatRate(kpis.current.user_cvr)} subValue={formatRate(kpis.current.count_cvr)} subLabel="건수 CVR" delta={kpis.delta.user_cvr} highlighted={activeMetric === 'user_cvr'} />
-        <AttributionKpiCard title="Purchase" value={formatKorean(kpis.current.purchase_count)} delta={kpis.delta.purchase_count} highlighted={activeMetric === 'purchase_count'} />
-        <AttributionKpiCard title="Revenue" value={formatKorean(kpis.current.revenue)} delta={kpis.delta.revenue} highlighted={activeMetric === 'revenue'} />
-        <AttributionKpiCard title="AOV" value={formatCurrency(kpis.current.aov)} delta={kpis.delta.aov} highlighted={activeMetric === 'aov'} />
-        <AttributionKpiCard title="ARPPU" value={formatCurrency(kpis.current.arppu)} delta={kpis.delta.arppu} highlighted={activeMetric === 'arppu'} />
-        <AttributionKpiCard title="Frequency" value={kpis.current.frequency.toFixed(2)} delta={kpis.delta.frequency} highlighted={activeMetric === 'frequency'} />
-        <AttributionKpiCard title="주문당 제품수" value={kpis.current.items_per_order.toFixed(2)} delta={kpis.delta.items_per_order} highlighted={activeMetric === 'items_per_order'} />
-        <AttributionKpiCard title="유저당 제품주문수" value={kpis.current.items_per_user.toFixed(2)} delta={kpis.delta.items_per_user} highlighted={activeMetric === 'items_per_user'} />
-      </div>
-    ),
-    att_data_table: (
-      <div className="px-6 py-4">
-        <PurchaseDataTable rows={filteredRows} allRows={extendedRows} />
-      </div>
-    ),
-    att_roi_table: (
-      <div className="px-6 py-4">
-        <CampaignRoiTable rows={filteredRows} />
-      </div>
-    ),
-    att_event_metrics: (
-      <div className="px-6 py-4">
-        <EventMetricsSection
-          activeEvent={activeEvent}
-          onEventChange={setActiveEvent}
-          eventCvr={eventCvr}
-          eventRawCount={eventRawCount}
-          eventImpression={eventImpression}
-          eventTrend={eventTrend}
-        />
+
+        {sectionTab === 'purchase' && (
+          <PurchaseMetricsSection
+            activeMetric={activeMetric}
+            onMetricChange={setActiveMetric}
+            trendData={trendData}
+            current={kpis.current}
+            delta={kpis.delta}
+            filteredRows={filteredRows}
+            allRows={extendedRows}
+          />
+        )}
+
+        {sectionTab === 'event' && (
+          <EventMetricsSection
+            activeEvent={activeEvent}
+            onEventChange={setActiveEvent}
+            eventCvr={eventCvr}
+            eventRawCount={eventRawCount}
+            eventImpression={eventImpression}
+            eventTrend={eventTrend}
+          />
+        )}
       </div>
     ),
   }
