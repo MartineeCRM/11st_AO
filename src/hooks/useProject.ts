@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
-import type { Project } from '@/lib/supabase'
+import type { Project, DashboardLayout } from '@/lib/supabase'
 
 const PROJECT_KEY = 'crm_project_id'
 
@@ -12,6 +12,7 @@ interface ProjectState {
   availableProjects: Project[]
   setProjectId: (id: string) => void
   saveTriggerMappings: (mappings: Record<string, string>) => Promise<void>
+  saveDashboardLayout: (layout: DashboardLayout) => Promise<void>
 }
 
 export function useProject(userId: string | null): ProjectState {
@@ -61,7 +62,7 @@ export function useProject(userId: string | null): ProjectState {
 
       const { data: projects, error: projErr } = await supabase
         .from('projects')
-        .select('id, name, chart_colors, metric_definitions, spreadsheet_id, trigger_mappings')
+        .select('id, name, chart_colors, metric_definitions, spreadsheet_id, trigger_mappings, dashboard_layout')
         .in('id', projectIds)
 
       if (projErr || !projects) {
@@ -104,5 +105,18 @@ export function useProject(userId: string | null): ProjectState {
     )
   }
 
-  return { project, projectId, loading, error, availableProjects, setProjectId, saveTriggerMappings }
+  async function saveDashboardLayout(layout: DashboardLayout) {
+    if (!project) return
+    const { error } = await supabase
+      .from('projects')
+      .update({ dashboard_layout: layout })
+      .eq('id', project.id)
+    if (error) throw new Error(error.message)
+    setProject(prev => prev ? { ...prev, dashboard_layout: layout } : prev)
+    setAvailableProjects(prev =>
+      prev.map(p => p.id === project.id ? { ...p, dashboard_layout: layout } : p)
+    )
+  }
+
+  return { project, projectId, loading, error, availableProjects, setProjectId, saveTriggerMappings, saveDashboardLayout }
 }

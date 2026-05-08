@@ -5,6 +5,22 @@ const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY as string
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey)
 
+export type SectionId =
+  | 'kpi_cards' | 'trends_top10' | 'channel_table' | 'funnel_events' | 'table_optin' | 'revenue'
+  | 'att_filter' | 'att_summary' | 'att_metrics'
+  | 'send_trend' | 'live_table' | 'trigger_cards' | 'scheduled_list'
+
+export interface LayoutSection {
+  id: SectionId
+  visible: boolean
+}
+
+export interface DashboardLayout {
+  performance: LayoutSection[]
+  attribution: LayoutSection[]
+  ops: LayoutSection[]
+}
+
 export interface Project {
   id: string
   name: string
@@ -12,4 +28,5 @@ export interface Project {
   chart_colors: string[]
   metric_definitions: { col: string; label: string }[]
   trigger_mappings: Record<string, string>
+  dashboard_layout: DashboardLayout
 }
