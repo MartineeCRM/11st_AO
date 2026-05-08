@@ -1,4 +1,10 @@
-import { useState, useMemo } from 'react'
+import React, { useState, useMemo } from 'react'
+import {
+  DndContext, closestCenter, KeyboardSensor, PointerSensor,
+  useSensor, useSensors, type DragEndEvent,
+} from '@dnd-kit/core'
+import { SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy } from '@dnd-kit/sortable'
+import { Settings2 } from 'lucide-react'
 import { useAttributionData } from '@/hooks/useAttributionData'
 import { useAttributionFiltered, type AttributionFilterState } from '@/hooks/useAttributionFiltered'
 import { useAttributionMetrics, type PurchaseMetricKey, type EventKey } from '@/hooks/useAttributionMetrics'
@@ -8,6 +14,11 @@ import { PurchaseMetricsSection } from '@/components/attribution/PurchaseMetrics
 import { EventMetricsSection } from '@/components/attribution/EventMetricsSection'
 import type { Preset } from '@/components/filters/datePresets'
 import { presetToRange } from '@/components/filters/datePresets'
+import { EditModeBar } from '@/components/EditModeBar'
+import { DraggableSectionWrapper } from '@/components/DraggableSectionWrapper'
+import { useAuth } from '@/hooks/useAuth'
+import { useProject } from '@/hooks/useProject'
+import { useDashboardLayout } from '@/hooks/useDashboardLayout'
 
 type SectionTab = 'purchase' | 'event'
 
@@ -52,6 +63,25 @@ export function CRMAttribution() {
   const [activeMetric, setActiveMetric] = useState<PurchaseMetricKey>('user_cvr')
   const [activeEvent, setActiveEvent] = useState<EventKey>('add_to_cart')
 
+  const { user } = useAuth()
+  const { project, saveDashboardLayout } = useProject(user?.id ?? null)
+
+  const { sections, isEditing, startEditing, cancelEditing, reorder, toggleVisible, save, saving, saveError } =
+    useDashboardLayout('attribution', project?.dashboard_layout, saveDashboardLayout)
+
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
+  )
+
+  function handleDragEnd(event: DragEndEvent) {
+    const { active, over } = event
+    if (!over || active.id === over.id) return
+    const oldIndex = sections.findIndex(s => s.id === active.id)
+    const newIndex = sections.findIndex(s => s.id === over.id)
+    reorder(oldIndex, newIndex)
+  }
+
   const { kpis, trendData, eventCvr, eventRawCount, eventImpression, eventTrend } = useAttributionMetrics(
     filteredRows,
     extendedRows,
@@ -80,8 +110,8 @@ export function CRMAttribution() {
     )
   }
 
-  return (
-    <div className="flex flex-col">
+  const sectionContent: Record<string, React.ReactNode> = {
+    att_filter: (
       <AttributionFilterBar
         filters={resolvedFilters}
         onFiltersChange={f => {
@@ -97,12 +127,14 @@ export function CRMAttribution() {
           if (p) setFilters(prev => ({ ...prev, dateRange: presetToRange(p, maxDate) }))
         }}
       />
-
+    ),
+    att_summary: (
       <AttributionSummaryBanner
         current={kpis.current}
         hasData={filteredRows.length > 0}
       />
-
+    ),
+    att_metrics: (
       <div className="px-6 py-5">
         {/* 섹션 탭 */}
         <div className="mb-5 flex gap-1 border-b border-[#E5E7EB]">
@@ -148,6 +180,42 @@ export function CRMAttribution() {
           />
         )}
       </div>
+    ),
+  }
+
+  return (
+    <div className="flex flex-col">
+      {isEditing && (
+        <EditModeBar onSave={save} onCancel={cancelEditing} saving={saving} saveError={saveError} />
+      )}
+
+      <div className="flex justify-end px-6 pt-4">
+        {!isEditing ? (
+          <button
+            onClick={startEditing}
+            className="flex items-center gap-1.5 rounded-lg border border-[#E5E7EB] bg-white px-3 py-1.5 text-sm text-[#6B7280] hover:bg-[#F9FAFB]"
+          >
+            <Settings2 className="h-4 w-4" />
+            레이아웃 편집
+          </button>
+        ) : null}
+      </div>
+
+      <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+        <SortableContext items={sections.map(s => s.id)} strategy={verticalListSortingStrategy}>
+          {sections.map(section => (
+            <DraggableSectionWrapper
+              key={section.id}
+              id={section.id}
+              visible={section.visible}
+              isEditing={isEditing}
+              onToggleVisible={() => toggleVisible(section.id)}
+            >
+              {sectionContent[section.id]}
+            </DraggableSectionWrapper>
+          ))}
+        </SortableContext>
+      </DndContext>
     </div>
   )
 }
