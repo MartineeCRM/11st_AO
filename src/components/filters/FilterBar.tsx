@@ -14,6 +14,7 @@ interface Props {
   maxDate: string
   activePreset: Preset | null
   onPresetChange: (p: Preset | null) => void
+  editButton?: React.ReactNode
 }
 
 export function FilterBar({
@@ -25,6 +26,7 @@ export function FilterBar({
   maxDate,
   activePreset,
   onPresetChange,
+  editButton,
 }: Props) {
   return (
     <div className="sticky top-14 z-30 flex items-center gap-3 border-b border-[#E5E7EB] bg-white px-6 py-3">
@@ -52,6 +54,8 @@ export function FilterBar({
         selected={filters.os}
         onChange={os => onFiltersChange({ ...filters, os })}
       />
+
+      {editButton && <div className="ml-auto">{editButton}</div>}
     </div>
   )
 }

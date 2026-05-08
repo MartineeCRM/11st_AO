@@ -1,5 +1,22 @@
 import { useState, useEffect } from 'react'
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from '@dnd-kit/core'
+import {
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable'
+import { Settings2 } from 'lucide-react'
 import { FilterBar } from '@/components/filters/FilterBar'
+import { EditModeBar } from '@/components/EditModeBar'
+import { DraggableSectionWrapper } from '@/components/DraggableSectionWrapper'
 import { Row1KpiSummary } from '@/components/rows/Row1KpiSummary'
 import { Row2TrendsTop10 } from '@/components/rows/Row2TrendsTop10'
 import { Row3FunnelEvents } from '@/components/rows/Row3FunnelEvents'
@@ -9,9 +26,13 @@ import { ChannelPerformanceTable } from '@/components/charts/ChannelPerformanceT
 import { useSheetData } from '@/hooks/useSheetData'
 import { useFilteredData } from '@/hooks/useFilteredData'
 import { useMetrics } from '@/hooks/useMetrics'
+import { useAuth } from '@/hooks/useAuth'
+import { useProject } from '@/hooks/useProject'
+import { useDashboardLayout } from '@/hooks/useDashboardLayout'
 import type { FilterState } from '@/types/sheets'
 import type { Top10Metric } from '@/types/metrics'
 import type { FunnelFieldKey } from '@/lib/metrics'
+import type { SectionId } from '@/lib/supabase'
 import { presetToRange, type Preset } from '@/components/filters/datePresets'
 
 const DEFAULT_FUNNEL_STEPS: FunnelFieldKey[] = ['dau', 'purchase_cnt']
@@ -61,6 +82,8 @@ function LoadingSkeleton() {
 
 export function CRMPerformance() {
   const { martinee, kpi, loading, error, dateRange } = useSheetData()
+  const { user } = useAuth()
+  const { project, saveDashboardLayout } = useProject(user?.id ?? null)
 
   const minDate = dateRange?.min ?? ''
   const maxDate = dateRange?.max ?? ''
@@ -109,6 +132,38 @@ export function CRMPerformance() {
     },
   )
 
+  const { sections, isEditing, startEditing, cancelEditing, reorder, toggleVisible, save, saving, saveError } =
+    useDashboardLayout('performance', project?.dashboard_layout, saveDashboardLayout)
+
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
+  )
+
+  function handleDragEnd(event: DragEndEvent) {
+    const { active, over } = event
+    if (!over || active.id === over.id) return
+    const oldIndex = sections.findIndex(s => s.id === active.id)
+    const newIndex = sections.findIndex(s => s.id === over.id)
+    reorder(oldIndex, newIndex)
+  }
+
+  const sectionContent: Record<SectionId, React.ReactNode> = {
+    kpi_cards:      <Row1KpiSummary kpiCards={kpiCards} />,
+    trends_top10:   <Row2TrendsTop10 dailyCombo={dailyCombo} top10={top10} top10Metric={top10Metric} onTop10MetricChange={setTop10Metric} />,
+    channel_table:  <div className="px-6 pb-4"><ChannelPerformanceTable rows={filteredMartinee} /></div>,
+    funnel_events:  <Row3FunnelEvents funnel={funnel} funnelSteps={funnelSteps} onFunnelStepsChange={setFunnelSteps} kpiRows={filteredKpi} />,
+    table_optin:    <Row4TableOptIn bizKpiTable={bizKpiTable} optInData={optInData} />,
+    revenue:        <Row5RevenueCharts dailyRevenue={dailyRevenue} />,
+    att_filter:     null,
+    att_summary:    null,
+    att_metrics:    null,
+    send_trend:     null,
+    live_table:     null,
+    trigger_cards:  null,
+    scheduled_list: null,
+  }
+
   if (error) {
     return (
       <div className="flex flex-col items-center justify-center py-24 gap-3">
@@ -123,6 +178,10 @@ export function CRMPerformance() {
 
   return (
     <>
+      {isEditing && (
+        <EditModeBar onSave={save} onCancel={cancelEditing} saving={saving} saveError={saveError} />
+      )}
+
       <FilterBar
         filters={filters}
         onFiltersChange={setFilters}
@@ -132,31 +191,39 @@ export function CRMPerformance() {
         maxDate={maxDate}
         activePreset={activePreset}
         onPresetChange={setActivePreset}
+        editButton={
+          !isEditing ? (
+            <button
+              onClick={startEditing}
+              className="flex items-center gap-1.5 rounded-lg border border-[#E5E7EB] bg-white px-2.5 py-1.5 text-xs font-medium text-[#374151] hover:bg-[#F9FAFB]"
+            >
+              <Settings2 size={12} />
+              레이아웃 편집
+            </button>
+          ) : null
+        }
       />
 
       {loading ? (
         <LoadingSkeleton />
       ) : (
-        <div className="pb-8">
-          <Row1KpiSummary kpiCards={kpiCards} />
-          <Row2TrendsTop10
-            dailyCombo={dailyCombo}
-            top10={top10}
-            top10Metric={top10Metric}
-            onTop10MetricChange={setTop10Metric}
-          />
-          <div className="px-6 pb-4">
-            <ChannelPerformanceTable rows={filteredMartinee} />
-          </div>
-          <Row3FunnelEvents
-            funnel={funnel}
-            funnelSteps={funnelSteps}
-            onFunnelStepsChange={setFunnelSteps}
-            kpiRows={filteredKpi}
-          />
-          <Row4TableOptIn bizKpiTable={bizKpiTable} optInData={optInData} />
-          <Row5RevenueCharts dailyRevenue={dailyRevenue} />
-        </div>
+        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+          <SortableContext items={sections.map(s => s.id)} strategy={verticalListSortingStrategy}>
+            <div className="pb-8">
+              {sections.map(section => (
+                <DraggableSectionWrapper
+                  key={section.id}
+                  id={section.id}
+                  visible={section.visible}
+                  isEditing={isEditing}
+                  onToggleVisible={() => toggleVisible(section.id as SectionId)}
+                >
+                  {sectionContent[section.id as SectionId]}
+                </DraggableSectionWrapper>
+              ))}
+            </div>
+          </SortableContext>
+        </DndContext>
       )}
     </>
   )
