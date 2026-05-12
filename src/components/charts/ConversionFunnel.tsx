@@ -8,6 +8,7 @@ import { cn } from '@/lib/utils'
 import { formatNumber } from '@/lib/formatters'
 import { FUNNEL_FIELD_LABELS, type FunnelFieldKey } from '@/lib/metrics'
 import type { FunnelStep } from '@/types/metrics'
+import { ChartSectionNote } from './ChartSectionNote'
 
 const SELECTABLE_FIELDS: FunnelFieldKey[] = [
   'dau',
@@ -97,7 +98,7 @@ export function ConversionFunnel({ data, steps, onStepsChange }: Props) {
       {/* 범례 및 헤더 */}
       <div className="mb-6 flex items-center justify-between">
         <div>
-          <h3 className="text-xl font-bold text-[#0F172A] tracking-tight">전환 퍼널 (Full-Funnel)</h3>
+          <ChartSectionNote sectionId="perf_funnel" title="전환 퍼널 (Full-Funnel)" titleClassName="text-xl font-bold text-[#0F172A] tracking-tight" />
           <p className="text-[11px] text-[#64748B] font-medium uppercase tracking-wider mt-0.5">Marketing Conversion Journey</p>
         </div>
       </div>

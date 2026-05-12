@@ -6,6 +6,7 @@ import { CampaignRoiTable } from './CampaignRoiTable'
 import { formatKorean, formatRate, formatCurrency } from '@/lib/formatters'
 import type { PurchaseMetricKey, PurchaseMetrics, KpiDelta, TrendPoint } from '@/hooks/useAttributionMetrics'
 import type { AttDataRow } from '@/types/sheets'
+import { ChartSectionNote } from '@/components/charts/ChartSectionNote'
 
 const PURCHASE_METRIC_OPTIONS: { key: PurchaseMetricKey; label: string }[] = [
   { key: 'user_cvr', label: 'CVR' },
@@ -83,7 +84,9 @@ export function PurchaseMetricsSection({
       />
 
       <div className="rounded-xl border border-[#E5E7EB] bg-white p-4">
-        <p className="mb-3 text-xs font-semibold text-[#374151]">트렌드 (현재 / WoW / MoM)</p>
+        <div className="mb-3">
+          <ChartSectionNote sectionId="att_purchase_trend" title="트렌드 (현재 / WoW / MoM)" titleClassName="text-xs font-semibold text-[#374151]" />
+        </div>
         <PurchaseTrendChart
           data={trendData}
           yLabel={getYLabel(activeMetric)}

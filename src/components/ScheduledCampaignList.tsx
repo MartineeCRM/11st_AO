@@ -1,4 +1,5 @@
 import { Calendar, ExternalLink } from 'lucide-react'
+import { ChartSectionNote } from './charts/ChartSectionNote'
 import { channelLabel, channelBadgeColor, brazeCampaignUrl } from '@/lib/braze'
 import type { EnrichedCampaign } from '@/hooks/useBrazeCampaigns'
 
@@ -74,7 +75,7 @@ export function ScheduledCampaignList({ campaigns, loading, error }: Props) {
     <div className="rounded-xl border border-[#E5E7EB] bg-white">
       <div className="flex items-center gap-2 border-b border-[#F3F4F6] px-6 py-3.5">
         <Calendar className="h-4 w-4 text-[#4361EE]" />
-        <span className="text-sm font-semibold text-[#111827]">Scheduled 캠페인 현황</span>
+        <ChartSectionNote sectionId="ops_scheduled_list" title="Scheduled 캠페인 현황" titleClassName="text-sm font-semibold text-[#111827]" />
         {!loading && (
           <span className="ml-1 rounded-full bg-[#EEF2FF] px-2 py-0.5 text-[11px] font-bold text-[#4361EE]">
             {totalCount}

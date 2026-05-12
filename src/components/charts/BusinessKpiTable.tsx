@@ -1,9 +1,11 @@
+import { useState } from 'react'
 import { TrendingUp, TrendingDown, Minus } from 'lucide-react'
 import { LineChart, Line, ResponsiveContainer, Tooltip as RTooltip } from 'recharts'
 import { cn } from '@/lib/utils'
 import { formatWoW } from '@/lib/formatters'
 import type { BusinessKpiRow } from '@/types/metrics'
 import { useChartColors } from '@/lib/chartColors'
+import { ChartSectionNote } from './ChartSectionNote'
 
 function MiniSparkline({ data, color }: { data: number[]; color: string }) {
   const points = data.map((v, i) => ({ i, v }))
@@ -52,9 +54,33 @@ interface Props {
 
 export function BusinessKpiTable({ rows }: Props) {
   const colors = useChartColors()
+  const [compareMode, setCompareMode] = useState<'mom' | 'yoy'>('mom')
+
   return (
     <div className="rounded-xl border border-[#E5E7EB] bg-white p-5 flex flex-col h-full">
-      <h3 className="mb-4 text-sm font-semibold text-[#111827]">비즈니스 지표 기간 비교</h3>
+      <div className="mb-4 flex items-center justify-between">
+        <ChartSectionNote sectionId="perf_business_kpi" title="비즈니스 지표 기간 비교" />
+        <div className="flex rounded-md border border-[#E5E7EB] overflow-hidden text-[11px]">
+          <button
+            onClick={() => setCompareMode('mom')}
+            className={cn(
+              'px-2.5 py-1 font-medium transition-colors',
+              compareMode === 'mom' ? 'bg-[#4361EE] text-white' : 'text-[#6B7280] hover:bg-[#F3F4F6]',
+            )}
+          >
+            MoM
+          </button>
+          <button
+            onClick={() => setCompareMode('yoy')}
+            className={cn(
+              'px-2.5 py-1 font-medium transition-colors border-l border-[#E5E7EB]',
+              compareMode === 'yoy' ? 'bg-[#4361EE] text-white' : 'text-[#6B7280] hover:bg-[#F3F4F6]',
+            )}
+          >
+            YoY
+          </button>
+        </div>
+      </div>
       <div className="flex-1 overflow-auto">
         <table className="w-full text-left border-collapse">
           <thead>
@@ -62,8 +88,9 @@ export function BusinessKpiTable({ rows }: Props) {
               <th className="pb-2 text-[11px] font-medium text-[#6B7280] w-36">지표</th>
               <th className="pb-2 text-[11px] font-medium text-[#6B7280] text-right">현재값</th>
               <th className="pb-2 text-[11px] font-medium text-[#6B7280] text-center">WoW</th>
-              <th className="pb-2 text-[11px] font-medium text-[#6B7280] text-center">MoM</th>
-              <th className="pb-2 text-[11px] font-medium text-[#6B7280] text-center">YoY</th>
+              <th className="pb-2 text-[11px] font-medium text-[#6B7280] text-center">
+                {compareMode === 'mom' ? 'MoM' : 'YoY'}
+              </th>
               <th className="pb-2 text-[11px] font-medium text-[#6B7280] text-center">30일 추이</th>
             </tr>
           </thead>
@@ -84,10 +111,7 @@ export function BusinessKpiTable({ rows }: Props) {
                   <ChangeCell value={row.wow} />
                 </td>
                 <td className="py-2.5 text-center">
-                  <ChangeCell value={row.mom} />
-                </td>
-                <td className="py-2.5 text-center">
-                  <ChangeCell value={row.yoy} />
+                  <ChangeCell value={compareMode === 'mom' ? row.mom : row.yoy} />
                 </td>
                 <td className="py-2.5">
                   <div className="flex justify-center">

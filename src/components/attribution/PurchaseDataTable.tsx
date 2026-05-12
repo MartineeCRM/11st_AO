@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react'
 import { ChevronRight, ChevronDown, Settings2 } from 'lucide-react'
+import { ChartSectionNote } from '@/components/charts/ChartSectionNote'
 import { cn } from '@/lib/utils'
 import { formatRate, formatCurrency, formatKorean } from '@/lib/formatters'
 import { sumRows, calcPurchaseMetrics, calcDelta, offsetDate } from '@/lib/attributionMetrics'
@@ -232,9 +233,10 @@ interface TableRowProps {
   depth?: number
   target: MonthlyTarget | null
   dailyTarget: MonthlyTarget | null
+  compareMode: 'mom' | 'yoy'
 }
 
-function TableRow({ row, depth = 0, target, dailyTarget }: TableRowProps) {
+function TableRow({ row, depth = 0, target, dailyTarget, compareMode }: TableRowProps) {
   const [open, setOpen] = useState(false)
   const hasChildren = (row.children?.length ?? 0) > 0
   const showProgress = target !== null && dailyTarget !== null && depth === 0
@@ -268,13 +270,15 @@ function TableRow({ row, depth = 0, target, dailyTarget }: TableRowProps) {
           </td>
         ))}
 
-        {/* MoM / YoY — Purchase */}
-        <td className="px-3 py-2 text-right"><DeltaBadge value={row.purchase_mom} /></td>
-        <td className="px-3 py-2 text-right"><DeltaBadge value={row.purchase_yoy} /></td>
+        {/* Purchase 비교 */}
+        <td className="px-3 py-2 text-right">
+          <DeltaBadge value={compareMode === 'mom' ? row.purchase_mom : row.purchase_yoy} />
+        </td>
 
-        {/* MoM / YoY — Revenue */}
-        <td className="px-3 py-2 text-right"><DeltaBadge value={row.revenue_mom} /></td>
-        <td className="px-3 py-2 text-right"><DeltaBadge value={row.revenue_yoy} /></td>
+        {/* Revenue 비교 */}
+        <td className="px-3 py-2 text-right">
+          <DeltaBadge value={compareMode === 'mom' ? row.revenue_mom : row.revenue_yoy} />
+        </td>
 
         {/* 진척도 */}
         {target !== null && (
@@ -294,7 +298,7 @@ function TableRow({ row, depth = 0, target, dailyTarget }: TableRowProps) {
       </tr>
 
       {open && row.children?.map(child => (
-        <TableRow key={child.key} row={child} depth={depth + 1} target={target} dailyTarget={dailyTarget} />
+        <TableRow key={child.key} row={child} depth={depth + 1} target={target} dailyTarget={dailyTarget} compareMode={compareMode} />
       ))}
     </>
   )
@@ -312,6 +316,7 @@ function parseLocaleNumber(s: string): number {
 export function PurchaseDataTable({ rows, allRows }: Props) {
   const [groupBy, setGroupBy] = useState<GroupBy>('day')
   const [showTargetPanel, setShowTargetPanel] = useState(false)
+  const [compareMode, setCompareMode] = useState<'mom' | 'yoy'>('mom')
 
   // 현재 데이터 기준 월 (최신 날짜 기준)
   const currentMonth = useMemo(() => {
@@ -366,13 +371,13 @@ export function PurchaseDataTable({ rows, allRows }: Props) {
     setShowTargetPanel(true)
   }
 
-  const colSpanTotal = BASE_COLS.length + 1 + 4 + (savedTarget ? 2 : 0)
+  const colSpanTotal = BASE_COLS.length + 1 + 2 + (savedTarget ? 2 : 0)
 
   return (
     <div className="rounded-xl border border-[#E5E7EB] bg-white">
       {/* 헤더 */}
       <div className="flex items-center justify-between border-b border-[#E5E7EB] px-4 py-3">
-        <p className="text-xs font-semibold text-[#374151]">일자별 구매 지표</p>
+        <ChartSectionNote sectionId="att_purchase_table" title="일자별 구매 지표" titleClassName="text-xs font-semibold text-[#374151]" />
         <div className="flex items-center gap-2">
           <button
             onClick={handleOpenPanel}
@@ -381,6 +386,27 @@ export function PurchaseDataTable({ rows, allRows }: Props) {
             <Settings2 className="h-3 w-3" />
             타겟 설정
           </button>
+          {/* MoM / YoY 토글 */}
+          <div className="flex rounded-md border border-[#E5E7EB] overflow-hidden text-[11px]">
+            <button
+              onClick={() => setCompareMode('mom')}
+              className={cn(
+                'px-2.5 py-1 font-medium transition-colors',
+                compareMode === 'mom' ? 'bg-[#4361EE] text-white' : 'text-[#6B7280] hover:bg-[#F3F4F6]',
+              )}
+            >
+              MoM
+            </button>
+            <button
+              onClick={() => setCompareMode('yoy')}
+              className={cn(
+                'px-2.5 py-1 font-medium transition-colors border-l border-[#E5E7EB]',
+                compareMode === 'yoy' ? 'bg-[#4361EE] text-white' : 'text-[#6B7280] hover:bg-[#F3F4F6]',
+              )}
+            >
+              YoY
+            </button>
+          </div>
           <div className="flex gap-1">
             {GROUP_OPTIONS.map(opt => (
               <button
@@ -458,12 +484,12 @@ export function PurchaseDataTable({ rows, allRows }: Props) {
                   {col.label}
                 </th>
               ))}
-              {/* Purchase MoM/YoY */}
-              <th className="px-3 py-2 text-right text-[11px] font-semibold text-[#6B7280]">Purchase MoM</th>
-              <th className="px-3 py-2 text-right text-[11px] font-semibold text-[#6B7280]">Purchase YoY</th>
-              {/* Revenue MoM/YoY */}
-              <th className="px-3 py-2 text-right text-[11px] font-semibold text-[#6B7280]">Revenue MoM</th>
-              <th className="px-3 py-2 text-right text-[11px] font-semibold text-[#6B7280]">Revenue YoY</th>
+              <th className="px-3 py-2 text-right text-[11px] font-semibold text-[#6B7280]">
+                Purchase {compareMode === 'mom' ? 'MoM' : 'YoY'}
+              </th>
+              <th className="px-3 py-2 text-right text-[11px] font-semibold text-[#6B7280]">
+                Revenue {compareMode === 'mom' ? 'MoM' : 'YoY'}
+              </th>
               {/* 진척도 */}
               {savedTarget && (
                 <>
@@ -487,6 +513,7 @@ export function PurchaseDataTable({ rows, allRows }: Props) {
                   row={row}
                   target={savedTarget}
                   dailyTarget={dailyTarget}
+                  compareMode={compareMode}
                 />
               ))
             )}

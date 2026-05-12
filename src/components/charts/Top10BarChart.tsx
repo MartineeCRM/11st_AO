@@ -3,6 +3,7 @@ import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, LabelL
 import { ChevronDown } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import type { Top10Item, Top10Metric } from '@/types/metrics'
+import { ChartSectionNote } from './ChartSectionNote'
 import { useChartColors } from '@/lib/chartColors'
 
 const METRICS: Top10Metric[] = ['Revenue', '구매 CVR', '발송/노출량', '오픈/클릭율', 'CTR', 'AOV']
@@ -23,7 +24,7 @@ export function Top10BarChart({ data, metric, onMetricChange }: Props) {
     <div className="rounded-xl border border-[#E5E7EB] bg-white p-5 flex flex-col h-full">
       {/* 헤더 */}
       <div className="mb-4 flex items-center justify-between">
-        <h3 className="text-sm font-semibold text-[#111827]">캠페인 성과 Top 10</h3>
+        <ChartSectionNote sectionId="perf_top10" title="캠페인 성과 Top 10" />
         <div className="flex items-center gap-2">
           {/* Campaign / Canvas 탭 */}
           <div className="flex rounded-md border border-[#E5E7EB] bg-[#F3F4F6] p-0.5 text-xs">

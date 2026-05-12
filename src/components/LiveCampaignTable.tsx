@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { ExternalLink } from 'lucide-react'
+import { ChartSectionNote } from './charts/ChartSectionNote'
 import type { EnrichedCampaign } from '@/hooks/useBrazeCampaigns'
 import { channelLabel, channelBadgeColor, scheduleTypeLabel, brazeCampaignUrl } from '@/lib/braze'
 import { cn } from '@/lib/utils'
@@ -42,7 +43,7 @@ export function LiveCampaignTable({ campaigns, loading, error }: Props) {
       {/* 카드 헤더 */}
       <div className="flex items-center justify-between px-6 py-3.5 border-b border-[#F3F4F6]">
         <div className="flex items-center gap-2.5">
-          <span className="text-sm font-semibold text-[#111827]">라이브 캠페인 현황</span>
+          <ChartSectionNote sectionId="ops_live_table" title="라이브 캠페인 현황" titleClassName="text-sm font-semibold text-[#111827]" />
           <span className="flex items-center gap-1 rounded-full bg-[#DCFCE7] px-2.5 py-0.5 text-[11px] font-bold text-[#16A34A]">
             <span className="inline-block h-1.5 w-1.5 rounded-full bg-[#16A34A]" />
             LIVE

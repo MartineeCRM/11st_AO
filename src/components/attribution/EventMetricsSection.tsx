@@ -2,6 +2,7 @@ import { MetricToggleGroup } from './MetricToggleGroup'
 import { EventTrendChart } from './AttributionTrendChart'
 import { formatKorean } from '@/lib/formatters'
 import type { EventKey, EventTrendPoint } from '@/hooks/useAttributionMetrics'
+import { ChartSectionNote } from '@/components/charts/ChartSectionNote'
 
 function formatAdaptiveRate(v: number): string {
   const pct = v * 100
@@ -59,9 +60,9 @@ export function EventMetricsSection({
       />
 
       <div className="rounded-xl border border-[#E5E7EB] bg-white p-4">
-        <p className="mb-3 text-xs font-semibold text-[#374151]">
-          {activeLabel} 발생수 트렌드
-        </p>
+        <div className="mb-3">
+          <ChartSectionNote sectionId="att_event_trend" title={`${activeLabel} 발생수 트렌드`} titleClassName="text-xs font-semibold text-[#374151]" />
+        </div>
         <EventTrendChart data={eventTrend} eventLabel={activeLabel} />
       </div>
 

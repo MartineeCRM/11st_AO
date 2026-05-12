@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { ExternalLink, Pencil } from 'lucide-react'
+import { ChartSectionNote } from './charts/ChartSectionNote'
 import type { EnrichedCampaign } from '@/hooks/useBrazeCampaigns'
 import { channelLabel, channelBadgeColor, brazeCampaignUrl } from '@/lib/braze'
 import { TriggerMappingModal } from '@/components/TriggerMappingModal'
@@ -57,7 +58,7 @@ export function TriggerEventCards({ campaigns, loading, error, triggerMappings, 
   return (
     <div className="rounded-xl border border-[#E5E7EB] bg-white">
       <div className="flex items-center gap-2.5 px-6 py-3.5 border-b border-[#F3F4F6]">
-        <span className="text-sm font-semibold text-[#111827]">Action-Based 트리거 이벤트 현황</span>
+        <ChartSectionNote sectionId="ops_trigger_cards" title="Action-Based 트리거 이벤트 현황" titleClassName="text-sm font-semibold text-[#111827]" />
         {!loading && (
           <span className="text-xs text-[#9CA3AF]">{groups.length}개 트리거</span>
         )}

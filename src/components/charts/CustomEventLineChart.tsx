@@ -11,6 +11,7 @@ import {
 } from 'recharts'
 import { formatKorean, formatDateShort } from '@/lib/formatters'
 import type { DailyKpiRow } from '@/types/sheets'
+import { ChartSectionNote } from './ChartSectionNote'
 import { useChartColors } from '@/lib/chartColors'
 
 const EVENT_KEYS: { key: keyof Omit<DailyKpiRow, 'date'>; label: string }[] = [
@@ -64,7 +65,9 @@ export function CustomEventLineChart({ kpiRows }: Props) {
 
   return (
     <div className="rounded-xl border border-[#E5E7EB] bg-white p-5 flex flex-col h-full">
-      <h3 className="mb-3 text-sm font-semibold text-[#111827]">커스텀 이벤트 일별 추이</h3>
+      <div className="mb-3">
+        <ChartSectionNote sectionId="perf_custom_event" title="커스텀 이벤트 일별 추이" />
+      </div>
 
       {/* 이벤트 선택 체크박스 */}
       <div className="mb-3 flex flex-wrap gap-x-3 gap-y-1.5">

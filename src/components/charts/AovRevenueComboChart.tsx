@@ -12,6 +12,7 @@ import {
 import { formatKorean, formatCurrency } from '@/lib/formatters'
 import type { DailyRevenuePoint } from '@/types/metrics'
 import { EmptyChartState } from '@/components/EmptyChartState'
+import { ChartSectionNote } from './ChartSectionNote'
 import { useChartColors } from '@/lib/chartColors'
 
 interface Props {
@@ -22,7 +23,9 @@ export function AovRevenueComboChart({ data }: Props) {
   const colors = useChartColors()
   return (
     <div className="rounded-xl border border-[#E5E7EB] bg-white p-5 flex flex-col h-full">
-      <h3 className="mb-4 text-sm font-semibold text-[#111827]">Revenue / AOV 추이</h3>
+      <div className="mb-4">
+        <ChartSectionNote sectionId="perf_aov_revenue" title="Revenue / AOV 추이" />
+      </div>
       <div className="flex-1 min-h-0">
         {data.length === 0 ? <EmptyChartState /> : <ResponsiveContainer width="100%" height="100%">
           <ComposedChart data={data} margin={{ top: 4, right: 52, left: 8, bottom: 4 }}>

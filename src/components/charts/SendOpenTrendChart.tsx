@@ -11,6 +11,7 @@ import {
 } from 'recharts'
 import type { DailyComboPoint } from '@/types/metrics'
 import { formatKorean } from '@/lib/formatters'
+import { ChartSectionNote } from './ChartSectionNote'
 import { useChartColors } from '@/lib/chartColors'
 
 interface Props {
@@ -23,7 +24,7 @@ export function SendOpenTrendChart({ data }: Props) {
     <div className="rounded-xl border border-[#E5E7EB] bg-white p-5 flex flex-col h-full">
       <div className="mb-4 flex items-center justify-between">
         <div>
-          <h3 className="text-sm font-semibold text-[#111827]">발송량 &amp; 반응 트렌드</h3>
+          <ChartSectionNote sectionId="ops_send_trend" title="발송량 & 반응 트렌드" />
           <p className="text-xs text-[#9CA3AF] mt-0.5">일별 Sent/Impression · Open/Click 추이</p>
         </div>
       </div>

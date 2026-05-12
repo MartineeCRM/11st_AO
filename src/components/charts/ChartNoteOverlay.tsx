@@ -34,13 +34,15 @@ export function NoteMarker({ cx, cy, date, note, onSave, onDelete }: NoteMarkerP
     if (!el) return
     const rect = el.getBoundingClientRect()
     const vw = window.innerWidth
+    const POPOVER_H = 160 // approximate popover height
 
-    let top = rect.top + window.scrollY - 208 - 8
     let left = rect.left + window.scrollX - POPOVER_W / 2 + rect.width / 2
+    // prefer above the marker; if not enough room, show below
+    let top = rect.top + window.scrollY - POPOVER_H - 8
+    if (top < window.scrollY + 8) top = rect.bottom + window.scrollY + 8
 
     if (left < 8) left = 8
     if (left + POPOVER_W > vw - 8) left = vw - POPOVER_W - 8
-    if (top < window.scrollY + 8) top = rect.bottom + window.scrollY + 8
 
     setPopoverPos({ top, left })
   }, [])

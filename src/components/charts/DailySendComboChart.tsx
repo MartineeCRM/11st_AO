@@ -14,6 +14,7 @@ import { formatKorean } from '@/lib/formatters'
 import { EmptyChartState } from '@/components/EmptyChartState'
 import { useChartNotes } from '@/hooks/useChartNotes'
 import { NoteMarker } from './ChartNoteOverlay'
+import { ChartSectionNote } from './ChartSectionNote'
 import { useChartColors } from '@/lib/chartColors'
 
 interface Props {
@@ -49,7 +50,9 @@ export function DailySendComboChart({ data }: Props) {
 
   return (
     <div className="rounded-xl border border-[#E5E7EB] bg-white p-5 flex flex-col h-full">
-      <h3 className="mb-4 text-sm font-semibold text-[#111827]">일별 발송량 / CTR / CVR 추이</h3>
+      <div className="mb-4">
+        <ChartSectionNote sectionId="perf_daily_send" title="일별 발송량 / CTR / CVR 추이" />
+      </div>
       <div className="flex-1 min-h-0">
         {data.length === 0 ? <EmptyChartState /> : <ResponsiveContainer width="100%" height="100%">
           <ComposedChart data={data} margin={{ top: 24, right: 48, left: 8, bottom: 4 }}>

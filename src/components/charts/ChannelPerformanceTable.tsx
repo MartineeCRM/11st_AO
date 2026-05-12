@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
 import { cn } from '@/lib/utils'
+import { ChartSectionNote } from './ChartSectionNote'
 import { formatKorean, formatRate } from '@/lib/formatters'
 import { calcSentImpression, calcCTR, calcCVR } from '@/lib/metrics'
 import type { MartineeUnionRow } from '@/types/sheets'
@@ -16,7 +17,7 @@ interface ChannelRow {
 function buildChannelRows(rows: MartineeUnionRow[]): ChannelRow[] {
   const byChannel = new Map<string, MartineeUnionRow[]>()
   for (const r of rows) {
-    const key = r.variant_depth_1 || '(미지정)'
+    const key = r.channel || '(미지정)'
     const list = byChannel.get(key) ?? []
     list.push(r)
     byChannel.set(key, list)
@@ -56,15 +57,15 @@ export function ChannelPerformanceTable({ rows }: Props) {
   return (
     <div className="rounded-xl border border-[#E5E7EB] bg-white">
       <div className="border-b border-[#E5E7EB] px-4 py-3">
-        <p className="text-xs font-semibold text-[#374151]">채널별 성과 비교</p>
-        <p className="text-[10px] text-[#9CA3AF] mt-0.5">Variant 기준 그루핑</p>
+        <ChartSectionNote sectionId="perf_channel_table" title="채널별 성과 비교" titleClassName="text-xs font-semibold text-[#374151]" />
+        <p className="text-[10px] text-[#9CA3AF] mt-0.5">Channel 기준 그루핑</p>
       </div>
 
       <div className="overflow-x-auto">
         <table className="w-full min-w-[580px]">
           <thead>
             <tr className="border-b border-[#E5E7EB] bg-[#F9FAFB]">
-              <th className="px-4 py-2 text-left text-[11px] font-semibold text-[#6B7280]">채널 / Variant</th>
+              <th className="px-4 py-2 text-left text-[11px] font-semibold text-[#6B7280]">Channel</th>
               <th className="px-3 py-2 text-right text-[11px] font-semibold text-[#6B7280]">발송/노출</th>
               <th className="px-3 py-2 text-right text-[11px] font-semibold text-[#6B7280]">CTR</th>
               <th className="px-3 py-2 text-right text-[11px] font-semibold text-[#6B7280]">CVR</th>
