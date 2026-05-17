@@ -19,7 +19,7 @@ interface SheetTab {
   sheetId: number
 }
 
-const DEFAULT_COLORS = ['#4361EE', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#EC4899', '#06B6D4', '#F97316']
+const DEFAULT_COLORS = ['#0066cc', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#EC4899', '#06B6D4', '#F97316']
 
 async function apiFetch(path: string, options?: RequestInit) {
   const { data: { session } } = await supabase.auth.getSession()
@@ -138,7 +138,7 @@ export function CRMSettings({ project }: Props) {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-24">
-        <div className="h-5 w-5 animate-spin rounded-full border-2 border-[#4361EE] border-t-transparent" />
+        <div className="h-5 w-5 animate-spin rounded-full border-2 border-[#0066cc] border-t-transparent" />
       </div>
     )
   }
@@ -153,7 +153,7 @@ export function CRMSettings({ project }: Props) {
 
   return (
     <div className="mx-auto max-w-2xl px-6 py-8 flex flex-col gap-6">
-      <h1 className="text-base font-bold text-[#111827]">프로젝트 설정</h1>
+      <h1 className="text-base font-bold text-[#1d1d1f]">프로젝트 설정</h1>
 
       {/* 프로젝트 이름 */}
       <Section title="프로젝트">
@@ -207,15 +207,15 @@ export function CRMSettings({ project }: Props) {
         <button
           onClick={loadSheetTabs}
           disabled={sheetLoading || !settings.spreadsheet_id || !settings.google_api_key}
-          className="mt-1 rounded-lg border border-[#4361EE] px-4 py-2 text-xs font-semibold text-[#4361EE] hover:bg-[#EEF2FF] disabled:opacity-40"
+          className="mt-1 rounded-lg border border-[#0066cc] px-4 py-2 text-xs font-semibold text-[#0066cc] hover:bg-[#e8f0fb] disabled:opacity-40"
         >
           {sheetLoading ? '불러오는 중...' : '시트 탭 목록 불러오기'}
         </button>
         {sheetError && <p className="text-xs text-[#EF4444]">{sheetError}</p>}
 
         {sheetTabs.length > 0 && (
-          <div className="mt-3 flex flex-col gap-3 rounded-xl border border-[#E5E7EB] p-4">
-            <p className="text-xs font-semibold text-[#374151]">데이터 탭 매핑</p>
+          <div className="mt-3 flex flex-col gap-3 rounded-[18px] border border-[#e0e0e0] p-4">
+            <p className="text-xs font-semibold text-[#1d1d1f]">데이터 탭 매핑</p>
             {[
               { key: 'martinee_union', label: 'CRM 성과 데이터 (martinee_union)' },
               { key: 'daily_kpi', label: '비즈니스 KPI (daily_kpi)' },
@@ -251,7 +251,7 @@ export function CRMSettings({ project }: Props) {
                   type="color"
                   value={color}
                   onChange={e => updateColor(i, e.target.value)}
-                  className="h-10 w-10 cursor-pointer rounded-lg border border-[#E5E7EB] p-0.5"
+                  className="h-10 w-10 cursor-pointer rounded-lg border border-[#e0e0e0] p-0.5"
                 />
               </div>
               <button
@@ -265,7 +265,7 @@ export function CRMSettings({ project }: Props) {
           {settings.chart_colors.length < 8 && (
             <button
               onClick={addColor}
-              className="flex h-10 w-10 items-center justify-center rounded-lg border border-dashed border-[#D1D5DB] text-[#9CA3AF] hover:border-[#4361EE] hover:text-[#4361EE]"
+              className="flex h-10 w-10 items-center justify-center rounded-lg border border-dashed border-[#D1D5DB] text-[#9CA3AF] hover:border-[#0066cc] hover:text-[#0066cc]"
             >
               +
             </button>
@@ -279,7 +279,7 @@ export function CRMSettings({ project }: Props) {
         <button
           onClick={handleSave}
           disabled={saving}
-          className="rounded-lg bg-[#4361EE] px-6 py-2.5 text-sm font-semibold text-white disabled:opacity-60"
+          className="rounded-lg bg-[#0066cc] px-6 py-2.5 text-sm font-semibold text-white disabled:opacity-60"
         >
           {saving ? '저장 중...' : '저장'}
         </button>
@@ -290,12 +290,12 @@ export function CRMSettings({ project }: Props) {
   )
 }
 
-const inputCls = 'w-full rounded-lg border border-[#E5E7EB] px-3 py-2 text-sm outline-none focus:border-[#4361EE] focus:ring-2 focus:ring-[#EEF2FF]'
+const inputCls = 'w-full rounded-lg border border-[#e0e0e0] px-3 py-2 text-sm outline-none focus:border-[#0066cc] focus:ring-2 focus:ring-[#e8f0fb]'
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div className="rounded-2xl border border-[#E5E7EB] bg-white p-6 flex flex-col gap-4">
-      <p className="text-sm font-semibold text-[#111827]">{title}</p>
+    <div className="rounded-2xl border border-[#e0e0e0] bg-white p-6 flex flex-col gap-4">
+      <p className="text-sm font-semibold text-[#1d1d1f]">{title}</p>
       {children}
     </div>
   )

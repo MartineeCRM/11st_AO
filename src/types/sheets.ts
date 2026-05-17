@@ -6,6 +6,9 @@ export interface MartineeUnionRow {
   campaign_depth_1: string
   variant_depth_1: string
   os: string
+  category: string
+  channel: string
+  message_type: string
   sent: number
   impression: number
   total_opens: number
@@ -83,4 +86,7 @@ export interface FilterState {
   dateRange: DateRange
   campaignDepth1: string[]  // empty = all
   os: string[]              // empty = all
+  category: string[]        // empty = all
+  channel: string[]         // empty = all
+  messageType: string[]     // empty = all
 }

@@ -46,7 +46,7 @@ function groupByTrigger(
 }
 
 const TRIGGER_COLORS = [
-  '#4361EE', '#10B981', '#F59E0B', '#EF4444',
+  '#0066cc', '#10B981', '#F59E0B', '#EF4444',
   '#8B5CF6', '#06B6D4', '#F97316', '#EC4899',
 ]
 
@@ -56,9 +56,9 @@ export function TriggerEventCards({ campaigns, loading, error, triggerMappings, 
   const knownTriggers = groups.filter(g => !g.isUnknown).map(g => g.triggerAction)
 
   return (
-    <div className="rounded-xl border border-[#E5E7EB] bg-white">
+    <div className="rounded-[18px] border border-[#e0e0e0] bg-white">
       <div className="flex items-center gap-2.5 px-6 py-3.5 border-b border-[#F3F4F6]">
-        <ChartSectionNote sectionId="ops_trigger_cards" title="Action-Based 트리거 이벤트 현황" titleClassName="text-sm font-semibold text-[#111827]" />
+        <ChartSectionNote sectionId="ops_trigger_cards" title="Action-Based 트리거 이벤트 현황" titleClassName="text-sm font-semibold text-[#1d1d1f]" />
         {!loading && (
           <span className="text-xs text-[#9CA3AF]">{groups.length}개 트리거</span>
         )}
@@ -85,17 +85,17 @@ export function TriggerEventCards({ campaigns, loading, error, triggerMappings, 
             return (
               <div
                 key={group.triggerAction}
-                className="rounded-lg border border-[#E5E7EB] overflow-hidden"
+                className="rounded-lg border border-[#e0e0e0] overflow-hidden"
                 style={{ borderLeftColor: color, borderLeftWidth: 3 }}
               >
                 <div className="flex items-center justify-between px-4 py-3 bg-[#F9FAFB] border-b border-[#F3F4F6]">
-                  <span className="text-[13px] font-semibold text-[#111827] truncate pr-2">
+                  <span className="text-[13px] font-semibold text-[#1d1d1f] truncate pr-2">
                     {group.triggerAction}
                   </span>
                   <div className="flex items-center gap-1.5 shrink-0">
                     <button
                       onClick={() => setEditingGroup(group)}
-                      className="rounded p-0.5 text-[#9CA3AF] hover:text-[#374151] hover:bg-[#E5E7EB]"
+                      className="rounded p-0.5 text-[#9CA3AF] hover:text-[#1d1d1f] hover:bg-[#e0e0e0]"
                       title="트리거 이름 수동 매핑"
                     >
                       <Pencil size={12} />
@@ -121,12 +121,12 @@ export function TriggerEventCards({ campaigns, loading, error, triggerMappings, 
                         >
                           {channelLabel(ch)}
                         </span>
-                        <span className="flex-1 text-xs text-[#374151] truncate">{c.name}</span>
+                        <span className="flex-1 text-xs text-[#1d1d1f] truncate">{c.name}</span>
                         <a
                           href={brazeCampaignUrl(c.id)}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="shrink-0 text-[#9CA3AF] hover:text-[#4361EE] transition-colors"
+                          className="shrink-0 text-[#9CA3AF] hover:text-[#0066cc] transition-colors"
                           title="Braze에서 열기"
                         >
                           <ExternalLink size={13} />

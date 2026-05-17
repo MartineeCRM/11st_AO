@@ -62,21 +62,21 @@ function WowBadge({ value }: { value: number }) {
 function MiniTrendChart({ data }: { data: number[] }) {
   const points = data.map((v, i) => ({ i, v }))
   return (
-    <div className="w-[200px] rounded-xl border border-[#E5E7EB] bg-white p-3 shadow-lg">
+    <div className="w-[200px] rounded-[18px] border border-[#e0e0e0] bg-white p-3 shadow-lg">
       <p className="mb-1.5 text-[11px] font-medium text-[#6B7280]">최근 14일 추이</p>
       <ResponsiveContainer width="100%" height={60}>
         <LineChart data={points}>
           <Line
             type="monotone"
             dataKey="v"
-            stroke="#4361EE"
+            stroke="#0066cc"
             strokeWidth={1.5}
             dot={false}
           />
           <RTooltip
             formatter={(v: number) => [v.toLocaleString(), '']}
             contentStyle={{ fontSize: 11 }}
-            itemStyle={{ color: '#374151' }}
+            itemStyle={{ color: '#1d1d1f' }}
           />
         </LineChart>
       </ResponsiveContainer>
@@ -100,9 +100,9 @@ export function KpiCard({ data }: Props) {
     >
       <div
         className={cn(
-          'rounded-xl border bg-white transition-shadow',
+          'rounded-[18px] border bg-white transition-shadow',
           primary ? 'p-5' : 'p-4',
-          anomaly ? 'border-[#FCA5A5]' : 'border-[#E5E7EB]',
+          anomaly ? 'border-[#FCA5A5]' : 'border-[#e0e0e0]',
           hovered && 'shadow-md',
         )}
       >
@@ -118,7 +118,7 @@ export function KpiCard({ data }: Props) {
         </div>
 
         {/* 값 */}
-        <p className={cn('mb-2 font-bold text-[#111827] leading-none', primary ? 'text-3xl' : 'text-2xl')}>{formattedValue}</p>
+        <p className={cn('mb-2 font-bold text-[#1d1d1f] leading-none', primary ? 'text-3xl' : 'text-2xl')}>{formattedValue}</p>
 
         {/* WoW + MoM */}
         <div className="flex flex-col gap-0.5">

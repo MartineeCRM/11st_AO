@@ -21,8 +21,8 @@ export function MetricToggleGroup<T extends string>({ options, active, onChange 
           className={cn(
             'rounded-md px-3 py-1.5 text-xs font-medium transition-colors',
             active === opt.key
-              ? 'bg-[#4361EE] text-white'
-              : 'bg-[#F3F4F6] text-[#6B7280] hover:bg-[#E5E7EB] hover:text-[#374151]',
+              ? 'bg-[#0066cc] text-white'
+              : 'bg-[#F3F4F6] text-[#6B7280] hover:bg-[#e0e0e0] hover:text-[#1d1d1f]',
           )}
         >
           {opt.label}

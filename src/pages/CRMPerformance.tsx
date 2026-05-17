@@ -42,7 +42,7 @@ const DEFAULT_PRESET: Preset = '30d'
 function SkeletonCard({ className }: { className?: string }) {
   return (
     <div
-      className={`animate-pulse rounded-xl border border-[#E5E7EB] bg-[#F3F4F6] ${className ?? ''}`}
+      className={`animate-pulse rounded-[18px] border border-[#e0e0e0] bg-[#F3F4F6] ${className ?? ''}`}
     />
   )
 }
@@ -94,6 +94,9 @@ export function CRMPerformance() {
     dateRange: { start: '', end: '' },
     campaignDepth1: [],
     os: [],
+    category: [],
+    channel: [],
+    messageType: [],
   })
 
   // dateRange 로드 후 기본 프리셋 적용
@@ -110,7 +113,7 @@ export function CRMPerformance() {
   // 퍼널 단계 상태
   const [funnelSteps, setFunnelSteps] = useState<FunnelFieldKey[]>(DEFAULT_FUNNEL_STEPS)
 
-  const { filteredMartinee, filteredKpi, campaignDepth1Options, osOptions } = useFilteredData(
+  const { filteredMartinee, filteredKpi, campaignDepth1Options, osOptions, categoryOptions, channelOptions, messageTypeOptions } = useFilteredData(
     martinee,
     kpi,
     filters,
@@ -187,6 +190,9 @@ export function CRMPerformance() {
         onFiltersChange={setFilters}
         campaignDepth1Options={campaignDepth1Options}
         osOptions={osOptions}
+        categoryOptions={categoryOptions}
+        channelOptions={channelOptions}
+        messageTypeOptions={messageTypeOptions}
         minDate={minDate}
         maxDate={maxDate}
         activePreset={activePreset}
@@ -195,7 +201,7 @@ export function CRMPerformance() {
           !isEditing ? (
             <button
               onClick={startEditing}
-              className="flex items-center gap-1.5 rounded-lg border border-[#E5E7EB] bg-white px-2.5 py-1.5 text-xs font-medium text-[#374151] hover:bg-[#F9FAFB]"
+              className="flex items-center gap-1.5 rounded-lg border border-[#e0e0e0] bg-white px-2.5 py-1.5 text-xs font-medium text-[#1d1d1f] hover:bg-[#F9FAFB]"
             >
               <Settings2 size={12} />
               레이아웃 편집

@@ -8,7 +8,7 @@ interface Props {
   titleClassName?: string
 }
 
-export function ChartSectionNote({ sectionId, title, titleClassName = 'text-sm font-semibold text-[#111827]' }: Props) {
+export function ChartSectionNote({ sectionId, title, titleClassName = 'text-sm font-semibold text-[#1d1d1f]' }: Props) {
   const { note, saveNote, deleteNote } = useSectionNotes(sectionId)
   const [editing, setEditing] = useState(false)
   const [draft, setDraft] = useState('')
@@ -49,7 +49,7 @@ export function ChartSectionNote({ sectionId, title, titleClassName = 'text-sm f
         {(hovering || editing) && (
           <button
             onClick={startEdit}
-            className="rounded p-0.5 text-[#9CA3AF] hover:text-[#374151] hover:bg-[#F3F4F6] transition-colors"
+            className="rounded p-0.5 text-[#9CA3AF] hover:text-[#1d1d1f] hover:bg-[#F3F4F6] transition-colors"
             title="노트 편집"
           >
             <Pencil className="h-3 w-3" />
@@ -82,7 +82,7 @@ export function ChartSectionNote({ sectionId, title, titleClassName = 'text-sm f
             onChange={e => setDraft(e.target.value)}
             rows={2}
             placeholder="차트에 대한 설명을 입력하세요..."
-            className="w-full rounded-lg border border-[#E5E7EB] px-2.5 py-1.5 text-[11px] text-[#374151] resize-none focus:border-[#4361EE] focus:outline-none"
+            className="w-full rounded-lg border border-[#e0e0e0] px-2.5 py-1.5 text-[11px] text-[#1d1d1f] resize-none focus:border-[#0066cc] focus:outline-none"
             onKeyDown={e => {
               if (e.key === 'Enter' && e.metaKey) handleSave()
               if (e.key === 'Escape') handleCancel()
@@ -91,7 +91,7 @@ export function ChartSectionNote({ sectionId, title, titleClassName = 'text-sm f
           <div className="flex items-center gap-1">
             <button
               onClick={handleSave}
-              className="flex items-center gap-1 rounded px-2 py-1 text-[11px] bg-[#374151] text-white hover:bg-[#111827] transition-colors"
+              className="flex items-center gap-1 rounded px-2 py-1 text-[11px] bg-[#1d1d1f] text-white hover:bg-[#1d1d1f] transition-colors"
             >
               <Check className="h-3 w-3" />
               저장

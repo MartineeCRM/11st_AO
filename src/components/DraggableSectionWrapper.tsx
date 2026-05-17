@@ -29,26 +29,26 @@ export function DraggableSectionWrapper({ id, visible, isEditing, onToggleVisibl
     <div
       ref={setNodeRef}
       style={style}
-      className={`relative rounded-xl border-2 transition-colors ${
-        visible ? 'border-[#4361EE]/30' : 'border-[#E5E7EB] opacity-50'
+      className={`relative rounded-[18px] border-2 transition-colors ${
+        visible ? 'border-[#0066cc]/30' : 'border-[#e0e0e0] opacity-50'
       }`}
     >
-      <div className="flex items-center gap-2 px-3 py-1.5 bg-[#F9FAFB] border-b border-[#E5E7EB] rounded-t-xl">
+      <div className="flex items-center gap-2 px-3 py-1.5 bg-[#F9FAFB] border-b border-[#e0e0e0] rounded-t-xl">
         <button
-          className="text-[#9CA3AF] hover:text-[#374151] cursor-grab active:cursor-grabbing touch-none"
+          className="text-[#9CA3AF] hover:text-[#1d1d1f] cursor-grab active:cursor-grabbing touch-none"
           {...attributes}
           {...listeners}
         >
           <GripVertical size={16} />
         </button>
-        <span className="flex-1 text-xs font-medium text-[#374151]">
+        <span className="flex-1 text-xs font-medium text-[#1d1d1f]">
           {SECTION_LABELS[id]}
         </span>
         <button
           onClick={onToggleVisible}
           className={`rounded p-0.5 transition-colors ${
             visible
-              ? 'text-[#4361EE] hover:bg-[#EEF2FF]'
+              ? 'text-[#0066cc] hover:bg-[#e8f0fb]'
               : 'text-[#9CA3AF] hover:bg-[#F3F4F6]'
           }`}
           title={visible ? '숨기기' : '표시하기'}

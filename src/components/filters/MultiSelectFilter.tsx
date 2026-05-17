@@ -62,24 +62,24 @@ export function MultiSelectFilter({ label, options, selected, onChange, allLabel
     <div ref={ref} className="relative">
       <button
         onClick={() => setOpen(o => !o)}
-        className="flex items-center gap-2 rounded-lg border border-[#E5E7EB] bg-[#F9FAFB] px-3 py-1.5 text-xs text-[#374151] hover:bg-[#F3F4F6] transition-colors"
+        className="flex items-center gap-2 rounded-lg border border-[#e0e0e0] bg-[#F9FAFB] px-3 py-1.5 text-xs text-[#1d1d1f] hover:bg-[#F3F4F6] transition-colors"
       >
         <span>{displayLabel}</span>
         <ChevronDown className={cn('h-3.5 w-3.5 text-[#9CA3AF] transition-transform', open && 'rotate-180')} />
       </button>
 
       {open && (
-        <div className="absolute top-full left-0 z-50 mt-1 min-w-[200px] rounded-lg border border-[#E5E7EB] bg-white shadow-lg py-1">
+        <div className="absolute top-full left-0 z-50 mt-1 min-w-[200px] rounded-lg border border-[#e0e0e0] bg-white shadow-lg py-1">
           {/* 검색창 */}
           <div className="px-2 pb-1 pt-1">
-            <div className="flex items-center gap-1.5 rounded-md border border-[#E5E7EB] bg-[#F9FAFB] px-2 py-1">
+            <div className="flex items-center gap-1.5 rounded-md border border-[#e0e0e0] bg-[#F9FAFB] px-2 py-1">
               <Search className="h-3 w-3 text-[#9CA3AF] shrink-0" />
               <input
                 autoFocus
                 value={query}
                 onChange={e => setQuery(e.target.value)}
                 placeholder="검색..."
-                className="w-full bg-transparent text-xs text-[#374151] placeholder-[#9CA3AF] focus:outline-none"
+                className="w-full bg-transparent text-xs text-[#1d1d1f] placeholder-[#9CA3AF] focus:outline-none"
               />
             </div>
           </div>
@@ -88,7 +88,7 @@ export function MultiSelectFilter({ label, options, selected, onChange, allLabel
           {query.trim() && filtered.length > 0 && (
             <button
               onClick={allFilteredSelected ? deselectFiltered : selectFiltered}
-              className="flex w-full items-center gap-2 px-3 py-1.5 text-xs text-[#4361EE] font-semibold hover:bg-[#F9FAFB]"
+              className="flex w-full items-center gap-2 px-3 py-1.5 text-xs text-[#0066cc] font-semibold hover:bg-[#F9FAFB]"
             >
               <Check className={cn('h-3 w-3', allFilteredSelected ? 'opacity-100' : 'opacity-0')} />
               검색 결과 전체 {allFilteredSelected ? '해제' : '선택'} ({filtered.length}개)
@@ -101,7 +101,7 @@ export function MultiSelectFilter({ label, options, selected, onChange, allLabel
               onClick={selectAll}
               className={cn(
                 'flex w-full items-center gap-2 px-3 py-1.5 text-xs hover:bg-[#F9FAFB]',
-                selected.length === 0 ? 'text-[#4361EE] font-semibold' : 'text-[#374151]',
+                selected.length === 0 ? 'text-[#0066cc] font-semibold' : 'text-[#1d1d1f]',
               )}
             >
               <Check className={cn('h-3 w-3', selected.length === 0 ? 'opacity-100' : 'opacity-0')} />
@@ -119,9 +119,9 @@ export function MultiSelectFilter({ label, options, selected, onChange, allLabel
                 <button
                   key={opt}
                   onClick={() => toggle(opt)}
-                  className="flex w-full items-center gap-2 px-3 py-1.5 text-xs text-[#374151] hover:bg-[#F9FAFB]"
+                  className="flex w-full items-center gap-2 px-3 py-1.5 text-xs text-[#1d1d1f] hover:bg-[#F9FAFB]"
                 >
-                  <Check className={cn('h-3 w-3 text-[#4361EE]', selected.includes(opt) ? 'opacity-100' : 'opacity-0')} />
+                  <Check className={cn('h-3 w-3 text-[#0066cc]', selected.includes(opt) ? 'opacity-100' : 'opacity-0')} />
                   {opt}
                 </button>
               ))

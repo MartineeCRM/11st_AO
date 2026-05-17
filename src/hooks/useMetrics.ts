@@ -196,7 +196,7 @@ export function useMetrics(
         value: curPush,
         wow: calcWoW(curPush, prevPushRow),
         trendData: calcKpiTrend14d(allKpi, 'push_opt_in', endDate),
-        color: '#4361EE',
+        color: '#0066cc',
       },
       {
         label: 'SMS 수신 동의',

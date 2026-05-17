@@ -10,6 +10,9 @@ interface Props {
   onFiltersChange: (f: FilterState) => void
   campaignDepth1Options: string[]
   osOptions: string[]
+  categoryOptions: string[]
+  channelOptions: string[]
+  messageTypeOptions: string[]
   minDate: string
   maxDate: string
   activePreset: Preset | null
@@ -22,6 +25,9 @@ export function FilterBar({
   onFiltersChange,
   campaignDepth1Options,
   osOptions,
+  categoryOptions,
+  channelOptions,
+  messageTypeOptions,
   minDate,
   maxDate,
   activePreset,
@@ -29,7 +35,7 @@ export function FilterBar({
   editButton,
 }: Props) {
   return (
-    <div className="sticky top-14 z-30 flex items-center gap-3 border-b border-[#E5E7EB] bg-white px-6 py-3">
+    <div className="sticky top-14 z-30 flex items-center gap-3 border-b border-[#e0e0e0] bg-white px-6 py-3">
       <DatePresetFilter
         value={filters.dateRange}
         onChange={dateRange => onFiltersChange({ ...filters, dateRange })}
@@ -39,7 +45,7 @@ export function FilterBar({
         onPresetChange={onPresetChange}
       />
 
-      <div className="h-7 w-px bg-[#E5E7EB]" />
+      <div className="h-7 w-px bg-[#e0e0e0]" />
 
       <MultiSelectFilter
         label="Campaign Depth 1"
@@ -53,6 +59,27 @@ export function FilterBar({
         options={osOptions}
         selected={filters.os}
         onChange={os => onFiltersChange({ ...filters, os })}
+      />
+
+      <MultiSelectFilter
+        label="Category"
+        options={categoryOptions}
+        selected={filters.category}
+        onChange={category => onFiltersChange({ ...filters, category })}
+      />
+
+      <MultiSelectFilter
+        label="Channel"
+        options={channelOptions}
+        selected={filters.channel}
+        onChange={channel => onFiltersChange({ ...filters, channel })}
+      />
+
+      <MultiSelectFilter
+        label="Message Type"
+        options={messageTypeOptions}
+        selected={filters.messageType}
+        onChange={messageType => onFiltersChange({ ...filters, messageType })}
       />
 
       {editButton && <div className="ml-auto">{editButton}</div>}

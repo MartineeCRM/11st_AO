@@ -55,16 +55,16 @@ export function ChannelPerformanceTable({ rows }: Props) {
   const hiddenCount = channelRows.length - PAGE_SIZE
 
   return (
-    <div className="rounded-xl border border-[#E5E7EB] bg-white">
-      <div className="border-b border-[#E5E7EB] px-4 py-3">
-        <ChartSectionNote sectionId="perf_channel_table" title="채널별 성과 비교" titleClassName="text-xs font-semibold text-[#374151]" />
+    <div className="rounded-xl border border-[#e0e0e0] bg-white">
+      <div className="border-b border-[#e0e0e0] px-4 py-3">
+        <ChartSectionNote sectionId="perf_channel_table" title="채널별 성과 비교" titleClassName="text-xs font-semibold text-[#1d1d1f]" />
         <p className="text-[10px] text-[#9CA3AF] mt-0.5">Channel 기준 그루핑</p>
       </div>
 
       <div className="overflow-x-auto">
         <table className="w-full min-w-[580px]">
           <thead>
-            <tr className="border-b border-[#E5E7EB] bg-[#F9FAFB]">
+            <tr className="border-b border-[#e0e0e0] bg-[#F9FAFB]">
               <th className="px-4 py-2 text-left text-[11px] font-semibold text-[#6B7280]">Channel</th>
               <th className="px-3 py-2 text-right text-[11px] font-semibold text-[#6B7280]">발송/노출</th>
               <th className="px-3 py-2 text-right text-[11px] font-semibold text-[#6B7280]">CTR</th>
@@ -76,12 +76,12 @@ export function ChannelPerformanceTable({ rows }: Props) {
           <tbody>
             {visibleRows.map(row => (
               <tr key={row.channel} className="border-b border-[#F3F4F6] hover:bg-[#F9FAFB]">
-                <td className="px-4 py-2 text-xs font-medium text-[#374151]">{row.channel}</td>
-                <td className="px-3 py-2 text-right text-xs tabular-nums text-[#374151]">
+                <td className="px-4 py-2 text-xs font-medium text-[#1d1d1f]">{row.channel}</td>
+                <td className="px-3 py-2 text-right text-xs tabular-nums text-[#1d1d1f]">
                   <div className="flex items-center justify-end gap-2">
-                    <div className="h-1.5 w-16 rounded-full bg-[#E5E7EB] overflow-hidden">
+                    <div className="h-1.5 w-16 rounded-full bg-[#e0e0e0] overflow-hidden">
                       <div
-                        className="h-full rounded-full bg-[#4361EE]"
+                        className="h-full rounded-full bg-[#0066cc]"
                         style={{ width: `${(row.sentImpression / maxSI) * 100}%` }}
                       />
                     </div>
@@ -90,20 +90,20 @@ export function ChannelPerformanceTable({ rows }: Props) {
                 </td>
                 <td className={cn(
                   'px-3 py-2 text-right text-xs tabular-nums font-medium',
-                  row.ctr > 0.1 ? 'text-[#10B981]' : row.ctr > 0.05 ? 'text-[#374151]' : 'text-[#EF4444]',
+                  row.ctr > 0.1 ? 'text-[#10B981]' : row.ctr > 0.05 ? 'text-[#1d1d1f]' : 'text-[#EF4444]',
                 )}>
                   {formatRate(row.ctr)}
                 </td>
                 <td className={cn(
                   'px-3 py-2 text-right text-xs tabular-nums font-medium',
-                  row.cvr > 0.05 ? 'text-[#10B981]' : row.cvr > 0.01 ? 'text-[#374151]' : 'text-[#EF4444]',
+                  row.cvr > 0.05 ? 'text-[#10B981]' : row.cvr > 0.01 ? 'text-[#1d1d1f]' : 'text-[#EF4444]',
                 )}>
                   {formatRate(row.cvr)}
                 </td>
-                <td className="px-3 py-2 text-right text-xs tabular-nums text-[#374151]">
+                <td className="px-3 py-2 text-right text-xs tabular-nums text-[#1d1d1f]">
                   ₩{formatKorean(Math.round(row.revenue))}
                 </td>
-                <td className="px-3 py-2 text-right text-xs tabular-nums text-[#374151]">
+                <td className="px-3 py-2 text-right text-xs tabular-nums text-[#1d1d1f]">
                   ₩{row.revenuePerSend.toFixed(1)}
                 </td>
               </tr>
@@ -116,7 +116,7 @@ export function ChannelPerformanceTable({ rows }: Props) {
         <div className="border-t border-[#F3F4F6] px-4 py-2.5 text-center">
           <button
             onClick={() => setExpanded(v => !v)}
-            className="text-xs font-medium text-[#4361EE] hover:underline"
+            className="text-xs font-medium text-[#0066cc] hover:underline"
           >
             {expanded ? '접기' : `나머지 ${hiddenCount}개 더 보기`}
           </button>

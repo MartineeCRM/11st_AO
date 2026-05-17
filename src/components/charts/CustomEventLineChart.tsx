@@ -64,7 +64,7 @@ export function CustomEventLineChart({ kpiRows }: Props) {
   const activeEvents = EVENTS.filter(ev => selected.has(ev.key))
 
   return (
-    <div className="rounded-xl border border-[#E5E7EB] bg-white p-5 flex flex-col h-full">
+    <div className="rounded-[18px] border border-[#e0e0e0] bg-white p-5 flex flex-col h-full">
       <div className="mb-3">
         <ChartSectionNote sectionId="perf_custom_event" title="커스텀 이벤트 일별 추이" />
       </div>
@@ -85,7 +85,7 @@ export function CustomEventLineChart({ kpiRows }: Props) {
             />
             <span
               className="text-[11px]"
-              style={{ color: selected.has(ev.key) ? '#374151' : '#9CA3AF' }}
+              style={{ color: selected.has(ev.key) ? '#1d1d1f' : '#9CA3AF' }}
             >
               {ev.label}
             </span>
@@ -113,7 +113,7 @@ export function CustomEventLineChart({ kpiRows }: Props) {
             />
             <Tooltip
               formatter={(value: number, name: string) => [formatKorean(value), name]}
-              contentStyle={{ fontSize: 12, borderRadius: 8, border: '1px solid #E5E7EB' }}
+              contentStyle={{ fontSize: 12, borderRadius: 8, border: '1px solid #e0e0e0' }}
             />
             {activeEvents.length > 1 && (
               <Legend iconSize={8} wrapperStyle={{ fontSize: 11, paddingTop: 4 }} />

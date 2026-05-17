@@ -46,7 +46,7 @@ function StepDropdown({
     <div className="relative">
       <button
         onClick={() => setOpen(o => !o)}
-        className="flex items-center gap-1 rounded-lg border border-[#E5E7EB] bg-white px-2 py-1 text-[11px] font-medium text-[#374151] hover:bg-gray-50 transition-colors"
+        className="flex items-center gap-1 rounded-lg border border-[#e0e0e0] bg-white px-2 py-1 text-[11px] font-medium text-[#1d1d1f] hover:bg-gray-50 transition-colors"
       >
         {FUNNEL_FIELD_LABELS[value] ?? value}
         <ChevronDown className="h-3 w-3 text-[#9CA3AF]" />
@@ -54,7 +54,7 @@ function StepDropdown({
       {open && (
         <>
           <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
-          <div className="absolute left-0 top-full z-50 mt-1 w-44 rounded-lg border border-[#E5E7EB] bg-white py-1 shadow-lg overflow-hidden animate-in fade-in slide-in-from-top-1">
+          <div className="absolute left-0 top-full z-50 mt-1 w-44 rounded-lg border border-[#e0e0e0] bg-white py-1 shadow-lg overflow-hidden animate-in fade-in slide-in-from-top-1">
             {SELECTABLE_FIELDS.filter(f => !exclude.includes(f) || f === value).map(f => (
               <button
                 key={f}
@@ -64,7 +64,7 @@ function StepDropdown({
                 }}
                 className={cn(
                   'block w-full px-3 py-1.5 text-left text-[11px] transition-colors',
-                  f === value ? 'bg-[#EEF2FF] font-semibold text-[#4361EE]' : 'text-[#374151] hover:bg-gray-50',
+                  f === value ? 'bg-[#e8f0fb] font-semibold text-[#0066cc]' : 'text-[#1d1d1f] hover:bg-gray-50',
                 )}
               >
                 {FUNNEL_FIELD_LABELS[f] ?? f}
@@ -94,11 +94,11 @@ export function ConversionFunnel({ data, steps, onStepsChange }: Props) {
   }
 
   return (
-    <div className="rounded-xl border border-[#E5E7EB] bg-white p-6 flex flex-col h-full overflow-hidden shadow-sm">
+    <div className="rounded-xl border border-[#e0e0e0] bg-white p-6 flex flex-col h-full overflow-hidden shadow-sm">
       {/* 범례 및 헤더 */}
       <div className="mb-6 flex items-center justify-between">
         <div>
-          <ChartSectionNote sectionId="perf_funnel" title="전환 퍼널 (Full-Funnel)" titleClassName="text-xl font-bold text-[#0F172A] tracking-tight" />
+          <ChartSectionNote sectionId="perf_funnel" title="전환 퍼널 (Full-Funnel)" titleClassName="text-xl font-bold text-[#1d1d1f] tracking-tight" />
           <p className="text-[11px] text-[#64748B] font-medium uppercase tracking-wider mt-0.5">Marketing Conversion Journey</p>
         </div>
       </div>
@@ -130,7 +130,7 @@ export function ConversionFunnel({ data, steps, onStepsChange }: Props) {
         {steps.length < 4 && (
           <button
             onClick={handleAddStep}
-            className="flex items-center gap-1 rounded-lg border border-[#E2E8F0] bg-[#F8FAFC] px-2.5 py-1.5 text-[11px] font-bold text-[#475569] hover:bg-[#EEF2FF] hover:text-[#4361EE] hover:border-[#4361EE] transition-all"
+            className="flex items-center gap-1 rounded-lg border border-[#e0e0e0] bg-[#F8FAFC] px-2.5 py-1.5 text-[11px] font-bold text-[#475569] hover:bg-[#e8f0fb] hover:text-[#0066cc] hover:border-[#0066cc] transition-all"
           >
             <Plus className="h-3 w-3" />
             단계 추가
@@ -149,7 +149,7 @@ export function ConversionFunnel({ data, steps, onStepsChange }: Props) {
           const widthScale = 1 - (i * 0.08)
 
           // 색상 결정 (Vibrant Blue -> Deep Blue -> Dark Teal -> Dark Navy)
-          const colors = ['#0066FF', '#0055DD', '#0044BB', '#00484F']
+          const colors = ['#0066cc', '#0055aa', '#004499', '#003377']
           const color = colors[i] || colors[colors.length - 1]
 
           return (
@@ -197,7 +197,7 @@ export function ConversionFunnel({ data, steps, onStepsChange }: Props) {
       {/* 하단 안내 배너 */}
       <div className="mt-8 rounded-xl bg-[#F8FAFC] border border-[#F1F5F9] py-3 px-4 text-center">
         <p className="text-[11px] font-medium text-[#64748B]">
-          드롭다운에서 퍼널 지표 변경 가능 <span className="text-[#94A3B8] font-normal mx-1">|</span> <span className="text-[#4361EE] font-bold">최대 4단계</span>까지 분석 지원
+          드롭다운에서 퍼널 지표 변경 가능 <span className="text-[#94A3B8] font-normal mx-1">|</span> <span className="text-[#0066cc] font-bold">최대 4단계</span>까지 분석 지원
         </p>
       </div>
     </div>

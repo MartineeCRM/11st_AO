@@ -21,8 +21,8 @@ export function ProtectedRoute({ children }: Props) {
 
   if (authLoading || projectLoading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-[#F4F5F7]">
-        <div className="h-5 w-5 animate-spin rounded-full border-2 border-[#4361EE] border-t-transparent" />
+      <div className="flex min-h-screen items-center justify-center bg-[#f5f5f7]">
+        <div className="h-5 w-5 animate-spin rounded-full border-2 border-[#0066cc] border-t-transparent" />
       </div>
     )
   }
@@ -31,8 +31,8 @@ export function ProtectedRoute({ children }: Props) {
 
   if (error) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-[#F4F5F7]">
-        <div className="rounded-xl border border-[#E5E7EB] bg-white p-8 text-center">
+      <div className="flex min-h-screen items-center justify-center bg-[#f5f5f7]">
+        <div className="rounded-[18px] border border-[#e0e0e0] bg-white p-8 text-center">
           <p className="text-sm font-semibold text-[#EF4444]">{error}</p>
           <p className="mt-1 text-xs text-[#9CA3AF]">관리자에게 문의하세요.</p>
         </div>
@@ -47,13 +47,13 @@ export function ProtectedRoute({ children }: Props) {
 
   if (!project) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-[#F4F5F7]">
-        <div className="rounded-xl border border-[#E5E7EB] bg-white p-8 text-center max-w-sm">
-          <p className="text-sm font-semibold text-[#111827]">접근 가능한 프로젝트가 없습니다</p>
+      <div className="flex min-h-screen items-center justify-center bg-[#f5f5f7]">
+        <div className="rounded-[18px] border border-[#e0e0e0] bg-white p-8 text-center max-w-sm">
+          <p className="text-sm font-semibold text-[#1d1d1f]">접근 가능한 프로젝트가 없습니다</p>
           <p className="mt-1 text-xs text-[#9CA3AF]">관리자에게 프로젝트 접근 권한을 요청하세요.</p>
           <button
             onClick={() => { localStorage.removeItem('crm_project_id'); window.location.reload() }}
-            className="mt-4 text-xs text-[#4361EE] hover:underline"
+            className="mt-4 text-xs text-[#0066cc] hover:underline"
           >
             로그아웃
           </button>

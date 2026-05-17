@@ -23,7 +23,7 @@ function MiniSparkline({ data, color }: { data: number[]; color: string }) {
           <RTooltip
             formatter={(v: number) => [v.toLocaleString('ko-KR'), '']}
             contentStyle={{ fontSize: 10 }}
-            itemStyle={{ color: '#374151' }}
+            itemStyle={{ color: '#1d1d1f' }}
           />
         </LineChart>
       </ResponsiveContainer>
@@ -57,15 +57,15 @@ export function BusinessKpiTable({ rows }: Props) {
   const [compareMode, setCompareMode] = useState<'mom' | 'yoy'>('mom')
 
   return (
-    <div className="rounded-xl border border-[#E5E7EB] bg-white p-5 flex flex-col h-full">
+    <div className="rounded-xl border border-[#e0e0e0] bg-white p-5 flex flex-col h-full">
       <div className="mb-4 flex items-center justify-between">
         <ChartSectionNote sectionId="perf_business_kpi" title="비즈니스 지표 기간 비교" />
-        <div className="flex rounded-md border border-[#E5E7EB] overflow-hidden text-[11px]">
+        <div className="flex rounded-md border border-[#e0e0e0] overflow-hidden text-[11px]">
           <button
             onClick={() => setCompareMode('mom')}
             className={cn(
               'px-2.5 py-1 font-medium transition-colors',
-              compareMode === 'mom' ? 'bg-[#4361EE] text-white' : 'text-[#6B7280] hover:bg-[#F3F4F6]',
+              compareMode === 'mom' ? 'bg-[#0066cc] text-white' : 'text-[#6B7280] hover:bg-[#F3F4F6]',
             )}
           >
             MoM
@@ -73,8 +73,8 @@ export function BusinessKpiTable({ rows }: Props) {
           <button
             onClick={() => setCompareMode('yoy')}
             className={cn(
-              'px-2.5 py-1 font-medium transition-colors border-l border-[#E5E7EB]',
-              compareMode === 'yoy' ? 'bg-[#4361EE] text-white' : 'text-[#6B7280] hover:bg-[#F3F4F6]',
+              'px-2.5 py-1 font-medium transition-colors border-l border-[#e0e0e0]',
+              compareMode === 'yoy' ? 'bg-[#0066cc] text-white' : 'text-[#6B7280] hover:bg-[#F3F4F6]',
             )}
           >
             YoY
@@ -84,7 +84,7 @@ export function BusinessKpiTable({ rows }: Props) {
       <div className="flex-1 overflow-auto">
         <table className="w-full text-left border-collapse">
           <thead>
-            <tr className="border-b border-[#E5E7EB]">
+            <tr className="border-b border-[#e0e0e0]">
               <th className="pb-2 text-[11px] font-medium text-[#6B7280] w-36">지표</th>
               <th className="pb-2 text-[11px] font-medium text-[#6B7280] text-right">현재값</th>
               <th className="pb-2 text-[11px] font-medium text-[#6B7280] text-center">WoW</th>
@@ -103,8 +103,8 @@ export function BusinessKpiTable({ rows }: Props) {
                   i % 2 === 0 ? 'bg-white' : 'bg-[#FAFAFA]',
                 )}
               >
-                <td className="py-2.5 text-xs font-medium text-[#374151]">{row.metric}</td>
-                <td className="py-2.5 text-xs font-semibold text-[#111827] text-right">
+                <td className="py-2.5 text-xs font-medium text-[#1d1d1f]">{row.metric}</td>
+                <td className="py-2.5 text-xs font-semibold text-[#1d1d1f] text-right">
                   {row.formattedCurrent}
                 </td>
                 <td className="py-2.5 text-center">

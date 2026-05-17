@@ -39,11 +39,11 @@ export function LiveCampaignTable({ campaigns, loading, error }: Props) {
     c.channels[0] ?? 'unknown'
 
   return (
-    <div className="rounded-xl border border-[#E5E7EB] bg-white">
+    <div className="rounded-[18px] border border-[#e0e0e0] bg-white">
       {/* 카드 헤더 */}
       <div className="flex items-center justify-between px-6 py-3.5 border-b border-[#F3F4F6]">
         <div className="flex items-center gap-2.5">
-          <ChartSectionNote sectionId="ops_live_table" title="라이브 캠페인 현황" titleClassName="text-sm font-semibold text-[#111827]" />
+          <ChartSectionNote sectionId="ops_live_table" title="라이브 캠페인 현황" titleClassName="text-sm font-semibold text-[#1d1d1f]" />
           <span className="flex items-center gap-1 rounded-full bg-[#DCFCE7] px-2.5 py-0.5 text-[11px] font-bold text-[#16A34A]">
             <span className="inline-block h-1.5 w-1.5 rounded-full bg-[#16A34A]" />
             LIVE
@@ -63,8 +63,8 @@ export function LiveCampaignTable({ campaigns, loading, error }: Props) {
             className={cn(
               'px-4 py-2.5 text-[13px] font-medium transition-colors',
               activeChannel === tab
-                ? 'bg-white text-[#4361EE] border-b-2 border-[#4361EE]'
-                : 'text-[#6B7280] hover:text-[#374151]',
+                ? 'bg-white text-[#0066cc] border-b-2 border-[#0066cc]'
+                : 'text-[#6B7280] hover:text-[#1d1d1f]',
             )}
           >
             {tab}
@@ -113,7 +113,7 @@ export function LiveCampaignTable({ campaigns, loading, error }: Props) {
                 const badge = channelBadgeColor(ch)
                 return (
                   <tr key={c.id} className="hover:bg-[#FAFAFA] transition-colors">
-                    <td className="px-4 py-3 font-medium text-[#111827] max-w-[256px] truncate">
+                    <td className="px-4 py-3 font-medium text-[#1d1d1f] max-w-[256px] truncate">
                       {c.name}
                     </td>
                     <td className="px-3 py-3">
@@ -124,7 +124,7 @@ export function LiveCampaignTable({ campaigns, loading, error }: Props) {
                         {channelLabel(ch)}
                       </span>
                     </td>
-                    <td className="px-3 py-3 text-[#374151] text-xs">
+                    <td className="px-3 py-3 text-[#1d1d1f] text-xs">
                       {scheduleTypeLabel(c.schedule_type)}
                     </td>
                     <td className="px-3 py-3">
@@ -144,7 +144,7 @@ export function LiveCampaignTable({ campaigns, loading, error }: Props) {
                         href={brazeCampaignUrl(c.id)}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="inline-flex items-center justify-center text-[#9CA3AF] hover:text-[#4361EE] transition-colors"
+                        className="inline-flex items-center justify-center text-[#9CA3AF] hover:text-[#0066cc] transition-colors"
                         title="Braze에서 열기"
                       >
                         <ExternalLink size={15} />

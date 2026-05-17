@@ -76,7 +76,7 @@ export function PurchaseTrendChart({ data, yLabel, formatter }: PurchaseTrendCha
               return [formatter(v), nameMap[name] ?? name]
             }}
             labelFormatter={formatDateShort}
-            contentStyle={{ fontSize: 12, borderColor: '#E5E7EB', borderRadius: 8 }}
+            contentStyle={{ fontSize: 12, borderColor: '#e0e0e0', borderRadius: 8 }}
           />
           <Legend
             wrapperStyle={{ fontSize: 11, paddingTop: 8 }}
@@ -156,7 +156,7 @@ export function EventTrendChart({ data, eventLabel }: EventTrendChartProps) {
           <Tooltip
             formatter={(v: number) => [formatCount(v), eventLabel]}
             labelFormatter={formatDateShort}
-            contentStyle={{ fontSize: 12, borderColor: '#E5E7EB', borderRadius: 8 }}
+            contentStyle={{ fontSize: 12, borderColor: '#e0e0e0', borderRadius: 8 }}
           />
           <Line
             type="monotone"

@@ -172,7 +172,7 @@ export function channelLabel(channel: string): string {
 /** 채널 뱃지 색상 */
 export function channelBadgeColor(channel: string): { bg: string; text: string } {
   const c = channel.toLowerCase()
-  if (c.includes('push')) return { bg: '#EEF2FF', text: '#4361EE' }
+  if (c.includes('push')) return { bg: '#e8f0fb', text: '#0066cc' }
   if (c.includes('in_app_message')) return { bg: '#EDE9FE', text: '#7C3AED' }
   if (c.includes('email')) return { bg: '#F0FDF4', text: '#15803D' }
   if (c.includes('sms')) return { bg: '#FEF3C7', text: '#D97706' }

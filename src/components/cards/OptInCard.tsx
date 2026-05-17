@@ -37,7 +37,7 @@ function DynamicIcon({ name, className, style }: { name: string; className?: str
 function MiniTrendChart({ data, color }: { data: number[]; color: string }) {
   const points = data.map((v, i) => ({ i, v }))
   return (
-    <div className="w-[180px] rounded-xl border border-[#E5E7EB] bg-white p-3 shadow-lg">
+    <div className="w-[180px] rounded-[18px] border border-[#e0e0e0] bg-white p-3 shadow-lg">
       <p className="mb-1.5 text-[11px] font-medium text-[#6B7280]">최근 14일 추이</p>
       <ResponsiveContainer width="100%" height={50}>
         <LineChart data={points}>
@@ -45,7 +45,7 @@ function MiniTrendChart({ data, color }: { data: number[]; color: string }) {
           <RTooltip
             formatter={(v: number) => [formatNumber(v), '']}
             contentStyle={{ fontSize: 11 }}
-            itemStyle={{ color: '#374151' }}
+            itemStyle={{ color: '#1d1d1f' }}
           />
         </LineChart>
       </ResponsiveContainer>
@@ -71,7 +71,7 @@ export function OptInCard({ data }: Props) {
     >
       <div
         className={cn(
-          'flex items-center justify-between rounded-xl border border-[#E5E7EB] bg-white px-4 py-3 transition-shadow',
+          'flex items-center justify-between rounded-[18px] border border-[#e0e0e0] bg-white px-4 py-3 transition-shadow',
           hovered && 'shadow-md',
         )}
       >
@@ -87,7 +87,7 @@ export function OptInCard({ data }: Props) {
         </div>
 
         {/* 값 */}
-        <span className="text-base font-bold text-[#111827]">{formatNumber(value)}</span>
+        <span className="text-base font-bold text-[#1d1d1f]">{formatNumber(value)}</span>
 
         {/* WoW */}
         <div className="flex items-center gap-1">

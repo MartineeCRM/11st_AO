@@ -123,7 +123,7 @@ export function NoteMarker({ cx, cy, date, note, onSave, onDelete }: NoteMarkerP
             cx={cx}
             cy={LINE_TOP}
             r={MARKER_R}
-            fill={open ? '#374151' : '#6B7280'}
+            fill={open ? '#1d1d1f' : '#6B7280'}
             stroke="white"
             strokeWidth={1.5}
             style={{ cursor: 'pointer' }}
@@ -187,12 +187,12 @@ export function NoteMarker({ cx, cy, date, note, onSave, onDelete }: NoteMarkerP
       {open && createPortal(
         <div
           ref={popoverRef}
-          className="fixed z-[9999] rounded-xl border border-[#E5E7EB] bg-white shadow-xl text-xs overflow-hidden"
+          className="fixed z-[9999] rounded-[18px] border border-[#e0e0e0] bg-white shadow-xl text-xs overflow-hidden"
           style={{ top: popoverPos.top, left: popoverPos.left, width: POPOVER_W }}
         >
           {/* 헤더 */}
           <div className="flex items-center justify-between px-3 py-2 border-b border-[#F3F4F6] bg-[#F9FAFB]">
-            <div className="flex items-center gap-1.5 font-semibold text-[#374151]">
+            <div className="flex items-center gap-1.5 font-semibold text-[#1d1d1f]">
               <StickyNote className="h-3 w-3 text-[#6B7280]" />
               <span className="text-[11px]">{date}</span>
             </div>
@@ -200,7 +200,7 @@ export function NoteMarker({ cx, cy, date, note, onSave, onDelete }: NoteMarkerP
               {hasNote && !editing && (
                 <button
                   onClick={() => { setDraft(note?.note ?? ''); setEditing(true) }}
-                  className="rounded p-0.5 text-[#9CA3AF] hover:text-[#374151] hover:bg-[#E5E7EB]"
+                  className="rounded p-0.5 text-[#9CA3AF] hover:text-[#1d1d1f] hover:bg-[#e0e0e0]"
                 >
                   <Pencil className="h-3 w-3" />
                 </button>
@@ -212,7 +212,7 @@ export function NoteMarker({ cx, cy, date, note, onSave, onDelete }: NoteMarkerP
               )}
               <button
                 onClick={() => { setOpen(false); setEditing(false) }}
-                className="rounded p-0.5 text-[#9CA3AF] hover:text-[#374151] hover:bg-[#E5E7EB]"
+                className="rounded p-0.5 text-[#9CA3AF] hover:text-[#1d1d1f] hover:bg-[#e0e0e0]"
               >
                 <X className="h-3 w-3" />
               </button>
@@ -228,7 +228,7 @@ export function NoteMarker({ cx, cy, date, note, onSave, onDelete }: NoteMarkerP
                   value={draft}
                   onChange={e => setDraft(e.target.value)}
                   rows={3}
-                  className="w-full rounded-lg border border-[#E5E7EB] px-2 py-1.5 text-xs text-[#374151] resize-none focus:border-[#4361EE] focus:outline-none"
+                  className="w-full rounded-lg border border-[#e0e0e0] px-2 py-1.5 text-xs text-[#1d1d1f] resize-none focus:border-[#0066cc] focus:outline-none"
                   placeholder="노트를 입력하세요..."
                   onKeyDown={e => { if (e.key === 'Enter' && e.metaKey) handleSave() }}
                 />
@@ -241,14 +241,14 @@ export function NoteMarker({ cx, cy, date, note, onSave, onDelete }: NoteMarkerP
                   </button>
                   <button
                     onClick={handleSave}
-                    className="rounded bg-[#374151] px-2 py-1 text-[11px] font-medium text-white hover:bg-[#111827]"
+                    className="rounded bg-[#1d1d1f] px-2 py-1 text-[11px] font-medium text-white hover:bg-[#1d1d1f]"
                   >
                     저장
                   </button>
                 </div>
               </>
             ) : (
-              <p className="text-[#374151] leading-relaxed whitespace-pre-wrap text-[11px]">
+              <p className="text-[#1d1d1f] leading-relaxed whitespace-pre-wrap text-[11px]">
                 {note?.note}
                 {note?.author_email && (
                   <span className="block mt-1.5 text-[10px] text-[#9CA3AF]">{note.author_email}</span>

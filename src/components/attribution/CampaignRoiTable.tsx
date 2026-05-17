@@ -71,23 +71,23 @@ export function CampaignRoiTable({ rows }: Props) {
   const totalRevenue = campaignRows.reduce((s, r) => s + r.revenue, 0)
 
   return (
-    <div className="mt-4 rounded-xl border border-[#E5E7EB] bg-white">
-      <div className="flex items-center gap-2 border-b border-[#E5E7EB] px-4 py-3">
-        <p className="text-xs font-semibold text-[#374151]">캠페인별 Attribution ROI</p>
+    <div className="mt-4 rounded-xl border border-[#e0e0e0] bg-white">
+      <div className="flex items-center gap-2 border-b border-[#e0e0e0] px-4 py-3">
+        <p className="text-xs font-semibold text-[#1d1d1f]">캠페인별 Attribution ROI</p>
         <span className="text-[11px] text-[#9CA3AF]">— 6h Attribution 기준</span>
       </div>
 
       <div ref={scrollRef} className="overflow-x-auto">
         <table className="w-full min-w-[640px]">
           <thead>
-            <tr className="border-b border-[#E5E7EB] bg-[#F9FAFB]">
+            <tr className="border-b border-[#e0e0e0] bg-[#F9FAFB]">
               <th className="px-4 py-2 text-left text-[11px] font-semibold text-[#6B7280]">캠페인</th>
               <th className="px-3 py-2 text-right text-[11px] font-semibold text-[#6B7280]">도달 유저</th>
               <th className="px-3 py-2 text-right text-[11px] font-semibold text-[#6B7280]">매출 비중</th>
               {cols.map(col => (
                 <th key={col.key} className="px-3 py-2 text-right text-[11px] font-semibold text-[#6B7280]">
                   <button
-                    className={cn('flex items-center gap-1 ml-auto', sortKey === col.key && 'text-[#4361EE]')}
+                    className={cn('flex items-center gap-1 ml-auto', sortKey === col.key && 'text-[#0066cc]')}
                     onClick={() => setSortKey(col.key)}
                   >
                     {col.label}
@@ -102,7 +102,7 @@ export function CampaignRoiTable({ rows }: Props) {
               const revenueShare = totalRevenue > 0 ? row.revenue / totalRevenue : 0
               return (
                 <tr key={row.alias} className="border-b border-[#F3F4F6] hover:bg-[#F9FAFB]">
-                  <td className="px-4 py-2 text-xs text-[#374151]">
+                  <td className="px-4 py-2 text-xs text-[#1d1d1f]">
                     <div className="flex items-center gap-2">
                       <span className="text-[10px] text-[#9CA3AF] tabular-nums w-4">{i + 1}</span>
                       <span className="font-medium">{row.alias}</span>
@@ -113,9 +113,9 @@ export function CampaignRoiTable({ rows }: Props) {
                   </td>
                   <td className="px-3 py-2 text-right text-xs tabular-nums">
                     <div className="flex items-center justify-end gap-1.5">
-                      <div className="h-1.5 w-16 rounded-full bg-[#E5E7EB] overflow-hidden">
+                      <div className="h-1.5 w-16 rounded-full bg-[#e0e0e0] overflow-hidden">
                         <div
-                          className="h-full rounded-full bg-[#4361EE]"
+                          className="h-full rounded-full bg-[#0066cc]"
                           style={{ width: `${revenueShare * 100}%` }}
                         />
                       </div>
@@ -127,7 +127,7 @@ export function CampaignRoiTable({ rows }: Props) {
                       key={col.key}
                       className={cn(
                         'px-3 py-2 text-right text-xs tabular-nums',
-                        sortKey === col.key ? 'font-semibold text-[#111827]' : 'text-[#374151]',
+                        sortKey === col.key ? 'font-semibold text-[#1d1d1f]' : 'text-[#1d1d1f]',
                       )}
                     >
                       {col.fmt(row)}

@@ -48,13 +48,13 @@ export function TopNav({ activeTab, onTabChange, project, availableProjects, onP
   }
 
   return (
-    <header className="sticky top-0 z-40 flex h-14 items-center border-b border-[#E5E7EB] bg-white px-6">
+    <header className="sticky top-0 z-40 flex h-14 items-center border-b border-[#e0e0e0] bg-white px-6">
       {/* 로고 */}
       <div className="flex items-center gap-2 mr-8">
-        <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-[#4361EE]">
+        <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-[#0066cc]">
           <span className="text-xs font-bold text-white">M</span>
         </div>
-        <span className="text-sm font-bold text-[#111827]">CRM Dashboard</span>
+        <span className="text-sm font-bold text-[#1d1d1f]">CRM Dashboard</span>
       </div>
 
       {/* 탭 */}
@@ -66,13 +66,13 @@ export function TopNav({ activeTab, onTabChange, project, availableProjects, onP
             className={cn(
               'relative px-3 py-1.5 text-sm font-medium transition-colors',
               activeTab === key
-                ? 'text-[#4361EE]'
-                : 'text-[#6B7280] hover:text-[#374151]',
+                ? 'text-[#0066cc]'
+                : 'text-[#6B7280] hover:text-[#1d1d1f]',
             )}
           >
             {label}
             {activeTab === key && (
-              <span className="absolute bottom-0 left-0 right-0 h-0.5 rounded-full bg-[#4361EE]" />
+              <span className="absolute bottom-0 left-0 right-0 h-0.5 rounded-full bg-[#0066cc]" />
             )}
           </button>
         ))}
@@ -84,19 +84,19 @@ export function TopNav({ activeTab, onTabChange, project, availableProjects, onP
           {canSwitch ? (
             <button
               onClick={() => setDropdownOpen(o => !o)}
-              className="flex items-center gap-1.5 rounded-full bg-[#EEF2FF] px-3 py-1 text-[11px] font-medium text-[#4361EE] hover:bg-[#E0E7FF] transition-colors"
+              className="flex items-center gap-1.5 rounded-full bg-[#e8f0fb] px-3 py-1 text-[11px] font-medium text-[#0066cc] hover:bg-[#e8f0fb] transition-colors"
             >
               {project.name}
               <ChevronDown className={cn('h-3 w-3 transition-transform', dropdownOpen && 'rotate-180')} />
             </button>
           ) : (
-            <span className="rounded-full bg-[#EEF2FF] px-2 py-0.5 text-[11px] font-medium text-[#4361EE]">
+            <span className="rounded-full bg-[#e8f0fb] px-2 py-0.5 text-[11px] font-medium text-[#0066cc]">
               {project.name}
             </span>
           )}
 
           {dropdownOpen && (
-            <div className="absolute right-0 top-full mt-1 min-w-[160px] rounded-xl border border-[#E5E7EB] bg-white shadow-lg z-50 overflow-hidden">
+            <div className="absolute right-0 top-full mt-1 min-w-[160px] rounded-xl border border-[#e0e0e0] bg-white shadow-lg z-50 overflow-hidden">
               {availableProjects.map(p => (
                 <button
                   key={p.id}
@@ -106,12 +106,12 @@ export function TopNav({ activeTab, onTabChange, project, availableProjects, onP
                   <Check
                     className={cn(
                       'h-3.5 w-3.5 flex-shrink-0',
-                      p.id === project.id ? 'text-[#4361EE]' : 'invisible',
+                      p.id === project.id ? 'text-[#0066cc]' : 'invisible',
                     )}
                   />
                   <span className={cn(
                     'font-medium',
-                    p.id === project.id ? 'text-[#4361EE]' : 'text-[#374151]',
+                    p.id === project.id ? 'text-[#0066cc]' : 'text-[#1d1d1f]',
                   )}>
                     {p.name}
                   </span>
@@ -123,7 +123,7 @@ export function TopNav({ activeTab, onTabChange, project, availableProjects, onP
 
         <button
           onClick={handleSignOut}
-          className="text-[11px] text-[#9CA3AF] hover:text-[#374151]"
+          className="text-[11px] text-[#9CA3AF] hover:text-[#1d1d1f]"
         >
           로그아웃
         </button>

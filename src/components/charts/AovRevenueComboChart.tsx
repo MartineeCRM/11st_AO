@@ -22,7 +22,7 @@ interface Props {
 export function AovRevenueComboChart({ data }: Props) {
   const colors = useChartColors()
   return (
-    <div className="rounded-xl border border-[#E5E7EB] bg-white p-5 flex flex-col h-full">
+    <div className="rounded-xl border border-[#e0e0e0] bg-white p-5 flex flex-col h-full">
       <div className="mb-4">
         <ChartSectionNote sectionId="perf_aov_revenue" title="Revenue / AOV 추이" />
       </div>
@@ -61,7 +61,7 @@ export function AovRevenueComboChart({ data }: Props) {
                 if (name === 'Revenue') return [`₩${formatKorean(value)}`, name]
                 return [formatCurrency(value), name]
               }}
-              contentStyle={{ fontSize: 12, borderRadius: 8, border: '1px solid #E5E7EB' }}
+              contentStyle={{ fontSize: 12, borderRadius: 8, border: '1px solid #e0e0e0' }}
             />
             <Legend iconSize={10} wrapperStyle={{ fontSize: 12, paddingTop: 8 }} />
             <Bar

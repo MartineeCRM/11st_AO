@@ -49,7 +49,7 @@ export function DailySendComboChart({ data }: Props) {
   const { notes, upsertNote, deleteNote } = useChartNotes('daily_send')
 
   return (
-    <div className="rounded-xl border border-[#E5E7EB] bg-white p-5 flex flex-col h-full">
+    <div className="rounded-[18px] border border-[#e0e0e0] bg-white p-5 flex flex-col h-full">
       <div className="mb-4">
         <ChartSectionNote sectionId="perf_daily_send" title="일별 발송량 / CTR / CVR 추이" />
       </div>
@@ -88,7 +88,7 @@ export function DailySendComboChart({ data }: Props) {
                 if (name === '발송/노출') return [formatKorean(value), name]
                 return [`${value.toFixed(2)}%`, name]
               }}
-              contentStyle={{ fontSize: 12, borderRadius: 8, border: '1px solid #E5E7EB' }}
+              contentStyle={{ fontSize: 12, borderRadius: 8, border: '1px solid #e0e0e0' }}
             />
             <Legend
               iconSize={10}

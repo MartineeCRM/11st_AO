@@ -52,15 +52,15 @@ export function AttributionKpiCard({
       className={cn(
         'flex flex-col gap-1.5 rounded-xl border bg-white p-3 transition-all',
         highlighted
-          ? 'border-[#4361EE] shadow-sm shadow-[#4361EE]/10'
-          : 'border-[#E5E7EB]',
+          ? 'border-[#0066cc] shadow-sm shadow-[#0066cc]/10'
+          : 'border-[#e0e0e0]',
       )}
     >
       <p className="text-[11px] font-medium text-[#9CA3AF]">{title}</p>
-      <p className="text-lg font-bold leading-none text-[#111827]">{value}</p>
+      <p className="text-lg font-bold leading-none text-[#1d1d1f]">{value}</p>
       {subValue && subLabel && (
         <p className="text-xs text-[#6B7280]">
-          <span className="font-medium text-[#374151]">{subValue}</span>
+          <span className="font-medium text-[#1d1d1f]">{subValue}</span>
           <span className="ml-1 text-[10px]">{subLabel}</span>
         </p>
       )}

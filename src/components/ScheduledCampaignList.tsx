@@ -72,12 +72,12 @@ export function ScheduledCampaignList({ campaigns, loading, error }: Props) {
   const totalCount = scheduled.length
 
   return (
-    <div className="rounded-xl border border-[#E5E7EB] bg-white">
+    <div className="rounded-[18px] border border-[#e0e0e0] bg-white">
       <div className="flex items-center gap-2 border-b border-[#F3F4F6] px-6 py-3.5">
-        <Calendar className="h-4 w-4 text-[#4361EE]" />
-        <ChartSectionNote sectionId="ops_scheduled_list" title="Scheduled 캠페인 현황" titleClassName="text-sm font-semibold text-[#111827]" />
+        <Calendar className="h-4 w-4 text-[#0066cc]" />
+        <ChartSectionNote sectionId="ops_scheduled_list" title="Scheduled 캠페인 현황" titleClassName="text-sm font-semibold text-[#1d1d1f]" />
         {!loading && (
-          <span className="ml-1 rounded-full bg-[#EEF2FF] px-2 py-0.5 text-[11px] font-bold text-[#4361EE]">
+          <span className="ml-1 rounded-full bg-[#e8f0fb] px-2 py-0.5 text-[11px] font-bold text-[#0066cc]">
             {totalCount}
           </span>
         )}
@@ -86,7 +86,7 @@ export function ScheduledCampaignList({ campaigns, loading, error }: Props) {
 
       {loading && (
         <div className="flex items-center justify-center py-10">
-          <div className="h-4 w-4 animate-spin rounded-full border-2 border-[#4361EE] border-t-transparent" />
+          <div className="h-4 w-4 animate-spin rounded-full border-2 border-[#0066cc] border-t-transparent" />
           <span className="ml-2 text-xs text-[#6B7280]">Braze 연동 중...</span>
         </div>
       )}
@@ -115,11 +115,11 @@ export function ScheduledCampaignList({ campaigns, loading, error }: Props) {
                   {/* 날짜 컬럼 */}
                   <div className="flex flex-col items-center" style={{ minWidth: 140 }}>
                     {/* X축 날짜 헤더 */}
-                    <div className={`flex flex-col items-center gap-0.5 pb-3 ${isToday ? 'text-[#4361EE]' : isFuture ? 'text-[#374151]' : 'text-[#9CA3AF]'}`}>
+                    <div className={`flex flex-col items-center gap-0.5 pb-3 ${isToday ? 'text-[#0066cc]' : isFuture ? 'text-[#1d1d1f]' : 'text-[#9CA3AF]'}`}>
                       <span className="text-xs font-semibold tabular-nums">{dateLabel(dateKey)}</span>
                       <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded ${
-                        isToday ? 'bg-[#4361EE] text-white' :
-                        isFuture ? 'bg-[#EEF2FF] text-[#4361EE]' :
+                        isToday ? 'bg-[#0066cc] text-white' :
+                        isFuture ? 'bg-[#e8f0fb] text-[#0066cc]' :
                         'bg-[#F3F4F6] text-[#9CA3AF]'
                       }`}>
                         {dDayLabel(diff)}
@@ -130,16 +130,16 @@ export function ScheduledCampaignList({ campaigns, loading, error }: Props) {
                     <div className="relative flex items-center w-full justify-center mb-3">
                       {/* 왼쪽 연결선 */}
                       {colIdx > 0 && (
-                        <div className="absolute right-1/2 top-1/2 -translate-y-1/2 h-0.5 bg-[#E5E7EB]" style={{ left: 0, right: '50%' }} />
+                        <div className="absolute right-1/2 top-1/2 -translate-y-1/2 h-0.5 bg-[#e0e0e0]" style={{ left: 0, right: '50%' }} />
                       )}
                       {/* 오른쪽 연결선 */}
                       {colIdx < dateKeys.length - 1 && (
-                        <div className="absolute top-1/2 -translate-y-1/2 h-0.5 bg-[#E5E7EB]" style={{ left: '50%', right: 0 }} />
+                        <div className="absolute top-1/2 -translate-y-1/2 h-0.5 bg-[#e0e0e0]" style={{ left: '50%', right: 0 }} />
                       )}
                       {/* 도트 */}
                       <div className={`relative z-10 h-3 w-3 rounded-full border-2 ${
-                        isToday ? 'border-[#4361EE] bg-[#4361EE]' :
-                        isFuture ? 'border-[#4361EE] bg-white' :
+                        isToday ? 'border-[#0066cc] bg-[#0066cc]' :
+                        isFuture ? 'border-[#0066cc] bg-white' :
                         'border-[#D1D5DB] bg-white'
                       }`} />
                     </div>
@@ -154,8 +154,8 @@ export function ScheduledCampaignList({ campaigns, loading, error }: Props) {
                             key={c.id}
                             className={`rounded-lg border p-2.5 text-left group ${
                               isFuture || isToday
-                                ? 'border-[#E0E7FF] bg-[#F8F9FF]'
-                                : 'border-[#E5E7EB] bg-[#F9FAFB]'
+                                ? 'border-[#e8f0fb] bg-[#F8F9FF]'
+                                : 'border-[#e0e0e0] bg-[#F9FAFB]'
                             }`}
                           >
                             <div className="flex items-center gap-1.5 mb-1">
@@ -167,14 +167,14 @@ export function ScheduledCampaignList({ campaigns, loading, error }: Props) {
                               </div>
                             </div>
                             <div className="flex items-start gap-1">
-                              <p className="text-[11px] font-medium text-[#111827] leading-snug line-clamp-2 flex-1 min-w-0">
+                              <p className="text-[11px] font-medium text-[#1d1d1f] leading-snug line-clamp-2 flex-1 min-w-0">
                                 {c.name}
                               </p>
                               <a
                                 href={brazeCampaignUrl(c.id)}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="shrink-0 text-[#9CA3AF] hover:text-[#4361EE] opacity-0 group-hover:opacity-100 transition-opacity mt-0.5"
+                                className="shrink-0 text-[#9CA3AF] hover:text-[#0066cc] opacity-0 group-hover:opacity-100 transition-opacity mt-0.5"
                               >
                                 <ExternalLink className="h-3 w-3" />
                               </a>

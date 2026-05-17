@@ -21,14 +21,14 @@ export function Top10BarChart({ data, metric, onMetricChange }: Props) {
   const maxVal = Math.max(...data.map(d => d.value), 1)
 
   return (
-    <div className="rounded-xl border border-[#E5E7EB] bg-white p-5 flex flex-col h-full">
+    <div className="rounded-[18px] border border-[#e0e0e0] bg-white p-5 flex flex-col h-full">
       {/* 헤더 */}
       <div className="mb-4 flex items-center justify-between">
         <ChartSectionNote sectionId="perf_top10" title="캠페인 성과 Top 10" />
         <div className="flex items-center gap-2">
           {/* Campaign / Canvas 탭 */}
-          <div className="flex rounded-md border border-[#E5E7EB] bg-[#F3F4F6] p-0.5 text-xs">
-            <span className="rounded px-2.5 py-1 font-medium bg-white text-[#374151] shadow-sm">
+          <div className="flex rounded-md border border-[#e0e0e0] bg-[#F3F4F6] p-0.5 text-xs">
+            <span className="rounded px-2.5 py-1 font-medium bg-white text-[#1d1d1f] shadow-sm">
               Campaign
             </span>
           </div>
@@ -37,20 +37,20 @@ export function Top10BarChart({ data, metric, onMetricChange }: Props) {
           <div className="relative">
             <button
               onClick={() => setDropdownOpen(o => !o)}
-              className="flex items-center gap-1.5 rounded-lg border border-[#E5E7EB] bg-[#F9FAFB] px-2.5 py-1.5 text-xs font-medium text-[#374151]"
+              className="flex items-center gap-1.5 rounded-lg border border-[#e0e0e0] bg-[#F9FAFB] px-2.5 py-1.5 text-xs font-medium text-[#1d1d1f]"
             >
               {metric}
               <ChevronDown className="h-3 w-3 text-[#9CA3AF]" />
             </button>
             {dropdownOpen && (
-              <div className="absolute right-0 top-full z-50 mt-1 w-36 rounded-lg border border-[#E5E7EB] bg-white shadow-lg py-1">
+              <div className="absolute right-0 top-full z-50 mt-1 w-36 rounded-lg border border-[#e0e0e0] bg-white shadow-lg py-1">
                 {METRICS.map(m => (
                   <button
                     key={m}
                     onClick={() => { onMetricChange(m); setDropdownOpen(false) }}
                     className={cn(
                       'block w-full px-3 py-1.5 text-left text-xs hover:bg-[#F9FAFB]',
-                      m === metric ? 'font-semibold text-[#4361EE]' : 'text-[#374151]',
+                      m === metric ? 'font-semibold text-[#0066cc]' : 'text-[#1d1d1f]',
                     )}
                   >
                     {m}
@@ -80,7 +80,7 @@ export function Top10BarChart({ data, metric, onMetricChange }: Props) {
                 type="category"
                 dataKey="name"
                 width={110}
-                tick={{ fontSize: 11, fill: '#374151' }}
+                tick={{ fontSize: 11, fill: '#1d1d1f' }}
                 tickLine={false}
                 axisLine={false}
                 tickFormatter={v => String(v).length > 14 ? `${String(v).slice(0, 14)}…` : String(v)}
@@ -90,17 +90,17 @@ export function Top10BarChart({ data, metric, onMetricChange }: Props) {
                   props.payload?.formattedValue ?? '',
                   metric,
                 ]}
-                contentStyle={{ fontSize: 12, borderRadius: 8, border: '1px solid #E5E7EB' }}
+                contentStyle={{ fontSize: 12, borderRadius: 8, border: '1px solid #e0e0e0' }}
               />
               <Bar dataKey="value" radius={[0, 3, 3, 0]} maxBarSize={18}>
                 <LabelList
                   dataKey="formattedValue"
                   position="right"
-                  style={{ fontSize: 11, fill: '#374151' }}
+                  style={{ fontSize: 11, fill: '#1d1d1f' }}
                 />
                 {data.map((entry, i) => {
                   const opacity = 0.4 + 0.6 * (entry.value / maxVal)
-                  const base = colors[0] ?? '#4361EE'
+                  const base = colors[0] ?? '#0066cc'
                   // hex → rgba
                   const r = parseInt(base.slice(1, 3), 16)
                   const g = parseInt(base.slice(3, 5), 16)

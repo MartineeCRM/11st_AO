@@ -33,7 +33,7 @@ export function AttributionFilterBar({
   }
 
   return (
-    <div className="sticky top-14 z-30 flex flex-wrap items-center gap-3 border-b border-[#E5E7EB] bg-white px-6 py-3">
+    <div className="sticky top-14 z-30 flex flex-wrap items-center gap-3 border-b border-[#e0e0e0] bg-white px-6 py-3">
       <DatePresetFilter
         value={filters.dateRange}
         onChange={dateRange => onFiltersChange({ ...filters, dateRange })}
@@ -43,7 +43,7 @@ export function AttributionFilterBar({
         onPresetChange={onPresetChange}
       />
 
-      <div className="h-7 w-px bg-[#E5E7EB]" />
+      <div className="h-7 w-px bg-[#e0e0e0]" />
 
       <MultiSelectFilter
         label="Source"

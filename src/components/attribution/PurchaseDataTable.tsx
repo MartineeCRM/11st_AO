@@ -200,10 +200,10 @@ function ProgressBar({ value, elapsedDays, dailyTarget }: {
   const progress = calcProgress(value, dailyTarget, elapsedDays)
   if (progress === null) return <span className="text-[#9CA3AF] text-[11px]">—</span>
   const pct = progress * 100
-  const barColor = pct >= 100 ? '#10B981' : pct >= 80 ? '#4361EE' : '#EF4444'
+  const barColor = pct >= 100 ? '#10B981' : pct >= 80 ? '#0066cc' : '#EF4444'
   return (
     <div className="flex flex-col gap-0.5 min-w-[72px]">
-      <div className="h-1.5 w-full rounded-full bg-[#E5E7EB] overflow-hidden">
+      <div className="h-1.5 w-full rounded-full bg-[#e0e0e0] overflow-hidden">
         <div
           className="h-full rounded-full transition-all"
           style={{ width: `${Math.min(pct, 100)}%`, backgroundColor: barColor }}
@@ -257,7 +257,7 @@ function TableRow({ row, depth = 0, target, dailyTarget, compareMode }: TableRow
                 ? <ChevronDown className="h-3.5 w-3.5 shrink-0 text-[#9CA3AF]" />
                 : <ChevronRight className="h-3.5 w-3.5 shrink-0 text-[#9CA3AF]" />
               : <span className="w-3.5" />}
-            <span className={cn('text-xs', depth === 0 ? 'font-semibold text-[#374151]' : 'text-[#6B7280]')}>
+            <span className={cn('text-xs', depth === 0 ? 'font-semibold text-[#1d1d1f]' : 'text-[#6B7280]')}>
               {row.label}
             </span>
           </button>
@@ -265,7 +265,7 @@ function TableRow({ row, depth = 0, target, dailyTarget, compareMode }: TableRow
 
         {/* 기본 지표 컬럼 */}
         {BASE_COLS.map(col => (
-          <td key={col.key} className="px-3 py-2 text-right text-xs text-[#374151] tabular-nums">
+          <td key={col.key} className="px-3 py-2 text-right text-xs text-[#1d1d1f] tabular-nums">
             {col.fmt(row[col.key as keyof RowData] as number)}
           </td>
         ))}
@@ -374,25 +374,25 @@ export function PurchaseDataTable({ rows, allRows }: Props) {
   const colSpanTotal = BASE_COLS.length + 1 + 2 + (savedTarget ? 2 : 0)
 
   return (
-    <div className="rounded-xl border border-[#E5E7EB] bg-white">
+    <div className="rounded-xl border border-[#e0e0e0] bg-white">
       {/* 헤더 */}
-      <div className="flex items-center justify-between border-b border-[#E5E7EB] px-4 py-3">
-        <ChartSectionNote sectionId="att_purchase_table" title="일자별 구매 지표" titleClassName="text-xs font-semibold text-[#374151]" />
+      <div className="flex items-center justify-between border-b border-[#e0e0e0] px-4 py-3">
+        <ChartSectionNote sectionId="att_purchase_table" title="일자별 구매 지표" titleClassName="text-xs font-semibold text-[#1d1d1f]" />
         <div className="flex items-center gap-2">
           <button
             onClick={handleOpenPanel}
-            className="flex items-center gap-1 rounded-md border border-[#E5E7EB] px-2.5 py-1 text-xs font-medium text-[#6B7280] hover:bg-[#F9FAFB] transition-colors"
+            className="flex items-center gap-1 rounded-md border border-[#e0e0e0] px-2.5 py-1 text-xs font-medium text-[#6B7280] hover:bg-[#F9FAFB] transition-colors"
           >
             <Settings2 className="h-3 w-3" />
             타겟 설정
           </button>
           {/* MoM / YoY 토글 */}
-          <div className="flex rounded-md border border-[#E5E7EB] overflow-hidden text-[11px]">
+          <div className="flex rounded-md border border-[#e0e0e0] overflow-hidden text-[11px]">
             <button
               onClick={() => setCompareMode('mom')}
               className={cn(
                 'px-2.5 py-1 font-medium transition-colors',
-                compareMode === 'mom' ? 'bg-[#4361EE] text-white' : 'text-[#6B7280] hover:bg-[#F3F4F6]',
+                compareMode === 'mom' ? 'bg-[#0066cc] text-white' : 'text-[#6B7280] hover:bg-[#F3F4F6]',
               )}
             >
               MoM
@@ -400,8 +400,8 @@ export function PurchaseDataTable({ rows, allRows }: Props) {
             <button
               onClick={() => setCompareMode('yoy')}
               className={cn(
-                'px-2.5 py-1 font-medium transition-colors border-l border-[#E5E7EB]',
-                compareMode === 'yoy' ? 'bg-[#4361EE] text-white' : 'text-[#6B7280] hover:bg-[#F3F4F6]',
+                'px-2.5 py-1 font-medium transition-colors border-l border-[#e0e0e0]',
+                compareMode === 'yoy' ? 'bg-[#0066cc] text-white' : 'text-[#6B7280] hover:bg-[#F3F4F6]',
               )}
             >
               YoY
@@ -415,8 +415,8 @@ export function PurchaseDataTable({ rows, allRows }: Props) {
                 className={cn(
                   'rounded-md px-2.5 py-1 text-xs font-medium transition-colors',
                   groupBy === opt.key
-                    ? 'bg-[#4361EE] text-white'
-                    : 'bg-[#F3F4F6] text-[#6B7280] hover:bg-[#E5E7EB]',
+                    ? 'bg-[#0066cc] text-white'
+                    : 'bg-[#F3F4F6] text-[#6B7280] hover:bg-[#e0e0e0]',
                 )}
               >
                 {opt.label}
@@ -428,8 +428,8 @@ export function PurchaseDataTable({ rows, allRows }: Props) {
 
       {/* 타겟 설정 패널 */}
       {showTargetPanel && (
-        <div className="border-b border-[#E5E7EB] bg-[#F9FAFB] px-5 py-4">
-          <p className="mb-3 text-xs font-semibold text-[#374151]">
+        <div className="border-b border-[#e0e0e0] bg-[#F9FAFB] px-5 py-4">
+          <p className="mb-3 text-xs font-semibold text-[#1d1d1f]">
             월간 타겟 설정 — {currentMonth.replace('-', '년 ')}월
           </p>
           <div className="flex flex-col gap-2.5 max-w-sm">
@@ -440,7 +440,7 @@ export function PurchaseDataTable({ rows, allRows }: Props) {
                 value={inputRevenue}
                 onChange={e => setInputRevenue(e.target.value.replace(/[^0-9]/g, ''))}
                 placeholder="예: 2000000000"
-                className="flex-1 rounded-lg border border-[#E5E7EB] bg-white px-3 py-1.5 text-xs text-[#374151] focus:border-[#4361EE] focus:outline-none tabular-nums"
+                className="flex-1 rounded-lg border border-[#e0e0e0] bg-white px-3 py-1.5 text-xs text-[#1d1d1f] focus:border-[#0066cc] focus:outline-none tabular-nums"
               />
             </div>
             <div className="flex items-center gap-3">
@@ -450,20 +450,20 @@ export function PurchaseDataTable({ rows, allRows }: Props) {
                 value={inputPurchase}
                 onChange={e => setInputPurchase(e.target.value.replace(/[^0-9]/g, ''))}
                 placeholder="예: 50000"
-                className="flex-1 rounded-lg border border-[#E5E7EB] bg-white px-3 py-1.5 text-xs text-[#374151] focus:border-[#4361EE] focus:outline-none tabular-nums"
+                className="flex-1 rounded-lg border border-[#e0e0e0] bg-white px-3 py-1.5 text-xs text-[#1d1d1f] focus:border-[#0066cc] focus:outline-none tabular-nums"
               />
             </div>
           </div>
           <div className="mt-3 flex gap-2">
             <button
               onClick={handleCancel}
-              className="rounded-lg border border-[#E5E7EB] px-3 py-1.5 text-xs font-medium text-[#6B7280] hover:bg-white transition-colors"
+              className="rounded-lg border border-[#e0e0e0] px-3 py-1.5 text-xs font-medium text-[#6B7280] hover:bg-white transition-colors"
             >
               취소
             </button>
             <button
               onClick={handleSave}
-              className="rounded-lg bg-[#4361EE] px-3 py-1.5 text-xs font-medium text-white hover:bg-[#3451d1] transition-colors"
+              className="rounded-lg bg-[#0066cc] px-3 py-1.5 text-xs font-medium text-white hover:bg-[#3451d1] transition-colors"
             >
               저장
             </button>
@@ -475,7 +475,7 @@ export function PurchaseDataTable({ rows, allRows }: Props) {
       <div className="overflow-x-auto">
         <table className="w-full min-w-[1100px]">
           <thead>
-            <tr className="border-b border-[#E5E7EB] bg-[#F9FAFB]">
+            <tr className="border-b border-[#e0e0e0] bg-[#F9FAFB]">
               <th className="sticky left-0 z-10 bg-[#F9FAFB] px-3 py-2 text-left text-[11px] font-semibold text-[#6B7280]">
                 날짜
               </th>

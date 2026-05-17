@@ -59,7 +59,7 @@ export function CRMCampaignOps() {
     send_trend: (
       <div className="h-72">
         {sheetLoading ? (
-          <div className="h-full rounded-xl border border-[#E5E7EB] bg-[#F3F4F6] animate-pulse" />
+          <div className="h-full rounded-[18px] border border-[#e0e0e0] bg-[#F3F4F6] animate-pulse" />
         ) : (
           <SendOpenTrendChart data={trendData} />
         )}
@@ -100,7 +100,7 @@ export function CRMCampaignOps() {
         <div className="flex justify-end px-6 pt-4">
           <button
             onClick={startEditing}
-            className="flex items-center gap-1.5 rounded-lg border border-[#E5E7EB] bg-white px-2.5 py-1.5 text-xs font-medium text-[#374151] hover:bg-[#F9FAFB]"
+            className="flex items-center gap-1.5 rounded-lg border border-[#e0e0e0] bg-white px-2.5 py-1.5 text-xs font-medium text-[#1d1d1f] hover:bg-[#F9FAFB]"
           >
             <Settings2 size={12} />
             레이아웃 편집

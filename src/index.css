@@ -2,33 +2,73 @@
 
 @layer base {
   :root {
+    /* Apple Design System Tokens */
+
+    /* Brand & Interactive */
+    --color-primary: #0066cc;          /* Action Blue — single interactive accent */
+    --color-primary-focus: #0071e3;    /* Focus ring */
+    --color-primary-on-dark: #2997ff;  /* Sky Link Blue — dark surfaces only */
+    --color-primary-tint: #e8f0fb;     /* Action Blue tint — badge backgrounds */
+
+    /* Surface */
+    --color-canvas: #ffffff;
+    --color-canvas-parchment: #f5f5f7; /* Page BG, alternating sections */
+    --color-surface-pearl: #fafafc;    /* Secondary button fill */
+    --color-surface-black: #000000;    /* Global nav bar */
+
+    /* Text */
+    --color-ink: #1d1d1f;              /* Near-black — all headlines & body on light */
+    --color-body-on-dark: #ffffff;
+    --color-body-muted: #cccccc;       /* Secondary copy on dark */
+    --color-text-secondary: #6B7280;
+    --color-text-muted: #9CA3AF;
+    --color-ink-muted-48: #7a7a7a;     /* Disabled, fine-print */
+
+    /* Borders */
+    --color-hairline: #e0e0e0;         /* Cards, tables, inputs */
+    --color-divider-soft: rgba(0,0,0,0.04);
+
+    /* Semantic */
+    --color-success: #10B981;
+    --color-success-bg: #DCFCE7;
+    --color-success-dark: #16A34A;
+    --color-danger: #EF4444;
+    --color-danger-light: #FCA5A5;
+    --color-warning: #F59E0B;
+    --color-warning-bg: #FFFBEB;
+    --color-warning-dark: #D97706;
+
+    /* shadcn/ui compatibility */
     --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
+    --foreground: 0 0% 11.4%;         /* #1d1d1f */
     --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+    --card-foreground: 0 0% 11.4%;
     --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
-    --primary: 230 84% 60%;
-    --primary-foreground: 210 40% 98%;
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
+    --popover-foreground: 0 0% 11.4%;
+    --primary: 211 100% 40%;           /* #0066cc */
+    --primary-foreground: 0 0% 100%;
+    --secondary: 240 4% 98%;           /* #f5f5f7 parchment */
+    --secondary-foreground: 0 0% 11.4%;
+    --muted: 240 4% 96%;
+    --muted-foreground: 220 9% 46%;    /* #6B7280 */
+    --accent: 240 4% 96%;
+    --accent-foreground: 0 0% 11.4%;
     --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 230 84% 60%;
-    --radius: 0.5rem;
+    --destructive-foreground: 0 0% 100%;
+    --border: 0 0% 87.8%;             /* #e0e0e0 hairline */
+    --input: 0 0% 87.8%;
+    --ring: 211 100% 40%;              /* #0066cc */
+    --radius: 1.125rem;                /* 18px — Apple {rounded.lg} */
   }
 }
 
 @layer base {
   body {
-    @apply bg-[#F4F5F7] text-[#111827];
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', sans-serif;
+    background-color: var(--color-canvas-parchment);
+    color: var(--color-ink);
+    font-family: 'SF Pro Display', 'SF Pro Text', system-ui, -apple-system, BlinkMacSystemFont, 'Inter', sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
 }
 

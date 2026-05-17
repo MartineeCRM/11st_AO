@@ -83,9 +83,9 @@ export function PurchaseMetricsSection({
         onChange={onMetricChange}
       />
 
-      <div className="rounded-xl border border-[#E5E7EB] bg-white p-4">
+      <div className="rounded-xl border border-[#e0e0e0] bg-white p-4">
         <div className="mb-3">
-          <ChartSectionNote sectionId="att_purchase_trend" title="트렌드 (현재 / WoW / MoM)" titleClassName="text-xs font-semibold text-[#374151]" />
+          <ChartSectionNote sectionId="att_purchase_trend" title="트렌드 (현재 / WoW / MoM)" titleClassName="text-xs font-semibold text-[#1d1d1f]" />
         </div>
         <PurchaseTrendChart
           data={trendData}

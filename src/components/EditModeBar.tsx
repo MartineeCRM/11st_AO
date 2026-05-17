@@ -9,7 +9,7 @@ interface Props {
 
 export function EditModeBar({ onSave, onCancel, saving, saveError }: Props) {
   return (
-    <div className="sticky top-14 z-40 flex items-center gap-3 px-6 py-2.5 bg-[#4361EE] shadow-md">
+    <div className="sticky top-14 z-40 flex items-center gap-3 px-6 py-2.5 bg-[#0066cc] shadow-md">
       <Settings2 className="h-4 w-4 text-white opacity-80" />
       <span className="text-sm font-semibold text-white flex-1">레이아웃 편집 중</span>
       {saveError && (
@@ -24,7 +24,7 @@ export function EditModeBar({ onSave, onCancel, saving, saveError }: Props) {
       <button
         onClick={onSave}
         disabled={saving}
-        className="rounded-lg bg-white px-3 py-1.5 text-xs font-semibold text-[#4361EE] hover:bg-blue-50 disabled:opacity-50"
+        className="rounded-lg bg-white px-3 py-1.5 text-xs font-semibold text-[#0066cc] hover:bg-blue-50 disabled:opacity-50"
       >
         {saving ? '저장 중...' : '저장'}
       </button>

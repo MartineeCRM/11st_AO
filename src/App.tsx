@@ -32,7 +32,7 @@ class ErrorBoundary extends Component<{ children: ReactNode }, { error: Error | 
             {error.stack}
           </pre>
           <button
-            className="rounded-lg bg-[#4361EE] px-4 py-2 text-xs text-white"
+            className="rounded-lg bg-[#0066cc] px-4 py-2 text-xs text-white"
             onClick={() => this.setState({ error: null })}
           >
             다시 시도
@@ -58,7 +58,7 @@ export default function App() {
     <ProtectedRoute>
       {({ project, availableProjects, setProjectId }) => (
         <ChartColorsContext.Provider value={project?.chart_colors?.length ? project.chart_colors : DEFAULT_CHART_COLORS}>
-        <div className="min-h-screen bg-[#F4F5F7]">
+        <div className="min-h-screen bg-[#f5f5f7]">
           <TopNav
             activeTab={activeTab}
             onTabChange={setActiveTab}
@@ -69,7 +69,7 @@ export default function App() {
           <main>
             {switching ? (
               <div className="flex flex-col items-center justify-center py-40 gap-3">
-                <div className="h-6 w-6 rounded-full border-2 border-[#4361EE] border-t-transparent animate-spin" />
+                <div className="h-6 w-6 rounded-full border-2 border-[#0066cc] border-t-transparent animate-spin" />
                 <p className="text-sm text-[#6B7280]">프로젝트 변경 중...</p>
               </div>
             ) : (

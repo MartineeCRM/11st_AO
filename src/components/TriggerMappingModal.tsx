@@ -38,13 +38,13 @@ export function TriggerMappingModal({ campaigns, existingTriggers, savedMappings
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30">
-      <div className="bg-white rounded-xl shadow-2xl w-full max-w-lg mx-4 flex flex-col max-h-[80vh]">
-        <div className="flex items-center justify-between px-5 py-4 border-b border-[#E5E7EB]">
+      <div className="bg-white rounded-[18px] shadow-2xl w-full max-w-lg mx-4 flex flex-col max-h-[80vh]">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-[#e0e0e0]">
           <div>
-            <h2 className="text-sm font-semibold text-[#111827]">트리거 이름 수동 매핑</h2>
+            <h2 className="text-sm font-semibold text-[#1d1d1f]">트리거 이름 수동 매핑</h2>
             <p className="text-xs text-[#9CA3AF] mt-0.5">미매핑 캠페인에 트리거 이름을 지정합니다.</p>
           </div>
-          <button onClick={onClose} className="text-[#9CA3AF] hover:text-[#374151] p-1 rounded">
+          <button onClick={onClose} className="text-[#9CA3AF] hover:text-[#1d1d1f] p-1 rounded">
             <X size={16} />
           </button>
         </div>
@@ -64,7 +64,7 @@ export function TriggerMappingModal({ campaigns, existingTriggers, savedMappings
                 >
                   {channelLabel(ch)}
                 </span>
-                <span className="flex-1 text-xs text-[#374151] truncate" title={c.name}>{c.name}</span>
+                <span className="flex-1 text-xs text-[#1d1d1f] truncate" title={c.name}>{c.name}</span>
                 <div className="relative shrink-0 w-36">
                   <input
                     type="text"
@@ -72,7 +72,7 @@ export function TriggerMappingModal({ campaigns, existingTriggers, savedMappings
                     value={draft[c.id] ?? ''}
                     onChange={e => setMapping(c.id, e.target.value)}
                     placeholder="트리거 이름 입력..."
-                    className="w-full rounded-lg border border-[#E5E7EB] px-2.5 py-1.5 text-xs text-[#374151] focus:border-[#4361EE] focus:outline-none"
+                    className="w-full rounded-lg border border-[#e0e0e0] px-2.5 py-1.5 text-xs text-[#1d1d1f] focus:border-[#0066cc] focus:outline-none"
                   />
                   <datalist id={`triggers-${c.id}`}>
                     {existingTriggers.map(t => (
@@ -85,7 +85,7 @@ export function TriggerMappingModal({ campaigns, existingTriggers, savedMappings
           })}
         </div>
 
-        <div className="flex items-center justify-between px-5 py-3 border-t border-[#E5E7EB] bg-[#F9FAFB]">
+        <div className="flex items-center justify-between px-5 py-3 border-t border-[#e0e0e0] bg-[#F9FAFB]">
           {saveError ? (
             <span className="text-xs text-[#EF4444]">{saveError}</span>
           ) : (
@@ -101,7 +101,7 @@ export function TriggerMappingModal({ campaigns, existingTriggers, savedMappings
             <button
               onClick={handleSave}
               disabled={saving}
-              className="rounded-lg bg-[#374151] px-3 py-1.5 text-xs font-medium text-white hover:bg-[#111827] disabled:opacity-50"
+              className="rounded-lg bg-[#1d1d1f] px-3 py-1.5 text-xs font-medium text-white hover:bg-[#1d1d1f] disabled:opacity-50"
             >
               {saving ? '저장 중...' : '저장'}
             </button>

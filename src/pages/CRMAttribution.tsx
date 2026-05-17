@@ -94,7 +94,7 @@ export function CRMAttribution() {
   if (loading) {
     return (
       <div className="flex h-64 items-center justify-center">
-        <div className="h-5 w-5 animate-spin rounded-full border-2 border-[#4361EE] border-t-transparent" />
+        <div className="h-5 w-5 animate-spin rounded-full border-2 border-[#0066cc] border-t-transparent" />
         <span className="ml-2 text-sm text-[#6B7280]">데이터 로딩 중...</span>
       </div>
     )
@@ -103,7 +103,7 @@ export function CRMAttribution() {
   if (error) {
     return (
       <div className="flex h-64 items-center justify-center">
-        <div className="rounded-xl border border-red-100 bg-red-50 px-6 py-4 text-sm text-red-600">
+        <div className="rounded-[18px] border border-red-100 bg-red-50 px-6 py-4 text-sm text-red-600">
           데이터 로드 실패: {error}
         </div>
       </div>
@@ -137,7 +137,7 @@ export function CRMAttribution() {
     att_metrics: (
       <div className="px-6 py-5">
         {/* 섹션 탭 */}
-        <div className="mb-5 flex gap-1 border-b border-[#E5E7EB]">
+        <div className="mb-5 flex gap-1 border-b border-[#e0e0e0]">
           {([
             { key: 'purchase', label: '구매 지표' },
             { key: 'event', label: '기타 이벤트' },
@@ -148,8 +148,8 @@ export function CRMAttribution() {
               className={[
                 'px-4 py-2 text-sm font-medium transition-colors',
                 sectionTab === tab.key
-                  ? 'border-b-2 border-[#4361EE] text-[#4361EE]'
-                  : 'text-[#6B7280] hover:text-[#374151]',
+                  ? 'border-b-2 border-[#0066cc] text-[#0066cc]'
+                  : 'text-[#6B7280] hover:text-[#1d1d1f]',
               ].join(' ')}
             >
               {tab.label}
@@ -193,7 +193,7 @@ export function CRMAttribution() {
         {!isEditing ? (
           <button
             onClick={startEditing}
-            className="flex items-center gap-1.5 rounded-lg border border-[#E5E7EB] bg-white px-3 py-1.5 text-sm text-[#6B7280] hover:bg-[#F9FAFB]"
+            className="flex items-center gap-1.5 rounded-lg border border-[#e0e0e0] bg-white px-3 py-1.5 text-sm text-[#6B7280] hover:bg-[#F9FAFB]"
           >
             <Settings2 className="h-4 w-4" />
             레이아웃 편집

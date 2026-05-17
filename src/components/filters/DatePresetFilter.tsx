@@ -73,10 +73,10 @@ export function DatePresetFilter({ value, minDate, maxDate, activePreset, onPres
 
   return (
     <div className="flex items-center gap-3">
-      <span className="text-sm font-semibold text-[#374151]">기간</span>
+      <span className="text-sm font-semibold text-[#1d1d1f]">기간</span>
 
       {/* 프리셋 버튼 그룹 */}
-      <div className="flex items-center rounded-lg border border-[#E5E7EB] bg-[#F9FAFB] p-0.5">
+      <div className="flex items-center rounded-lg border border-[#e0e0e0] bg-[#F9FAFB] p-0.5">
         {PRESETS.map(p => (
           <button
             key={p.key}
@@ -84,8 +84,8 @@ export function DatePresetFilter({ value, minDate, maxDate, activePreset, onPres
             className={cn(
               'rounded-md px-3 py-1.5 text-xs font-medium transition-all',
               activePreset === p.key
-                ? 'border border-[#4361EE] bg-[#EEF1FF] text-[#4361EE]'
-                : 'text-[#6B7280] hover:text-[#374151]',
+                ? 'border border-[#0066cc] bg-[#e8f0fb] text-[#0066cc]'
+                : 'text-[#6B7280] hover:text-[#1d1d1f]',
             )}
           >
             {p.label}
@@ -101,10 +101,10 @@ export function DatePresetFilter({ value, minDate, maxDate, activePreset, onPres
             className={cn(
               'flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs transition-colors',
               calOpen
-                ? 'border-[#4361EE] bg-[#EEF1FF] text-[#4361EE]'
+                ? 'border-[#0066cc] bg-[#e8f0fb] text-[#0066cc]'
                 : activePreset === null
-                  ? 'border-[#4361EE] bg-[#EEF1FF] text-[#4361EE]'
-                  : 'border-[#E5E7EB] bg-[#F9FAFB] text-[#374151] hover:bg-[#F3F4F6]',
+                  ? 'border-[#0066cc] bg-[#e8f0fb] text-[#0066cc]'
+                  : 'border-[#e0e0e0] bg-[#F9FAFB] text-[#1d1d1f] hover:bg-[#F3F4F6]',
             )}
           >
             <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -114,7 +114,7 @@ export function DatePresetFilter({ value, minDate, maxDate, activePreset, onPres
           </button>
 
           {calOpen && (
-            <div className="absolute top-full left-0 z-50 mt-1 rounded-xl border border-[#E5E7EB] bg-white shadow-lg">
+            <div className="absolute top-full left-0 z-50 mt-1 rounded-xl border border-[#e0e0e0] bg-white shadow-lg">
               <DayPicker
                 mode="range"
                 selected={range}
@@ -127,11 +127,11 @@ export function DatePresetFilter({ value, minDate, maxDate, activePreset, onPres
                   root: { margin: 0, padding: '12px 16px', fontSize: 13 },
                 }}
                 classNames={{
-                  day_selected: 'bg-[#4361EE] text-white rounded-md',
-                  day_range_middle: 'bg-[#EEF1FF] text-[#4361EE] rounded-none',
-                  day_range_start: 'bg-[#4361EE] text-white rounded-l-md',
-                  day_range_end: 'bg-[#4361EE] text-white rounded-r-md',
-                  day_today: 'font-bold text-[#4361EE]',
+                  day_selected: 'bg-[#0066cc] text-white rounded-md',
+                  day_range_middle: 'bg-[#e8f0fb] text-[#0066cc] rounded-none',
+                  day_range_start: 'bg-[#0066cc] text-white rounded-l-md',
+                  day_range_end: 'bg-[#0066cc] text-white rounded-r-md',
+                  day_today: 'font-bold text-[#0066cc]',
                   button: 'hover:bg-[#F3F4F6] rounded-md',
                 }}
               />
