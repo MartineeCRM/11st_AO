@@ -33,6 +33,7 @@ export function useSheetData(): SheetData {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const mounted = useRef(true)
+  const pid = getProjectId()
 
   useEffect(() => {
     mounted.current = true
@@ -42,7 +43,6 @@ export function useSheetData(): SheetData {
       setError(null)
       try {
         const now = Date.now()
-        const pid = getProjectId()
         const mKey: CacheKey = `${pid}:martinee`
         const kKey: CacheKey = `${pid}:kpi`
 
@@ -87,7 +87,7 @@ export function useSheetData(): SheetData {
 
     void load()
     return () => { mounted.current = false }
-  }, [])
+  }, [pid])
 
   const allDates = [...martinee.map(r => r.date), ...kpi.map(r => r.date)].filter(Boolean).sort()
 

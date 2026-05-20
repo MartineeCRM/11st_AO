@@ -46,17 +46,19 @@ class ErrorBoundary extends Component<{ children: ReactNode }, { error: Error | 
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<Tab>('performance')
-  const [switching, setSwitching] = useState(false)
-
-  function handleProjectChange(setProjectId: (id: string) => void, id: string) {
-    setSwitching(true)
-    setProjectId(id)
-    setTimeout(() => setSwitching(false), 2000)
-  }
+  const [pendingId, setPendingId] = useState<string | null>(null)
 
   return (
     <ProtectedRoute>
-      {({ project, availableProjects, setProjectId }) => (
+      {({ project, availableProjects, setProjectId }) => {
+        const switching = pendingId !== null && pendingId !== project.id
+
+        function handleProjectChange(id: string) {
+          setPendingId(id)
+          setProjectId(id)
+        }
+
+        return (
         <ChartColorsContext.Provider value={project?.chart_colors?.length ? project.chart_colors : DEFAULT_CHART_COLORS}>
         <div className="min-h-screen bg-[#f5f5f7]">
           <TopNav
@@ -64,7 +66,7 @@ export default function App() {
             onTabChange={setActiveTab}
             project={project}
             availableProjects={availableProjects}
-            onProjectChange={(id) => handleProjectChange(setProjectId, id)}
+            onProjectChange={handleProjectChange}
           />
           <main>
             {switching ? (
@@ -83,7 +85,8 @@ export default function App() {
           </main>
         </div>
         </ChartColorsContext.Provider>
-      )}
+        )
+      }}
     </ProtectedRoute>
   )
 }
