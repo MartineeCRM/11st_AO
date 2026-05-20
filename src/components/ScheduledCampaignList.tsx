@@ -4,6 +4,12 @@ import { channelLabel, channelBadgeColor, brazeCampaignUrl, brazeCanvasUrl } fro
 import type { EnrichedCampaign } from '@/hooks/useBrazeCampaigns'
 
 function getRelevantDate(c: EnrichedCampaign): string | undefined {
+  // 예약 발송 시각 — schedule 객체에서 우선 추출
+  const scheduledTime =
+    (c.schedule?.time as string | undefined) ??
+    (c.schedule?.next_send_time as string | undefined) ??
+    (c.schedule?.start_time as string | undefined)
+  if (scheduledTime) return scheduledTime
   return c.first_sent || c.last_sent || c.updated_at
 }
 
@@ -51,7 +57,7 @@ export function ScheduledCampaignList({ campaigns, loading, error }: Props) {
       const iso = getRelevantDate(c)
       if (!iso) return false
       const diff = dayDiffFromKey(toLocalDateKey(iso))
-      return diff >= -7  // 7일 전까지만 표시
+      return diff >= -7 && diff <= 14  // 7일 전 ~ 14일 후
     })
 
   // 날짜별 그룹핑
@@ -81,7 +87,7 @@ export function ScheduledCampaignList({ campaigns, loading, error }: Props) {
             {totalCount}
           </span>
         )}
-        <span className="ml-auto text-[11px] text-[#9CA3AF]">7일 이내 · 날짜 순</span>
+        <span className="ml-auto text-[11px] text-[#9CA3AF]">7일 전 ~ 14일 후 · 날짜 순</span>
       </div>
 
       {loading && (
