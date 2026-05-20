@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import {
   LineChart,
   Line,
@@ -14,16 +14,6 @@ import type { DailyKpiRow } from '@/types/sheets'
 import { ChartSectionNote } from './ChartSectionNote'
 import { useChartColors } from '@/lib/chartColors'
 
-const EVENT_KEYS: { key: keyof Omit<DailyKpiRow, 'date'>; label: string }[] = [
-  { key: 'complete_order_product', label: '구매 제품 수' },
-  { key: 'first_purchase', label: '첫 구매' },
-  { key: 'like_brand', label: '브랜드 좋아요' },
-  { key: 'like_product', label: '제품 좋아요' },
-  { key: 'view_cartpage', label: '카트 조회' },
-  { key: 'view_product_detail', label: '제품 상세 조회' },
-  { key: 'view_promotion_list_page', label: '프로모션 조회' },
-]
-
 interface DailyEventPoint {
   date: string
   [key: string]: number | string
@@ -31,15 +21,35 @@ interface DailyEventPoint {
 
 interface Props {
   kpiRows: DailyKpiRow[]
+  /** H열 이후 원본 컬럼명 목록. 없으면 DailyKpiRow 기본 이벤트 컬럼 사용 */
+  eventColumns?: { key: string; label: string }[]
 }
 
-export function CustomEventLineChart({ kpiRows }: Props) {
+const DEFAULT_EVENT_KEYS: { key: string; label: string }[] = [
+  { key: 'complete_order_product', label: 'complete_order_product' },
+  { key: 'first_purchase', label: 'first_purchase' },
+  { key: 'like_brand', label: 'like_brand' },
+  { key: 'like_product', label: 'like_product' },
+  { key: 'view_cartpage', label: 'view_cartpage' },
+  { key: 'view_product_detail', label: 'view_product_detail' },
+  { key: 'view_promotion_list_page', label: 'view_promotion_list_page' },
+]
+
+export function CustomEventLineChart({ kpiRows, eventColumns }: Props) {
   const colors = useChartColors()
-  const EVENTS = EVENT_KEYS.map((ev, i) => ({ ...ev, color: colors[i % colors.length] }))
+  const EVENTS = (eventColumns && eventColumns.length > 0 ? eventColumns : DEFAULT_EVENT_KEYS)
+    .map((ev, i) => ({ ...ev, color: colors[i % colors.length] }))
 
   const [selected, setSelected] = useState<Set<string>>(
-    new Set(['complete_order_product', 'first_purchase']),
+    new Set(DEFAULT_EVENT_KEYS.slice(0, 2).map(ev => ev.key)),
   )
+
+  useEffect(() => {
+    if (EVENTS.length > 0) {
+      setSelected(new Set(EVENTS.slice(0, 2).map(ev => ev.key)))
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [eventColumns])
 
   const data: DailyEventPoint[] = kpiRows
     .slice()
@@ -47,7 +57,7 @@ export function CustomEventLineChart({ kpiRows }: Props) {
     .map(row => {
       const point: DailyEventPoint = { date: formatDateShort(row.date) }
       for (const ev of EVENTS) {
-        point[ev.key] = Number(row[ev.key]) || 0
+        point[ev.key] = Number((row as Record<string, unknown>)[ev.key]) || 0
       }
       return point
     })

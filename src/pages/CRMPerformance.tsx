@@ -81,7 +81,7 @@ function LoadingSkeleton() {
 }
 
 export function CRMPerformance() {
-  const { martinee, kpi, loading, error, dateRange } = useSheetData()
+  const { martinee, kpi, kpiEventColumns, loading, error, dateRange } = useSheetData()
   const { user } = useAuth()
   const { project, saveDashboardLayout } = useProject(user?.id ?? null)
 
@@ -155,7 +155,7 @@ export function CRMPerformance() {
     kpi_cards:      <Row1KpiSummary kpiCards={kpiCards} />,
     trends_top10:   <Row2TrendsTop10 dailyCombo={dailyCombo} top10={top10} top10Metric={top10Metric} onTop10MetricChange={setTop10Metric} />,
     channel_table:  <div className="px-6 pb-4"><ChannelPerformanceTable rows={filteredMartinee} /></div>,
-    funnel_events:  <Row3FunnelEvents funnel={funnel} funnelSteps={funnelSteps} onFunnelStepsChange={setFunnelSteps} kpiRows={filteredKpi} />,
+    funnel_events:  <Row3FunnelEvents funnel={funnel} funnelSteps={funnelSteps} onFunnelStepsChange={setFunnelSteps} kpiRows={filteredKpi} eventColumns={kpiEventColumns} />,
     table_optin:    <Row4TableOptIn bizKpiTable={bizKpiTable} optInData={optInData} />,
     revenue:        <Row5RevenueCharts dailyRevenue={dailyRevenue} />,
     att_filter:     null,

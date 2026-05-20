@@ -21,7 +21,7 @@ function MiniSparkline({ data, color }: { data: number[]; color: string }) {
             dot={false}
           />
           <RTooltip
-            formatter={(v: number) => [v.toLocaleString('ko-KR'), '']}
+            formatter={(v: number) => [v >= 100 ? Math.round(v).toLocaleString('ko-KR') : v.toFixed(2), '']}
             contentStyle={{ fontSize: 10 }}
             itemStyle={{ color: '#1d1d1f' }}
           />

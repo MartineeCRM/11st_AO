@@ -1,4 +1,3 @@
-import { useState } from 'react'
 import {
   Bell,
   BellRing,
@@ -37,9 +36,9 @@ function DynamicIcon({ name, className, style }: { name: string; className?: str
 function MiniTrendChart({ data, color }: { data: number[]; color: string }) {
   const points = data.map((v, i) => ({ i, v }))
   return (
-    <div className="w-[180px] rounded-[18px] border border-[#e0e0e0] bg-white p-3 shadow-lg">
-      <p className="mb-1.5 text-[11px] font-medium text-[#6B7280]">최근 14일 추이</p>
-      <ResponsiveContainer width="100%" height={50}>
+    <div className="px-1 pt-1">
+      <p className="mb-1 text-[10px] font-medium text-[#9CA3AF]">최근 14일 추이</p>
+      <ResponsiveContainer width="100%" height={40}>
         <LineChart data={points}>
           <Line type="monotone" dataKey="v" stroke={color} strokeWidth={1.5} dot={false} />
           <RTooltip
@@ -58,24 +57,14 @@ interface Props {
 }
 
 export function OptInCard({ data }: Props) {
-  const [hovered, setHovered] = useState(false)
   const { label, icon, value, wow, trendData, color } = data
   const isPositive = wow > 0
   const isNegative = wow < 0
 
   return (
-    <div
-      className="relative"
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
-    >
-      <div
-        className={cn(
-          'flex items-center justify-between rounded-[18px] border border-[#e0e0e0] bg-white px-4 py-3 transition-shadow',
-          hovered && 'shadow-md',
-        )}
-      >
-        {/* 아이콘 + 레이블 */}
+    <div className="rounded-[18px] border border-[#e0e0e0] bg-white px-4 pt-3 pb-2">
+      {/* 상단: 아이콘 + 레이블 + 값 + WoW */}
+      <div className={cn('flex items-center justify-between')}>
         <div className="flex items-center gap-2.5">
           <div
             className="flex h-8 w-8 items-center justify-center rounded-lg flex-shrink-0"
@@ -86,10 +75,8 @@ export function OptInCard({ data }: Props) {
           <span className="text-xs font-medium text-[#6B7280]">{label}</span>
         </div>
 
-        {/* 값 */}
         <span className="text-base font-bold text-[#1d1d1f]">{formatNumber(value)}</span>
 
-        {/* WoW */}
         <div className="flex items-center gap-1">
           {isPositive ? (
             <TrendingUp className="h-3.5 w-3.5 text-[#10B981]" />
@@ -109,11 +96,9 @@ export function OptInCard({ data }: Props) {
         </div>
       </div>
 
-      {/* 호버 미니차트 */}
-      {hovered && trendData.length > 0 && (
-        <div className="absolute right-4 top-full z-50 mt-2">
-          <MiniTrendChart data={trendData} color={color} />
-        </div>
+      {/* 하단: 미니 트렌드 차트 */}
+      {trendData.length > 0 && (
+        <MiniTrendChart data={trendData} color={color} />
       )}
     </div>
   )

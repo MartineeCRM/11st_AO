@@ -414,7 +414,7 @@ export function buildBusinessKpiTable(
 
     let formattedCurrent: string
     if (def.isRate) formattedCurrent = formatRate(curVal)
-    else if (def.isFullNumber) formattedCurrent = `₩${curVal.toLocaleString('ko-KR')}`
+    else if (def.isFullNumber) formattedCurrent = `₩${Math.round(curVal).toLocaleString('ko-KR')}`
     else if (def.isCurrency) formattedCurrent = `₩${formatNumber(curVal)}`
     else formattedCurrent = formatNumber(curVal)
 

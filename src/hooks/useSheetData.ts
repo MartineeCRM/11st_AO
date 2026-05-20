@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { fetchMartineeUnion, fetchDailyKpi } from '@/lib/googleSheets'
+import { fetchMartineeUnion, fetchDailyKpiWithHeaders } from '@/lib/googleSheets'
 import type { MartineeUnionRow, DailyKpiRow } from '@/types/sheets'
 
 const CACHE_TTL_MS = 5 * 60 * 1000 // 5분
@@ -9,10 +9,18 @@ interface CacheEntry<T> {
   fetchedAt: number
 }
 
+interface KpiCacheData {
+  rows: DailyKpiRow[]
+  eventColumns: { key: string; label: string }[]
+}
+
 // 캐시 키에 project_id 포함 — 프로젝트 전환 시 다른 슬롯 사용
-type CacheKey = `${string}:martinee` | `${string}:kpi`
-const cache = new Map<CacheKey, CacheEntry<MartineeUnionRow[] | DailyKpiRow[]>>()
-const pendingRequests = new Map<CacheKey, Promise<MartineeUnionRow[] | DailyKpiRow[]>>()
+type MarineeKey = `${string}:martinee`
+type KpiKey = `${string}:kpi`
+const martineeCache = new Map<MarineeKey, CacheEntry<MartineeUnionRow[]>>()
+const kpiCache = new Map<KpiKey, CacheEntry<KpiCacheData>>()
+const pendingMartinee = new Map<MarineeKey, Promise<MartineeUnionRow[]>>()
+const pendingKpi = new Map<KpiKey, Promise<KpiCacheData>>()
 
 function getProjectId(): string {
   return localStorage.getItem('crm_project_id') ?? 'default'
@@ -21,6 +29,7 @@ function getProjectId(): string {
 export interface SheetData {
   martinee: MartineeUnionRow[]
   kpi: DailyKpiRow[]
+  kpiEventColumns: { key: string; label: string }[]
   loading: boolean
   error: string | null
   /** 전체 기간 */
@@ -30,6 +39,7 @@ export interface SheetData {
 export function useSheetData(): SheetData {
   const [martinee, setMartinee] = useState<MartineeUnionRow[]>([])
   const [kpi, setKpi] = useState<DailyKpiRow[]>([])
+  const [kpiEventColumns, setKpiEventColumns] = useState<{ key: string; label: string }[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const mounted = useRef(true)
@@ -43,38 +53,39 @@ export function useSheetData(): SheetData {
       setError(null)
       try {
         const now = Date.now()
-        const mKey: CacheKey = `${pid}:martinee`
-        const kKey: CacheKey = `${pid}:kpi`
+        const mKey: MarineeKey = `${pid}:martinee`
+        const kKey: KpiKey = `${pid}:kpi`
 
-        const cachedM = cache.get(mKey)
-        const cachedK = cache.get(kKey)
+        const cachedM = martineeCache.get(mKey)
+        const cachedK = kpiCache.get(kKey)
         const needsMartinee = !cachedM || now - cachedM.fetchedAt > CACHE_TTL_MS
         const needsKpi = !cachedK || now - cachedK.fetchedAt > CACHE_TTL_MS
 
-        if (needsMartinee && !pendingRequests.has(mKey)) {
-          const p = fetchMartineeUnion().finally(() => pendingRequests.delete(mKey))
-          pendingRequests.set(mKey, p as Promise<MartineeUnionRow[]>)
+        if (needsMartinee && !pendingMartinee.has(mKey)) {
+          const p = fetchMartineeUnion().finally(() => pendingMartinee.delete(mKey))
+          pendingMartinee.set(mKey, p)
         }
-        if (needsKpi && !pendingRequests.has(kKey)) {
-          const p = fetchDailyKpi().finally(() => pendingRequests.delete(kKey))
-          pendingRequests.set(kKey, p as Promise<DailyKpiRow[]>)
+        if (needsKpi && !pendingKpi.has(kKey)) {
+          const p = fetchDailyKpiWithHeaders().finally(() => pendingKpi.delete(kKey))
+          pendingKpi.set(kKey, p)
         }
 
         const [mData, kData] = await Promise.all([
           needsMartinee
-            ? (pendingRequests.get(mKey) as Promise<MartineeUnionRow[]>)
-            : Promise.resolve(cachedM!.data as MartineeUnionRow[]),
+            ? (pendingMartinee.get(mKey) as Promise<MartineeUnionRow[]>)
+            : Promise.resolve(cachedM!.data),
           needsKpi
-            ? (pendingRequests.get(kKey) as Promise<DailyKpiRow[]>)
-            : Promise.resolve(cachedK!.data as DailyKpiRow[]),
+            ? (pendingKpi.get(kKey) as Promise<KpiCacheData>)
+            : Promise.resolve(cachedK!.data),
         ])
 
-        if (needsMartinee) cache.set(mKey, { data: mData, fetchedAt: Date.now() })
-        if (needsKpi) cache.set(kKey, { data: kData, fetchedAt: Date.now() })
+        if (needsMartinee) martineeCache.set(mKey, { data: mData, fetchedAt: Date.now() })
+        if (needsKpi) kpiCache.set(kKey, { data: kData, fetchedAt: Date.now() })
 
         if (mounted.current) {
           setMartinee(mData)
-          setKpi(kData)
+          setKpi(kData.rows)
+          setKpiEventColumns(kData.eventColumns)
         }
       } catch (err) {
         if (mounted.current) {
@@ -96,5 +107,5 @@ export function useSheetData(): SheetData {
       ? { min: allDates[0], max: allDates[allDates.length - 1] }
       : null
 
-  return { martinee, kpi, loading, error, dateRange }
+  return { martinee, kpi, kpiEventColumns, loading, error, dateRange }
 }

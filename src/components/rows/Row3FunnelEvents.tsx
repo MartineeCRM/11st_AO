@@ -9,16 +9,17 @@ interface Props {
   funnelSteps: FunnelFieldKey[]
   onFunnelStepsChange: (steps: FunnelFieldKey[]) => void
   kpiRows: DailyKpiRow[]
+  eventColumns?: { key: string; label: string }[]
 }
 
-export function Row3FunnelEvents({ funnel, funnelSteps, onFunnelStepsChange, kpiRows }: Props) {
+export function Row3FunnelEvents({ funnel, funnelSteps, onFunnelStepsChange, kpiRows, eventColumns }: Props) {
   return (
     <div className="flex gap-4 px-6 py-4" style={{ minHeight: 380 }}>
       <div className="flex-[35]">
         <ConversionFunnel data={funnel} steps={funnelSteps} onStepsChange={onFunnelStepsChange} />
       </div>
       <div className="flex-[61]">
-        <CustomEventLineChart kpiRows={kpiRows} />
+        <CustomEventLineChart kpiRows={kpiRows} eventColumns={eventColumns} />
       </div>
     </div>
   )

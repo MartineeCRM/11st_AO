@@ -118,6 +118,26 @@ export async function fetchDailyKpi(): Promise<DailyKpiRow[]> {
   return normalizeDailyKpi(parsed)
 }
 
+/** daily_kpi rows + H열(index 7)부터의 원본 컬럼명 반환 */
+export async function fetchDailyKpiWithHeaders(): Promise<{
+  rows: DailyKpiRow[]
+  eventColumns: { key: string; label: string }[]
+}> {
+  const raw = await fetchSheet('daily_kpi')
+  const rows = normalizeDailyKpi(parseRows<Record<string, string | number>>(raw))
+  const headerRow = raw[0] ?? []
+  // H열 = index 7 이후 원본 헤더
+  const eventColumns = headerRow
+    .slice(7)
+    .map(h => h.trim())
+    .filter(h => h.length > 0)
+    .map(h => ({
+      key: h.toLowerCase().replace(/\s+/g, '_'),
+      label: h,
+    }))
+  return { rows, eventColumns }
+}
+
 function normalizeAttData(rows: Record<string, string | number>[]): AttDataRow[] {
   return rows
     .map(r => ({
