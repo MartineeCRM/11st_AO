@@ -10,60 +10,63 @@ import { FUNNEL_FIELD_LABELS, type FunnelFieldKey } from '@/lib/metrics'
 import type { FunnelStep } from '@/types/metrics'
 import { ChartSectionNote } from './ChartSectionNote'
 
-const SELECTABLE_FIELDS: FunnelFieldKey[] = [
-  'view_promotion_list_page',
-  'view_product_detail',
-  'view_cartpage',
-  'like_brand',
-  'like_product',
-  'purchase_cnt',
-  'complete_order_product',
-  'first_purchase',
+const DEFAULT_SELECTABLE_FIELDS: { key: string; label: string }[] = [
+  { key: 'view_promotion_list_page', label: 'view_promotion_list_page' },
+  { key: 'view_product_detail', label: 'view_product_detail' },
+  { key: 'view_cartpage', label: 'view_cartpage' },
+  { key: 'like_brand', label: 'like_brand' },
+  { key: 'like_product', label: 'like_product' },
+  { key: 'purchase_cnt', label: 'purchase_cnt' },
+  { key: 'complete_order_product', label: 'complete_order_product' },
+  { key: 'first_purchase', label: 'first_purchase' },
 ]
-
 
 interface Props {
   data: FunnelStep[]
   steps: FunnelFieldKey[]
   onStepsChange: (steps: FunnelFieldKey[]) => void
+  eventColumns?: { key: string; label: string }[]
 }
 
 function StepDropdown({
   value,
   onChange,
   exclude,
+  fields,
 }: {
   value: FunnelFieldKey
   onChange: (f: FunnelFieldKey) => void
   exclude: FunnelFieldKey[]
+  fields: { key: string; label: string }[]
 }) {
   const [open, setOpen] = useState(false)
+  const currentLabel = fields.find(f => f.key === value)?.label ?? value
   return (
     <div className="relative">
       <button
         onClick={() => setOpen(o => !o)}
         className="flex items-center gap-1 rounded-lg border border-[#e0e0e0] bg-white px-2 py-1 text-[11px] font-medium text-[#1d1d1f] hover:bg-gray-50 transition-colors"
       >
-        {FUNNEL_FIELD_LABELS[value] ?? value}
+        {currentLabel}
         <ChevronDown className="h-3 w-3 text-[#9CA3AF]" />
       </button>
       {open && (
         <>
           <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
           <div className="absolute left-0 top-full z-50 mt-1 w-44 rounded-lg border border-[#e0e0e0] bg-white py-1 shadow-lg overflow-hidden animate-in fade-in slide-in-from-top-1">
-            {SELECTABLE_FIELDS.filter(f => !exclude.includes(f) || f === value).map(f => (
+            {fields.filter(f => !exclude.includes(f.key) || f.key === value).map(f => (
               <button
-                key={f}
+                key={f.key}
                 onClick={() => {
-                  onChange(f)
+                  onChange(f.key)
                   setOpen(false)
                 }}
                 className={cn(
                   'block w-full px-3 py-1.5 text-left text-[11px] transition-colors',
-                  f === value ? 'bg-[#e8f0fb] font-semibold text-[#0066cc]' : 'text-[#1d1d1f] hover:bg-gray-50',
+                  f.key === value ? 'bg-[#e8f0fb] font-semibold text-[#0066cc]' : 'text-[#1d1d1f] hover:bg-gray-50',
                 )}
               >
-                {FUNNEL_FIELD_LABELS[f] ?? f}
+                {f.label}
               </button>
             ))}
           </div>
@@ -73,7 +76,9 @@ function StepDropdown({
   )
 }
 
-export function ConversionFunnel({ data, steps, onStepsChange }: Props) {
+export function ConversionFunnel({ data, steps, onStepsChange, eventColumns }: Props) {
+  const selectableFields = eventColumns && eventColumns.length > 0 ? eventColumns : DEFAULT_SELECTABLE_FIELDS
+
   function handleStepChange(i: number, f: FunnelFieldKey) {
     const next = [...steps]
     next[i] = f
@@ -81,8 +86,8 @@ export function ConversionFunnel({ data, steps, onStepsChange }: Props) {
   }
 
   function handleAddStep() {
-    const available = SELECTABLE_FIELDS.find(f => !steps.includes(f))
-    if (available) onStepsChange([...steps, available])
+    const available = selectableFields.find(f => !steps.includes(f.key))
+    if (available) onStepsChange([...steps, available.key])
   }
 
   function handleRemoveStep(i: number) {
@@ -110,6 +115,7 @@ export function ConversionFunnel({ data, steps, onStepsChange }: Props) {
                   value={step}
                   onChange={f => handleStepChange(i, f)}
                   exclude={steps.filter((_, j) => j !== i)}
+                  fields={selectableFields}
                 />
                 {steps.length > 2 && (
                   <button
@@ -123,7 +129,7 @@ export function ConversionFunnel({ data, steps, onStepsChange }: Props) {
             </div>
           ))}
         </div>
-        {steps.length < 4 && (
+        {steps.length < 4 && steps.length < selectableFields.length && (
           <button
             onClick={handleAddStep}
             className="flex items-center gap-1 rounded-lg border border-[#e0e0e0] bg-[#F8FAFC] px-2.5 py-1.5 text-[11px] font-bold text-[#475569] hover:bg-[#e8f0fb] hover:text-[#0066cc] hover:border-[#0066cc] transition-all"

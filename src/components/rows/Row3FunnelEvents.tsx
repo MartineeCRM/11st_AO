@@ -16,7 +16,7 @@ export function Row3FunnelEvents({ funnel, funnelSteps, onFunnelStepsChange, kpi
   return (
     <div className="flex gap-4 px-6 py-4" style={{ minHeight: 380 }}>
       <div className="flex-[35]">
-        <ConversionFunnel data={funnel} steps={funnelSteps} onStepsChange={onFunnelStepsChange} />
+        <ConversionFunnel data={funnel} steps={funnelSteps} onStepsChange={onFunnelStepsChange} eventColumns={eventColumns} />
       </div>
       <div className="flex-[61]">
         <CustomEventLineChart kpiRows={kpiRows} eventColumns={eventColumns} />

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import {
   DndContext,
   closestCenter,
@@ -112,6 +112,15 @@ export function CRMPerformance() {
 
   // 퍼널 단계 상태
   const [funnelSteps, setFunnelSteps] = useState<FunnelFieldKey[]>(DEFAULT_FUNNEL_STEPS)
+  const funnelInitialized = useRef(false)
+
+  // eventColumns 로드 후 퍼널 기본 steps를 시트 첫 2개 컬럼으로 초기화
+  useEffect(() => {
+    if (!funnelInitialized.current && kpiEventColumns.length >= 2) {
+      funnelInitialized.current = true
+      setFunnelSteps(kpiEventColumns.slice(0, 2).map(c => c.key))
+    }
+  }, [kpiEventColumns])
 
   const { filteredMartinee, filteredKpi, campaignDepth1Options, osOptions, categoryOptions, channelOptions, messageTypeOptions } = useFilteredData(
     martinee,

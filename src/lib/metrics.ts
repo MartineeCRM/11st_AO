@@ -259,7 +259,7 @@ export function buildTop10(
 
 // ─── 퍼널 ─────────────────────────────────────────────────────
 
-export type FunnelFieldKey = keyof Omit<DailyKpiRow, 'date'>
+export type FunnelFieldKey = string
 
 export const FUNNEL_FIELD_LABELS: Record<string, string> = {}
 
@@ -267,7 +267,7 @@ export function buildFunnel(
   rows: DailyKpiRow[],
   steps: FunnelFieldKey[],
 ): FunnelStep[] {
-  const totals = steps.map(field => rows.reduce((s, r) => s + Number(r[field]), 0))
+  const totals = steps.map(field => rows.reduce((s, r) => s + Number((r as Record<string, unknown>)[field]), 0))
   return steps.map((field, i) => ({
     label: FUNNEL_FIELD_LABELS[field] ?? field,
     field,
