@@ -5,10 +5,7 @@ import type { EnrichedCampaign } from '@/hooks/useBrazeCampaigns'
 
 function getRelevantDate(c: EnrichedCampaign): string | undefined {
   // 예약 발송 시각 — schedule 객체에서 우선 추출
-  const scheduledTime =
-    (c.schedule?.time as string | undefined) ??
-    (c.schedule?.next_send_time as string | undefined) ??
-    (c.schedule?.start_time as string | undefined)
+  const scheduledTime = c.schedule?.next_send_time ?? c.schedule?.time ?? c.schedule?.start_time
   if (scheduledTime) return scheduledTime
   return c.first_sent || c.last_sent || c.updated_at
 }

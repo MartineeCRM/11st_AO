@@ -40,7 +40,7 @@ export interface EnrichedCampaign extends BrazeCampaign {
   trigger_action?: string
   first_sent?: string
   last_sent?: string
-  schedule?: Record<string, unknown>
+  schedule?: { time?: string; next_send_time?: string; start_time?: string; [key: string]: unknown }
 }
 
 export interface UseBrazeCampaignsResult {

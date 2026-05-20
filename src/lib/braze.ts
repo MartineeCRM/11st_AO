@@ -90,7 +90,7 @@ export interface BrazeCampaignDetails {
   // 성과 지표 (details API에 포함)
   messages?: Record<string, unknown>
   // 스케줄 상세 (Braze API 원본 그대로 보존)
-  schedule?: Record<string, unknown>
+  schedule?: { time?: string; next_send_time?: string; start_time?: string; [key: string]: unknown }
 }
 
 export interface BrazeCampaignStats {
