@@ -63,19 +63,20 @@ function getProjectId(): string {
 }
 
 async function fetchDetailsWithConcurrency(
-  campaigns: BrazeCampaign[],
+  items: BrazeCampaign[],
+  fetcher: (id: string) => Promise<BrazeCampaignDetails>,
 ): Promise<PromiseSettledResult<BrazeCampaignDetails>[]> {
-  const results: PromiseSettledResult<BrazeCampaignDetails>[] = new Array(campaigns.length)
+  const results: PromiseSettledResult<BrazeCampaignDetails>[] = new Array(items.length)
   let nextIndex = 0
 
   async function worker() {
-    while (nextIndex < campaigns.length) {
+    while (nextIndex < items.length) {
       const index = nextIndex
       nextIndex += 1
       try {
         results[index] = {
           status: 'fulfilled',
-          value: await fetchCampaignDetails(campaigns[index].id),
+          value: await fetcher(items[index].id),
         }
       } catch (reason) {
         results[index] = { status: 'rejected', reason }
@@ -84,7 +85,7 @@ async function fetchDetailsWithConcurrency(
   }
 
   await Promise.all(
-    Array.from({ length: Math.min(DETAIL_CONCURRENCY, campaigns.length) }, () => worker()),
+    Array.from({ length: Math.min(DETAIL_CONCURRENCY, items.length) }, () => worker()),
   )
   return results
 }
@@ -98,7 +99,7 @@ async function fetchLiveCampaigns(): Promise<EnrichedCampaign[]> {
 
   // Campaign 상세 fetch
   const campaignTargets = campaignList.slice(0, DETAIL_LIMIT)
-  const campaignDetailResults = await fetchDetailsWithConcurrency(campaignTargets)
+  const campaignDetailResults = await fetchDetailsWithConcurrency(campaignTargets, fetchCampaignDetails)
 
   const enrichedCampaigns: EnrichedCampaign[] = campaignTargets.flatMap((c, i) => {
     const detail =
@@ -131,7 +132,7 @@ async function fetchLiveCampaigns(): Promise<EnrichedCampaign[]> {
 
   // Canvas 상세 fetch — fetchDetailsWithConcurrency는 BrazeCampaign[] 기대하므로 id/name 호환됨
   const canvasTargets = canvasList.slice(0, DETAIL_LIMIT)
-  const canvasDetailResults = await fetchDetailsWithConcurrency(canvasTargets)
+  const canvasDetailResults = await fetchDetailsWithConcurrency(canvasTargets, fetchCanvasDetails)
 
   const enrichedCanvases: EnrichedCampaign[] = canvasTargets.flatMap((c, i) => {
     const raw =
