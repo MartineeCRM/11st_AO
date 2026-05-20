@@ -5,8 +5,10 @@ import {
   fetchAllCanvases,
   fetchCanvasDetails,
   resolveCanvasScheduleType,
+  extractCanvasChannels,
   type BrazeCampaign,
   type BrazeCampaignDetails,
+  type BrazeCanvasDetails,
 } from '@/lib/braze'
 
 /**
@@ -137,18 +139,18 @@ async function fetchLiveCampaigns(): Promise<EnrichedCampaign[]> {
   const enrichedCanvases: EnrichedCampaign[] = canvasTargets.flatMap((c, i) => {
     const raw =
       canvasDetailResults[i].status === 'fulfilled'
-        ? (canvasDetailResults[i] as PromiseFulfilledResult<BrazeCampaignDetails>).value
+        ? (canvasDetailResults[i] as PromiseFulfilledResult<BrazeCanvasDetails>).value
         : null
     if (!raw) return []
     const isLive = raw.enabled && !raw.archived && !raw.draft
     if (!isLive) return []
-    const scheduleType = resolveCanvasScheduleType(raw as { schedule_type?: string; schedule?: { type?: string } })
+    const scheduleType = resolveCanvasScheduleType(raw)
     return [{
       ...c,
       type: 'canvas' as const,
       name: raw.name || c.name,
       schedule_type: scheduleType,
-      channels: raw.channels ?? [],
+      channels: extractCanvasChannels(raw),
       created_at: raw.created_at,
       updated_at: raw.updated_at,
       tags: raw.tags ?? c.tags,

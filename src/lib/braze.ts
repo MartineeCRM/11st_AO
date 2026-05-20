@@ -232,12 +232,26 @@ export interface BrazeCanvasDetails {
   draft: boolean
   enabled: boolean
   tags: string[]
-  channels: string[]
-  schedule_type?: string   // action_based | scheduled | api_triggered
-  // Canvas schedule 객체 — type 필드 포함
+  channels?: string[]       // Campaign 호환 — Canvas는 보통 없음
+  schedule_type?: string    // action_based | scheduled | api_triggered
   schedule?: { type?: string; [key: string]: unknown }
   first_sent?: string
   last_sent?: string
+  // Canvas steps — 채널 정보가 여기 messages 키로 있음
+  steps?: Array<{ name?: string; messages?: Record<string, unknown> }>
+}
+
+/** Canvas steps.messages 키에서 채널 목록 추출 */
+export function extractCanvasChannels(detail: BrazeCanvasDetails): string[] {
+  if (detail.channels && detail.channels.length > 0) return detail.channels
+  if (!detail.steps) return []
+  const channelSet = new Set<string>()
+  for (const step of detail.steps) {
+    for (const ch of Object.keys(step.messages ?? {})) {
+      channelSet.add(ch)
+    }
+  }
+  return [...channelSet]
 }
 
 interface CanvasListResponse {
