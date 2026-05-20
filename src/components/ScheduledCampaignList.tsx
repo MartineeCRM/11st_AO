@@ -1,6 +1,6 @@
 import { Calendar, ExternalLink } from 'lucide-react'
 import { ChartSectionNote } from './charts/ChartSectionNote'
-import { channelLabel, channelBadgeColor, brazeCampaignUrl } from '@/lib/braze'
+import { channelLabel, channelBadgeColor, brazeCampaignUrl, brazeCanvasUrl } from '@/lib/braze'
 import type { EnrichedCampaign } from '@/hooks/useBrazeCampaigns'
 
 function getRelevantDate(c: EnrichedCampaign): string | undefined {
@@ -165,13 +165,16 @@ export function ScheduledCampaignList({ campaigns, loading, error }: Props) {
                               >
                                 {channelLabel(primaryChannel) || '기타'}
                               </div>
+                              <span className={`rounded px-1 py-0.5 text-[9px] font-bold shrink-0 ${c.type === 'canvas' ? 'bg-[#EDE9FE] text-[#7C3AED]' : 'bg-[#e8f0fb] text-[#0066cc]'}`}>
+                                {c.type === 'canvas' ? 'Canvas' : 'Cmpgn'}
+                              </span>
                             </div>
                             <div className="flex items-start gap-1">
                               <p className="text-[11px] font-medium text-[#1d1d1f] leading-snug line-clamp-2 flex-1 min-w-0">
                                 {c.name}
                               </p>
                               <a
-                                href={brazeCampaignUrl(c.id)}
+                                href={c.type === 'canvas' ? brazeCanvasUrl(c.id) : brazeCampaignUrl(c.id)}
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="shrink-0 text-[#9CA3AF] hover:text-[#0066cc] opacity-0 group-hover:opacity-100 transition-opacity mt-0.5"

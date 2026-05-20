@@ -2,6 +2,9 @@ import { useState, useEffect } from 'react'
 import {
   fetchAllCampaigns,
   fetchCampaignDetails,
+  fetchAllCanvases,
+  fetchCanvasDetails,
+  resolveCanvasScheduleType,
   type BrazeCampaign,
   type BrazeCampaignDetails,
 } from '@/lib/braze'
@@ -22,6 +25,7 @@ function resolveTriggerAction(detail: BrazeCampaignDetails): string | undefined 
 }
 
 export interface EnrichedCampaign extends BrazeCampaign {
+  type: 'campaign' | 'canvas'
   schedule_type: string
   channels: string[]
   created_at: string
@@ -86,26 +90,27 @@ async function fetchDetailsWithConcurrency(
 }
 
 async function fetchLiveCampaigns(): Promise<EnrichedCampaign[]> {
-  // 1단계: 전체 목록. /campaigns/list에는 활성 상태와 채널 정보가 없다.
-  const list = await fetchAllCampaigns()
+  // Campaign과 Canvas 목록을 병렬로 가져옴
+  const [campaignList, canvasList] = await Promise.all([
+    fetchAllCampaigns().catch(() => [] as BrazeCampaign[]),
+    fetchAllCanvases().catch(() => [] as BrazeCampaign[]),
+  ])
 
-  // 2단계: 최신 캠페인 상세 정보 fetch. 동시성을 제한해 rate limit과 네트워크 병목을 피한다.
-  const targets = list.slice(0, DETAIL_LIMIT)
-  const detailResults = await fetchDetailsWithConcurrency(targets)
+  // Campaign 상세 fetch
+  const campaignTargets = campaignList.slice(0, DETAIL_LIMIT)
+  const campaignDetailResults = await fetchDetailsWithConcurrency(campaignTargets)
 
-  return targets.flatMap((c, i) => {
+  const enrichedCampaigns: EnrichedCampaign[] = campaignTargets.flatMap((c, i) => {
     const detail =
-      detailResults[i].status === 'fulfilled'
-        ? (detailResults[i] as PromiseFulfilledResult<BrazeCampaignDetails>).value
+      campaignDetailResults[i].status === 'fulfilled'
+        ? (campaignDetailResults[i] as PromiseFulfilledResult<BrazeCampaignDetails>).value
         : null
-
     if (!detail) return []
-
     const isLive = detail.enabled && !detail.archived && !detail.draft
     if (!isLive) return []
-
-    return {
+    return [{
       ...c,
+      type: 'campaign' as const,
       name: detail.name || c.name,
       schedule_type: detail.schedule_type ?? 'unknown',
       channels: detail.channels ?? [],
@@ -121,8 +126,44 @@ async function fetchLiveCampaigns(): Promise<EnrichedCampaign[]> {
       first_sent: detail.first_sent,
       last_sent: detail.last_sent,
       schedule: detail.schedule,
-    }
+    }]
   })
+
+  // Canvas 상세 fetch — fetchDetailsWithConcurrency는 BrazeCampaign[] 기대하므로 id/name 호환됨
+  const canvasTargets = canvasList.slice(0, DETAIL_LIMIT)
+  const canvasDetailResults = await fetchDetailsWithConcurrency(canvasTargets)
+
+  const enrichedCanvases: EnrichedCampaign[] = canvasTargets.flatMap((c, i) => {
+    const raw =
+      canvasDetailResults[i].status === 'fulfilled'
+        ? (canvasDetailResults[i] as PromiseFulfilledResult<BrazeCampaignDetails>).value
+        : null
+    if (!raw) return []
+    const isLive = raw.enabled && !raw.archived && !raw.draft
+    if (!isLive) return []
+    const scheduleType = resolveCanvasScheduleType(raw as { schedule_type?: string; schedule?: { type?: string } })
+    return [{
+      ...c,
+      type: 'canvas' as const,
+      name: raw.name || c.name,
+      schedule_type: scheduleType,
+      channels: raw.channels ?? [],
+      created_at: raw.created_at,
+      updated_at: raw.updated_at,
+      tags: raw.tags ?? c.tags,
+      enabled: raw.enabled,
+      archived: raw.archived,
+      draft: raw.draft,
+      is_active: isLive,
+      is_archived: raw.archived,
+      trigger_action: resolveTriggerAction(raw),
+      first_sent: raw.first_sent,
+      last_sent: raw.last_sent,
+      schedule: raw.schedule as Record<string, unknown> | undefined,
+    }]
+  })
+
+  return [...enrichedCampaigns, ...enrichedCanvases]
 }
 
 export function useBrazeCampaigns(): UseBrazeCampaignsResult {

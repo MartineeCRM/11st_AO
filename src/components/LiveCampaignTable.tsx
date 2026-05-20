@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { ExternalLink } from 'lucide-react'
 import { ChartSectionNote } from './charts/ChartSectionNote'
 import type { EnrichedCampaign } from '@/hooks/useBrazeCampaigns'
-import { channelLabel, channelBadgeColor, scheduleTypeLabel, brazeCampaignUrl } from '@/lib/braze'
+import { channelLabel, channelBadgeColor, scheduleTypeLabel, brazeCampaignUrl, brazeCanvasUrl } from '@/lib/braze'
 import { cn } from '@/lib/utils'
 
 const CHANNEL_TABS = ['전체', '푸시', '인앱', '이메일', 'SMS', '카카오', '웹훅'] as const
@@ -113,8 +113,13 @@ export function LiveCampaignTable({ campaigns, loading, error }: Props) {
                 const badge = channelBadgeColor(ch)
                 return (
                   <tr key={c.id} className="hover:bg-[#FAFAFA] transition-colors">
-                    <td className="px-4 py-3 font-medium text-[#1d1d1f] max-w-[256px] truncate">
-                      {c.name}
+                    <td className="px-4 py-3 max-w-[280px]">
+                      <div className="flex items-center gap-1.5">
+                        <span className={`shrink-0 rounded px-1.5 py-0.5 text-[10px] font-bold ${c.type === 'canvas' ? 'bg-[#EDE9FE] text-[#7C3AED]' : 'bg-[#e8f0fb] text-[#0066cc]'}`}>
+                          {c.type === 'canvas' ? 'Canvas' : 'Campaign'}
+                        </span>
+                        <span className="font-medium text-[#1d1d1f] truncate text-sm">{c.name}</span>
+                      </div>
                     </td>
                     <td className="px-3 py-3">
                       <span
@@ -141,7 +146,7 @@ export function LiveCampaignTable({ campaigns, loading, error }: Props) {
                     </td>
                     <td className="px-3 py-3 text-center">
                       <a
-                        href={brazeCampaignUrl(c.id)}
+                        href={c.type === 'canvas' ? brazeCanvasUrl(c.id) : brazeCampaignUrl(c.id)}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="inline-flex items-center justify-center text-[#9CA3AF] hover:text-[#0066cc] transition-colors"

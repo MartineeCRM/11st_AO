@@ -2,6 +2,8 @@ const REQUIRED_PERMISSIONS: Record<string, string> = {
   '/campaigns/list': 'campaigns.list',
   '/campaigns/details': 'campaigns.details',
   '/campaigns/data_series': 'campaigns.data_series',
+  '/canvas/list': 'canvas.list',
+  '/canvas/details': 'canvas.details',
 }
 
 function buildUrl(path: string, params: Record<string, string | number | boolean>) {
@@ -208,4 +210,82 @@ export function scheduleTypeLabel(t: string): string {
 /** Braze 캠페인 대시보드 URL */
 export function brazeCampaignUrl(campaignId: string): string {
   return `https://dashboard-07.braze.com/engagement/campaigns/${campaignId}`
+}
+
+/** Braze Canvas 대시보드 URL */
+export function brazeCanvasUrl(canvasId: string): string {
+  return `https://dashboard-07.braze.com/engagement/canvas/${canvasId}`
+}
+
+export interface BrazeCanvas {
+  id: string
+  name: string
+  last_edited: string
+  tags: string[]
+}
+
+export interface BrazeCanvasDetails {
+  created_at: string
+  updated_at: string
+  name: string
+  archived: boolean
+  draft: boolean
+  enabled: boolean
+  tags: string[]
+  channels: string[]
+  schedule_type?: string   // action_based | scheduled | api_triggered
+  // Canvas schedule 객체 — type 필드 포함
+  schedule?: { type?: string; [key: string]: unknown }
+  first_sent?: string
+  last_sent?: string
+}
+
+interface CanvasListResponse {
+  canvases?: BrazeCanvas[]
+}
+
+interface CanvasDetailsResponse extends BrazeCanvasDetails {
+  canvas?: BrazeCanvasDetails
+}
+
+/** Canvas 목록 (페이지 단위) */
+export async function fetchCanvasList(page = 0): Promise<BrazeCanvas[]> {
+  const json = await brazeGet<CanvasListResponse>(
+    '/canvas/list',
+    { page, include_archived: false, sort_direction: 'desc' },
+    'Braze /canvas/list',
+  )
+  return json.canvases ?? []
+}
+
+/** 전체 Canvas 목록 */
+export async function fetchAllCanvases(): Promise<BrazeCanvas[]> {
+  const results: BrazeCanvas[] = []
+  let page = 0
+  while (true) {
+    const batch = await fetchCanvasList(page)
+    results.push(...batch)
+    if (batch.length < 100) break
+    if (results.length >= 500) break
+    page++
+  }
+  return results
+}
+
+/** Canvas 상세 */
+export async function fetchCanvasDetails(canvasId: string): Promise<BrazeCanvasDetails> {
+  const json = await brazeGet<CanvasDetailsResponse>(
+    '/canvas/details',
+    { canvas_id: canvasId },
+    'Braze /canvas/details',
+  )
+  return json.canvas ?? json
+}
+
+/** Canvas schedule.type → schedule_type 정규화 */
+export function resolveCanvasScheduleType(detail: { schedule_type?: string; schedule?: { type?: string } }): string {
+  if (detail.schedule_type) return detail.schedule_type
+  const t = detail.schedule?.type
+  if (typeof t === 'string') return t
+  return 'unknown'
 }

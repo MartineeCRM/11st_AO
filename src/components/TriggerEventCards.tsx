@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { ExternalLink, Pencil } from 'lucide-react'
 import { ChartSectionNote } from './charts/ChartSectionNote'
 import type { EnrichedCampaign } from '@/hooks/useBrazeCampaigns'
-import { channelLabel, channelBadgeColor, brazeCampaignUrl } from '@/lib/braze'
+import { channelLabel, channelBadgeColor, brazeCampaignUrl, brazeCanvasUrl } from '@/lib/braze'
 import { TriggerMappingModal } from '@/components/TriggerMappingModal'
 
 interface Props {
@@ -121,9 +121,12 @@ export function TriggerEventCards({ campaigns, loading, error, triggerMappings, 
                         >
                           {channelLabel(ch)}
                         </span>
+                        <span className={`shrink-0 rounded px-1 py-0.5 text-[9px] font-bold ${c.type === 'canvas' ? 'bg-[#EDE9FE] text-[#7C3AED]' : 'bg-[#e8f0fb] text-[#0066cc]'}`}>
+                          {c.type === 'canvas' ? 'Canvas' : 'Cmpgn'}
+                        </span>
                         <span className="flex-1 text-xs text-[#1d1d1f] truncate">{c.name}</span>
                         <a
-                          href={brazeCampaignUrl(c.id)}
+                          href={c.type === 'canvas' ? brazeCanvasUrl(c.id) : brazeCampaignUrl(c.id)}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="shrink-0 text-[#9CA3AF] hover:text-[#0066cc] transition-colors"
