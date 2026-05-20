@@ -9,6 +9,8 @@ function buildUrl(path: string, params: Record<string, string | number | boolean
   Object.entries(params).forEach(([key, value]) => {
     url.searchParams.set(key, String(value))
   })
+  const pid = localStorage.getItem('crm_project_id')
+  if (pid) url.searchParams.set('pid', pid)
   return url.toString()
 }
 

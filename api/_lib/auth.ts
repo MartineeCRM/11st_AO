@@ -30,6 +30,13 @@ interface AuthResult {
 const projectCache = new Map<string, { config: ProjectConfig; cachedAt: number }>()
 const CACHE_TTL = 5 * 60 * 1000
 
+/** 설정 변경 후 해당 프로젝트 캐시 즉시 무효화 */
+export function invalidateProjectCache(projectId: string) {
+  for (const key of projectCache.keys()) {
+    if (key.endsWith(`:${projectId}`)) projectCache.delete(key)
+  }
+}
+
 export async function verifyProjectAccess(
   req: IncomingMessage,
   res: ServerResponse,

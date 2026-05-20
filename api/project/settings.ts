@@ -1,6 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { createClient } from '@supabase/supabase-js'
-import { verifyProjectAccess } from '../_lib/auth.js'
+import { verifyProjectAccess, invalidateProjectCache } from '../_lib/auth.js'
 
 const supabaseUrl = process.env.SUPABASE_URL!
 const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
@@ -58,7 +58,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     if (error) return res.status(503).json({ error: '설정 저장에 실패했습니다.' })
 
-    // 캐시 무효화를 위해 auth 캐시에서 해당 프로젝트 제거
+    invalidateProjectCache(auth.projectId)
     return res.status(200).json({ ok: true })
   }
 

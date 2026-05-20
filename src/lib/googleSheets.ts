@@ -12,7 +12,8 @@ async function fetchSheet(sheetName: string): Promise<string[][]> {
   if (session?.access_token) headers['Authorization'] = `Bearer ${session.access_token}`
   if (projectId) headers['X-Project-Id'] = projectId
 
-  const res = await fetch(`/api/sheets?sheet=${encodeURIComponent(sheetName)}`, { headers })
+  const pid = projectId ? `&pid=${encodeURIComponent(projectId)}` : ''
+  const res = await fetch(`/api/sheets?sheet=${encodeURIComponent(sheetName)}${pid}`, { headers })
   if (!res.ok) {
     const json = await res.json().catch(() => ({}))
     throw new Error(`Google Sheets API 오류 [${sheetName}]: ${res.status} ${json.error ?? ''}`)
