@@ -24,8 +24,19 @@ async function parseErrorBody(res: Response) {
   }
 }
 
+async function getAuthHeaders(): Promise<Record<string, string>> {
+  const { supabase } = await import('./supabase')
+  const { data: { session } } = await supabase.auth.getSession()
+  const projectId = localStorage.getItem('crm_project_id')
+  const headers: Record<string, string> = {}
+  if (session?.access_token) headers['Authorization'] = `Bearer ${session.access_token}`
+  if (projectId) headers['X-Project-Id'] = projectId
+  return headers
+}
+
 async function brazeGet<T>(path: string, params: Record<string, string | number | boolean>, label: string): Promise<T> {
-  const res = await fetch(buildUrl(path, params))
+  const headers = await getAuthHeaders()
+  const res = await fetch(buildUrl(path, params), { headers })
 
   if (!res.ok) {
     const body = await parseErrorBody(res)

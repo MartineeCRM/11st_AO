@@ -47,9 +47,16 @@ const CACHE_TTL_MS = 3 * 60 * 1000
 const DETAIL_LIMIT = 100
 const DETAIL_CONCURRENCY = 8
 
-let cachedAt = 0
-let cached: EnrichedCampaign[] = []
-let pendingRequest: Promise<EnrichedCampaign[]> | undefined
+interface CacheSlot {
+  data: EnrichedCampaign[]
+  cachedAt: number
+  pending?: Promise<EnrichedCampaign[]>
+}
+const cache = new Map<string, CacheSlot>()
+
+function getProjectId(): string {
+  return localStorage.getItem('crm_project_id') ?? 'default'
+}
 
 async function fetchDetailsWithConcurrency(
   campaigns: BrazeCampaign[],
@@ -119,13 +126,18 @@ async function fetchLiveCampaigns(): Promise<EnrichedCampaign[]> {
 }
 
 export function useBrazeCampaigns(): UseBrazeCampaignsResult {
-  const [campaigns, setCampaigns] = useState<EnrichedCampaign[]>(cached)
-  const [loading, setLoading] = useState(cached.length === 0)
+  const pid = getProjectId()
+  const slot = cache.get(pid)
+  const [campaigns, setCampaigns] = useState<EnrichedCampaign[]>(slot?.data ?? [])
+  const [loading, setLoading] = useState(!slot || slot.data.length === 0)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    if (Date.now() - cachedAt < CACHE_TTL_MS && cached.length > 0) {
-      setCampaigns(cached)
+    const pid = getProjectId()
+    const slot = cache.get(pid)
+
+    if (slot && Date.now() - slot.cachedAt < CACHE_TTL_MS && slot.data.length > 0) {
+      setCampaigns(slot.data)
       setLoading(false)
       return
     }
@@ -136,14 +148,18 @@ export function useBrazeCampaigns(): UseBrazeCampaignsResult {
       setLoading(true)
       setError(null)
       try {
-        pendingRequest ??= fetchLiveCampaigns().finally(() => {
-          pendingRequest = undefined
-        })
-        const enriched = await pendingRequest
+        const current = cache.get(pid) ?? { data: [], cachedAt: 0 }
+        if (!current.pending) {
+          current.pending = fetchLiveCampaigns().finally(() => {
+            const s = cache.get(pid)
+            if (s) delete s.pending
+          })
+          cache.set(pid, current)
+        }
+        const enriched = await current.pending!
 
         if (!cancelled) {
-          cached = enriched
-          cachedAt = Date.now()
+          cache.set(pid, { data: enriched, cachedAt: Date.now() })
           setCampaigns(enriched)
           setLoading(false)
         }
@@ -157,7 +173,7 @@ export function useBrazeCampaigns(): UseBrazeCampaignsResult {
 
     load()
     return () => { cancelled = true }
-  }, [])
+  }, [pid])
 
   return { campaigns, loading, error }
 }

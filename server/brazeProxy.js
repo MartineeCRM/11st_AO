@@ -54,7 +54,7 @@ export async function handleBrazeProxy(req, res, brazePath, permission) {
       },
     })
 
-    res.setHeader('Cache-Control', 's-maxage=60, stale-while-revalidate=180')
+    res.setHeader('Cache-Control', 'private, max-age=60')
 
     if (!brazeResponse.ok) {
       const body = await readBrazeError(brazeResponse)
