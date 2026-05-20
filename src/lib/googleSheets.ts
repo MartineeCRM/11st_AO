@@ -84,6 +84,9 @@ function normalizeMartinee(rows: Record<string, string | number>[]): MartineeUni
 function normalizeDailyKpi(rows: Record<string, string | number>[]): DailyKpiRow[] {
   return rows
     .map(r => ({
+      // 시트 원본 컬럼 모두 포함 (pdp_view 등 실제 컬럼명 그대로)
+      ...r,
+      // 고정 alias 덮어쓰기
       date: normalizeDate(String(r['date'] ?? r['날짜'] ?? '')),
       push_opt_in: Number(r['push_opt_in'] ?? 0),
       sms_opt_in: Number(r['sms_opt_in'] ?? 0),

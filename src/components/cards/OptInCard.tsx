@@ -11,7 +11,7 @@ import {
   TrendingUp,
   Users,
 } from 'lucide-react'
-import { LineChart, Line, ResponsiveContainer, Tooltip as RTooltip } from 'recharts'
+import { LineChart, Line, XAxis, ResponsiveContainer, Tooltip as RTooltip } from 'recharts'
 import { cn } from '@/lib/utils'
 import { formatNumber, formatWoW } from '@/lib/formatters'
 import type { OptInData } from '@/types/metrics'
@@ -33,15 +33,16 @@ function DynamicIcon({ name, className, style }: { name: string; className?: str
   return <Icon className={className} style={style} />
 }
 
-function MiniTrendChart({ data, color }: { data: number[]; color: string }) {
-  const points = data.map((v, i) => ({ i, v }))
+function MiniTrendChart({ data, color }: { data: { date: string; value: number }[]; color: string }) {
   return (
     <div className="px-1 pt-1">
       <p className="mb-1 text-[10px] font-medium text-[#9CA3AF]">최근 14일 추이</p>
       <ResponsiveContainer width="100%" height={40}>
-        <LineChart data={points}>
-          <Line type="monotone" dataKey="v" stroke={color} strokeWidth={1.5} dot={false} />
+        <LineChart data={data}>
+          <XAxis dataKey="date" hide />
+          <Line type="monotone" dataKey="value" stroke={color} strokeWidth={1.5} dot={false} />
           <RTooltip
+            labelFormatter={(label: string) => label}
             formatter={(v: number) => [formatNumber(v), '']}
             contentStyle={{ fontSize: 11 }}
             itemStyle={{ color: '#1d1d1f' }}

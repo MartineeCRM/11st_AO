@@ -8,6 +8,7 @@ import {
   calcWoW,
   calcTrend14d,
   calcKpiTrend14d,
+  calcKpiTrend14dWithDates,
   buildDailyComboData,
   buildDailyRevenueData,
   buildTop10,
@@ -195,7 +196,7 @@ export function useMetrics(
         icon: 'bell-ring',
         value: curPush,
         wow: calcWoW(curPush, prevPushRow),
-        trendData: calcKpiTrend14d(allKpi, 'push_opt_in', endDate),
+        trendData: calcKpiTrend14dWithDates(allKpi, 'push_opt_in', endDate),
         color: '#0066cc',
       },
       {
@@ -203,7 +204,7 @@ export function useMetrics(
         icon: 'message-square',
         value: curSms,
         wow: calcWoW(curSms, prevSms),
-        trendData: calcKpiTrend14d(allKpi, 'sms_opt_in', endDate),
+        trendData: calcKpiTrend14dWithDates(allKpi, 'sms_opt_in', endDate),
         color: '#10B981',
       },
       {
@@ -211,7 +212,7 @@ export function useMetrics(
         icon: 'message-circle',
         value: curKakao,
         wow: calcWoW(curKakao, prevKakao),
-        trendData: calcKpiTrend14d(allKpi, 'kakao_opt_in', endDate),
+        trendData: calcKpiTrend14dWithDates(allKpi, 'kakao_opt_in', endDate),
         color: '#F59E0B',
       },
     ]

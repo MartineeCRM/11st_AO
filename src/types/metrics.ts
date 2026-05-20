@@ -54,7 +54,7 @@ export interface OptInData {
   icon: string
   value: number
   wow: number
-  trendData: number[]
+  trendData: { date: string; value: number }[]
   color: string
 }
 

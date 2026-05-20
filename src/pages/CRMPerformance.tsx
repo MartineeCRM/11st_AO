@@ -35,7 +35,7 @@ import type { FunnelFieldKey } from '@/lib/metrics'
 import type { SectionId } from '@/lib/supabase'
 import { presetToRange, type Preset } from '@/components/filters/datePresets'
 
-const DEFAULT_FUNNEL_STEPS: FunnelFieldKey[] = ['dau', 'purchase_cnt']
+const DEFAULT_FUNNEL_STEPS: FunnelFieldKey[] = ['view_promotion_list_page', 'purchase_cnt']
 const DEFAULT_TOP10_METRIC: Top10Metric = 'Revenue'
 const DEFAULT_PRESET: Preset = '30d'
 

@@ -11,10 +11,6 @@ import type { FunnelStep } from '@/types/metrics'
 import { ChartSectionNote } from './ChartSectionNote'
 
 const SELECTABLE_FIELDS: FunnelFieldKey[] = [
-  'dau',
-  'push_opt_in',
-  'sms_opt_in',
-  'kakao_opt_in',
   'view_promotion_list_page',
   'view_product_detail',
   'view_cartpage',

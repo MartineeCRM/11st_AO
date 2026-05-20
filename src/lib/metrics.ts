@@ -126,6 +126,19 @@ export function calcKpiTrend14d(
   })
 }
 
+/** daily_kpi 기준 14일 트렌드 (날짜 포함) */
+export function calcKpiTrend14dWithDates(
+  rows: DailyKpiRow[],
+  field: keyof Omit<DailyKpiRow, 'date'>,
+  endDate: string,
+): { date: string; value: number }[] {
+  const byDate = groupKpiByDate(rows)
+  return lastNDates(14, endDate).map(date => ({
+    date,
+    value: byDate.get(date) ? Number(byDate.get(date)![field]) : 0,
+  }))
+}
+
 /** daily_kpi 기준 30일 트렌드 */
 export function calcKpiTrend30d(
   rows: DailyKpiRow[],
@@ -248,21 +261,7 @@ export function buildTop10(
 
 export type FunnelFieldKey = keyof Omit<DailyKpiRow, 'date'>
 
-export const FUNNEL_FIELD_LABELS: Record<string, string> = {
-  dau: 'DAU',
-  mau: 'MAU',
-  push_opt_in: 'Push 수신동의',
-  sms_opt_in: 'SMS 수신동의',
-  kakao_opt_in: '카카오 수신동의',
-  view_promotion_list_page: '프로모션 조회',
-  view_product_detail: '제품 상세 조회',
-  view_cartpage: '카트 조회',
-  like_brand: '브랜드 좋아요',
-  like_product: '제품 좋아요',
-  purchase_cnt: '구매 건수',
-  complete_order_product: '구매 제품 수',
-  first_purchase: '첫 구매',
-}
+export const FUNNEL_FIELD_LABELS: Record<string, string> = {}
 
 export function buildFunnel(
   rows: DailyKpiRow[],

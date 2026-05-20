@@ -56,6 +56,7 @@ export interface DailyKpiRow {
   view_cartpage: number
   view_product_detail: number
   view_promotion_list_page: number
+  [key: string]: string | number      // 시트 원본 컬럼 pass-through
 }
 
 export interface AttDataRow {
