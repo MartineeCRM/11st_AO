@@ -12,7 +12,7 @@ import { addDays, formatNumber, formatRate, formatCurrency, formatDateShort, toD
 // ─── 기본 집계 ────────────────────────────────────────────────
 
 export function calcSentImpression(rows: MartineeUnionRow[]): number {
-  return rows.reduce((s, r) => s + r.sent + r.impression, 0)
+  return rows.reduce((s, r) => s + r.sent + r.impressions, 0)
 }
 
 export function calcOpenClick(rows: MartineeUnionRow[]): number {
@@ -44,9 +44,9 @@ export function calcRevenuePerImpression(rows: MartineeUnionRow[]): number {
 
 export function calcMsgPerUser(rows: MartineeUnionRow[]): number {
   const si = calcSentImpression(rows)
-  const uniqueRecipient = rows.reduce((s, r) => s + r.unique_recipient, 0)
-  if (uniqueRecipient === 0) return 0
-  return si / uniqueRecipient
+  const uniqueRecipients = rows.reduce((s, r) => s + r.unique_recipients, 0)
+  if (uniqueRecipients === 0) return 0
+  return si / uniqueRecipients
 }
 
 export function calcExpectedReward(ctr: number, cvr: number): number {

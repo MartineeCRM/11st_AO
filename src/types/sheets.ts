@@ -1,23 +1,40 @@
 export interface MartineeUnionRow {
   date: string                  // YYYY-MM-DD
-  campaign_id?: string
-  campaign_name: string
-  canvas_name?: string
-  campaign_depth_1: string
-  variant_depth_1: string
-  os: string
+  app: string
+  campaign_type: string
   category: string
   channel: string
+  os: string
   message_type: string
+  message_name: string
+  delivery_type: string
+  campaign_name: string
+  message_action: string
   sent: number
-  impression: number
+  deliveries: number
+  impressions: number
+  unique_impressions: number
+  unique_recipients: number
+  body_clicks: number
+  bounces: number
   total_opens: number
+  direct_opens: number
+  influenced_opens: number
   first_button_clicks: number
   second_button_clicks: number
-  body_clicks: number
   conversion_a: number
+  conversion_b: number
+  conversion_c: number
+  conversion_d: number
   revenue: number
-  unique_recipient: number
+  imps: number                  // Control Group이면 unique_recipients, 아니면 impressions (시트 계산값)
+  sent_calc: number             // Control Group이면 unique_recipients, 아니면 sent (시트 계산값)
+  campaign_depth_1: string
+  campaign_depth_2: string
+  variant_depth_1: string
+  variant_depth_2: string
+  cg_tg: string
+  clicks: number                // body_clicks + first_button_clicks + second_button_clicks
 }
 
 export interface DailyKpiRow {

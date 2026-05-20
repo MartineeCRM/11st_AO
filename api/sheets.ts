@@ -30,8 +30,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
     const json = await upstream.json()
 
-    // Vercel Edge Cache: 5분 캐시
-    res.setHeader('Cache-Control', 's-maxage=300, stale-while-revalidate=600')
+    // private: 프로젝트별 인증 응답이므로 CDN 공유 캐시 금지
+    res.setHeader('Cache-Control', 'private, max-age=300')
     return res.status(200).json(json)
   } catch (err) {
     console.error('[sheets] fetch failed', err)
