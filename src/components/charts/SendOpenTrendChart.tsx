@@ -51,7 +51,7 @@ export function SendOpenTrendChart({ data }: Props) {
             <YAxis
               yAxisId="right"
               orientation="right"
-              tickFormatter={v => `${(v * 100).toFixed(1)}%`}
+              tickFormatter={v => `${v.toFixed(1)}%`}
               tick={{ fontSize: 11, fill: '#9CA3AF' }}
               tickLine={false}
               axisLine={false}
@@ -60,7 +60,7 @@ export function SendOpenTrendChart({ data }: Props) {
             <Tooltip
               formatter={(value: number, name: string) =>
                 name === 'CTR'
-                  ? [`${(value * 100).toFixed(2)}%`, name]
+                  ? [`${value.toFixed(2)}%`, name]
                   : [formatKorean(value), name]
               }
               contentStyle={{ fontSize: 12, borderRadius: 8, border: '1px solid #e0e0e0' }}
