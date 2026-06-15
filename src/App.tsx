@@ -1,7 +1,7 @@
-import { useState, Component, type ReactNode, type ErrorInfo } from 'react'
+import { useState, lazy, Suspense, Component, type ReactNode, type ErrorInfo } from 'react'
 import { TopNav } from '@/components/TopNav'
 import { CRMPerformance } from '@/pages/CRMPerformance'
-import { CRMAttribution } from '@/pages/CRMAttribution'
+const CRMAttribution = lazy(() => import('@/pages/CRMAttribution').then(m => ({ default: m.CRMAttribution })))
 import { CRMCampaignOps } from '@/pages/CRMCampaignOps'
 import { CRMSettings } from '@/pages/CRMSettings'
 import { ProtectedRoute } from '@/components/ProtectedRoute'
@@ -77,7 +77,11 @@ export default function App() {
             ) : (
               <ErrorBoundary key={project.id}>
                 {activeTab === 'performance' && <CRMPerformance key={project.id} />}
-                {activeTab === 'attribution' && <CRMAttribution key={project.id} />}
+                {activeTab === 'attribution' && (
+                  <Suspense fallback={<div className="flex h-64 items-center justify-center"><div className="h-5 w-5 animate-spin rounded-full border-2 border-[#0066cc] border-t-transparent" /></div>}>
+                    <CRMAttribution key={project.id} />
+                  </Suspense>
+                )}
                 {activeTab === 'ops' && <CRMCampaignOps key={project.id} />}
                 {activeTab === 'settings' && <CRMSettings project={project} />}
               </ErrorBoundary>
