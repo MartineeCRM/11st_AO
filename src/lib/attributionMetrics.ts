@@ -7,6 +7,7 @@ import type { AttDataRow } from '@/types/sheets'
 export interface AttSums {
   impression_or_send_user: number
   open_or_click_user: number
+  purchase_user_count: number
   purchase_count: number
   purchase_item_count: number
   purchase_amount: number
@@ -18,6 +19,7 @@ export function sumRows(rows: AttDataRow[]): AttSums {
   const s: AttSums = {
     impression_or_send_user: 0,
     open_or_click_user: 0,
+    purchase_user_count: 0,
     purchase_count: 0,
     purchase_item_count: 0,
     purchase_amount: 0,
@@ -27,6 +29,7 @@ export function sumRows(rows: AttDataRow[]): AttSums {
   for (const r of rows) {
     s.impression_or_send_user += r.impression_or_send_user
     s.open_or_click_user += r.open_or_click_user
+    s.purchase_user_count += r.purchase_user_count
     s.purchase_count += r.purchase_count
     s.purchase_item_count += r.purchase_item_count
     s.purchase_amount += r.purchase_amount
@@ -54,15 +57,15 @@ export function collectEventKeys(rows: AttDataRow[]): string[] {
 // ────────────────────────────────────────────────────────────
 
 export interface PurchaseMetrics {
-  user_cvr: number        // open_or_click_user / impression_or_send_user (proxy)
+  user_cvr: number        // purchase_user_count / impression_or_send_user
   count_cvr: number       // purchase_count / impression_or_send_user
   purchase_count: number
   revenue: number         // purchase_amount
   aov: number             // purchase_amount / purchase_count
-  arppu: number           // purchase_amount / open_or_click_user (proxy)
-  frequency: number       // purchase_count / open_or_click_user (proxy)
+  arppu: number           // purchase_amount / purchase_user_count
+  frequency: number       // purchase_count / purchase_user_count
   items_per_order: number // purchase_item_count / purchase_count
-  items_per_user: number  // purchase_item_count / open_or_click_user (proxy)
+  items_per_user: number  // purchase_item_count / purchase_user_count
 }
 
 function safeDivide(a: number, b: number): number {
@@ -71,15 +74,15 @@ function safeDivide(a: number, b: number): number {
 
 export function calcPurchaseMetrics(s: AttSums): PurchaseMetrics {
   return {
-    user_cvr: safeDivide(s.open_or_click_user, s.impression_or_send_user),
+    user_cvr: safeDivide(s.purchase_user_count, s.impression_or_send_user),
     count_cvr: safeDivide(s.purchase_count, s.impression_or_send_user),
     purchase_count: s.purchase_count,
     revenue: s.purchase_amount,
     aov: safeDivide(s.purchase_amount, s.purchase_count),
-    arppu: safeDivide(s.purchase_amount, s.open_or_click_user),
-    frequency: safeDivide(s.purchase_count, s.open_or_click_user),
+    arppu: safeDivide(s.purchase_amount, s.purchase_user_count),
+    frequency: safeDivide(s.purchase_count, s.purchase_user_count),
     items_per_order: safeDivide(s.purchase_item_count, s.purchase_count),
-    items_per_user: safeDivide(s.purchase_item_count, s.open_or_click_user),
+    items_per_user: safeDivide(s.purchase_item_count, s.purchase_user_count),
   }
 }
 

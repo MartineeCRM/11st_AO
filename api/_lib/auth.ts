@@ -18,6 +18,7 @@ interface ProjectConfig {
   braze_base_url: string | null
   chart_colors: string[]
   metric_definitions: { col: string; label: string }[]
+  sheet_mapping: Record<string, string> | null
 }
 
 interface AuthResult {
@@ -94,7 +95,7 @@ export async function verifyProjectAccess(
 
   const { data: project, error: projError } = await admin
     .from('projects')
-    .select('id, name, spreadsheet_id, google_api_key, braze_api_key, braze_base_url, chart_colors, metric_definitions')
+    .select('id, name, spreadsheet_id, google_api_key, braze_api_key, braze_base_url, chart_colors, metric_definitions, sheet_mapping')
     .eq('id', projectId)
     .single()
 

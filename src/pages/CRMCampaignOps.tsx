@@ -30,7 +30,7 @@ import type { SectionId } from '@/lib/supabase'
 
 export function CRMCampaignOps() {
   const { martinee, loading: sheetLoading } = useSheetData()
-  const { campaigns, loading: brazeLoading, error: brazeError } = useBrazeCampaigns()
+  const { campaigns, loading: brazeLoading, error: brazeError, warning: brazeWarning } = useBrazeCampaigns()
   const { user } = useAuth()
   const { project, saveTriggerMappings, saveDashboardLayout } = useProject(user?.id ?? null)
 
@@ -107,6 +107,12 @@ export function CRMCampaignOps() {
             <Settings2 size={12} />
             레이아웃 편집
           </button>
+        </div>
+      )}
+
+      {brazeWarning && !brazeError && (
+        <div className="mx-6 mt-4 rounded-lg border border-[#FDE68A] bg-[#FFFBEB] px-4 py-2 text-xs text-[#92400E]">
+          Braze 일부 데이터 조회 실패: {brazeWarning}
         </div>
       )}
 

@@ -14,6 +14,10 @@ interface CacheEntry {
 const cache = new Map<string, CacheEntry>()
 const pendingRequest = new Map<string, Promise<AttDataRow[]>>()
 
+export function invalidateAttributionDataCache(projectId: string) {
+  cache.delete(projectId)
+}
+
 function getProjectId(): string {
   return localStorage.getItem('crm_project_id') ?? 'default'
 }

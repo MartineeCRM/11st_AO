@@ -146,7 +146,7 @@ const ATT_FIXED_KEYS = new Set([
   'kst_date', 'date', 'source_id', 'source_type', 'message_variation_id',
   'message_type', 'os', 'source_alias', 'variant_alias', '분류', 'category',
   'impression_or_send_user', 'open_or_click_user',
-  'purchase_count', 'purchase_item_count', 'purchase_amount', 'purchase_amount_6h',
+  'purchase_user_count', 'purchase_count', 'purchase_item_count', 'purchase_amount', 'purchase_amount_6h',
   // 구버전 컬럼명 alias — 파싱은 하되 extra_events에 중복 수집 안 함
   'purchase_count_6h', 'purchase_item_count_6h', 'purchase_user_count_6h',
   // 시트 메타
@@ -176,6 +176,7 @@ function normalizeAttData(rows: Record<string, string | number>[]): AttDataRow[]
         category: String(r['분류'] ?? r['category'] ?? ''),
         impression_or_send_user: Number(r['impression_or_send_user'] ?? 0),
         open_or_click_user: Number(r['open_or_click_user'] ?? 0),
+        purchase_user_count: Number(r['purchase_user_count'] ?? r['purchase_user_count_6h'] ?? 0),
         purchase_count: Number(r['purchase_count'] ?? r['purchase_count_6h'] ?? 0),
         purchase_item_count: Number(r['purchase_item_count'] ?? r['purchase_item_count_6h'] ?? 0),
         purchase_amount: Number(r['purchase_amount'] ?? r['purchase_amount_6h'] ?? 0),

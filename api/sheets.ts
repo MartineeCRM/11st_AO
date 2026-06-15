@@ -17,8 +17,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(400).json({ error: 'Missing sheet parameter' })
   }
 
-  const { spreadsheet_id, google_api_key } = auth.project
-  const rangeParam = range ? `${sheet}!${range}` : `${sheet}!A:ZZ`
+  const { spreadsheet_id, google_api_key, sheet_mapping } = auth.project
+  const logicalSheet = sheet.toLowerCase()
+  const mappedSheet = sheet_mapping?.[logicalSheet] || sheet
+  const rangeParam = range ? `${mappedSheet}!${range}` : `${mappedSheet}!A:ZZ`
   const url = `${SHEETS_BASE}/${spreadsheet_id}/values/${encodeURIComponent(rangeParam)}?key=${google_api_key}`
 
   try {

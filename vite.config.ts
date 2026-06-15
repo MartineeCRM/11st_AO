@@ -7,6 +7,8 @@ const ALLOWED_BRAZE_PATHS = new Set([
   '/campaigns/list',
   '/campaigns/details',
   '/campaigns/data_series',
+  '/canvas/list',
+  '/canvas/details',
 ])
 
 function sheetsDevProxy(env: Record<string, string>): Plugin {

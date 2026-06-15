@@ -6,7 +6,7 @@ import {
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { formatNumber } from '@/lib/formatters'
-import { FUNNEL_FIELD_LABELS, type FunnelFieldKey } from '@/lib/metrics'
+import type { FunnelFieldKey } from '@/lib/metrics'
 import type { FunnelStep } from '@/types/metrics'
 import { ChartSectionNote } from './ChartSectionNote'
 

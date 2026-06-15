@@ -3,18 +3,18 @@ import { verifyProjectAccess } from '../_lib/auth.js'
 
 const SHEETS_BASE = 'https://sheets.googleapis.com/v4/spreadsheets'
 
-// GET /api/project/sheets-meta?spreadsheet_id=xxx&google_api_key=xxx
-// 스프레드시트의 시트 탭 목록 반환
+// POST /api/project/sheets-meta
+// 저장된 설정 또는 관리자가 입력한 새 설정으로 시트 탭 목록 반환
 export default async function handler(req: VercelRequest, res: VercelResponse) {
-  if (req.method !== 'GET') {
-    res.setHeader('Allow', 'GET')
+  if (req.method !== 'POST') {
+    res.setHeader('Allow', 'POST')
     return res.status(405).json({ error: 'Method not allowed' })
   }
 
   const auth = await verifyProjectAccess(req as any, res as any)
   if (!auth) return
 
-  const { spreadsheet_id, google_api_key } = req.query as Record<string, string>
+  const { spreadsheet_id, google_api_key } = (req.body ?? {}) as Record<string, string>
   const sid = spreadsheet_id || auth.project.spreadsheet_id
   const key = google_api_key || auth.project.google_api_key
 

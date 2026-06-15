@@ -48,11 +48,6 @@ function getWeekLabel(weekStart: string): string {
   return `${fmt(d)} ~ ${fmt(end)}`
 }
 
-function daysInMonth(monthKey: string): number {
-  const [y, m] = monthKey.split('-').map(Number)
-  return new Date(y, m, 0).getDate()
-}
-
 function metricsFromRows(
   rows: AttDataRow[],
   allRows: AttDataRow[],

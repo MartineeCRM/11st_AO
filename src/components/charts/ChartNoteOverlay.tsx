@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { createPortal } from 'react-dom'
-import { StickyNote, X, Trash2, Pencil, Plus } from 'lucide-react'
+import { StickyNote, X, Trash2, Pencil } from 'lucide-react'
 import type { ChartNote } from '@/hooks/useChartNotes'
 
 interface NoteMarkerProps {
