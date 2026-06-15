@@ -141,43 +141,48 @@ export async function fetchDailyKpiWithHeaders(): Promise<{
   return { rows, eventColumns }
 }
 
+// 고정 컬럼 — extra_events 수집에서 제외
+const ATT_FIXED_KEYS = new Set([
+  'kst_date', 'date', 'source_id', 'source_type', 'message_variation_id',
+  'message_type', 'os', 'source_alias', 'variant_alias', '분류', 'category',
+  'impression_or_send_user', 'open_or_click_user',
+  'purchase_count', 'purchase_item_count', 'purchase_amount', 'purchase_amount_6h',
+  // 구버전 컬럼명 alias — 파싱은 하되 extra_events에 중복 수집 안 함
+  'purchase_count_6h', 'purchase_item_count_6h', 'purchase_user_count_6h',
+  // 시트 메타
+  'campaing_name', 'campaign_name', 'variant_name',
+])
+
 function normalizeAttData(rows: Record<string, string | number>[]): AttDataRow[] {
   return rows
-    .map(r => ({
-      date: normalizeDate(String(r['kst_date'] ?? r['date'] ?? '')),
-      source_id: String(r['source_id'] ?? ''),
-      source_type: String(r['source_type'] ?? ''),
-      message_variation_id: String(r['message_variation_id'] ?? ''),
-      message_type: String(r['message_type'] ?? ''),
-      os: String(r['os'] ?? ''),
-      source_alias: String(r['source_alias'] ?? ''),
-      variant_alias: String(r['variant_alias'] ?? ''),
-      category: String(r['분류'] ?? r['category'] ?? ''),
-      impression_or_send_user: Number(r['impression_or_send_user'] ?? 0),
-      open_or_click_user: Number(r['open_or_click_user'] ?? 0),
-      purchase_item_count_6h: Number(r['purchase_item_count_6h'] ?? 0),
-      purchase_count_6h: Number(r['purchase_count_6h'] ?? 0),
-      purchase_user_count_6h: Number(r['purchase_user_count_6h'] ?? 0),
-      purchase_amount_6h: Number(r['purchase_amount_6h'] ?? 0),
-      join_membership: Number(r['join_membership'] ?? 0),
-      add_to_cart: Number(r['add_to_cart'] ?? 0),
-      pdp_view: Number(r['pdp_view'] ?? 0),
-      exhibition_view: Number(r['exhibition_view'] ?? 0),
-      push_subscribe: Number(r['push_subscribe'] ?? 0),
-      coupon_used: Number(r['coupon_used'] ?? 0),
-      promo_event_complete: Number(r['promo_event_complete'] ?? 0),
-      promo_page_view: Number(r['promo_page_view'] ?? 0),
-      plus_subscribe_start: Number(r['11plus_subscribe_start'] ?? 0),
-      family_member_join: Number(r['family_member_join'] ?? 0),
-      family_order_complete: Number(r['family_order_complete'] ?? 0),
-      family_order_request: Number(r['family_order_request'] ?? 0),
-      family_order_request_received: Number(r['family_order_request_received'] ?? 0),
-      lotto_issued: Number(r['11lotto_issued'] ?? 0),
-      lotto_my_page_view: Number(r['11lotto_my_page_view'] ?? 0),
-      lotto_attendance_check: Number(r['11lotto_attendance_check'] ?? 0),
-      noti_setting_view: Number(r['noti_setting_view'] ?? 0),
-      my_11st_view: Number(r['my_11st_view'] ?? 0),
-    }))
+    .map(r => {
+      // 고정 컬럼 외 숫자 컬럼 → extra_events
+      const extra_events: Record<string, number> = {}
+      for (const [k, v] of Object.entries(r)) {
+        if (ATT_FIXED_KEYS.has(k)) continue
+        const n = Number(v)
+        if (!isNaN(n)) extra_events[k] = n
+      }
+
+      return {
+        date: normalizeDate(String(r['kst_date'] ?? r['date'] ?? '')),
+        source_id: String(r['source_id'] ?? ''),
+        source_type: String(r['source_type'] ?? ''),
+        message_variation_id: String(r['message_variation_id'] ?? ''),
+        message_type: String(r['message_type'] ?? ''),
+        os: String(r['os'] ?? ''),
+        source_alias: String(r['source_alias'] ?? r['campaing_name'] ?? r['campaign_name'] ?? ''),
+        variant_alias: String(r['variant_alias'] ?? r['variant_name'] ?? ''),
+        category: String(r['분류'] ?? r['category'] ?? ''),
+        impression_or_send_user: Number(r['impression_or_send_user'] ?? 0),
+        open_or_click_user: Number(r['open_or_click_user'] ?? 0),
+        purchase_count: Number(r['purchase_count'] ?? r['purchase_count_6h'] ?? 0),
+        purchase_item_count: Number(r['purchase_item_count'] ?? r['purchase_item_count_6h'] ?? 0),
+        purchase_amount: Number(r['purchase_amount'] ?? r['purchase_amount_6h'] ?? 0),
+        purchase_amount_6h: Number(r['purchase_amount_6h'] ?? 0),
+        extra_events,
+      }
+    })
     .sort((a, b) => a.date.localeCompare(b.date))
 }
 

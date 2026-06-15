@@ -4,10 +4,17 @@ import { channelLabel, channelBadgeColor, brazeCampaignUrl, brazeCanvasUrl } fro
 import type { EnrichedCampaign } from '@/hooks/useBrazeCampaigns'
 
 function getRelevantDate(c: EnrichedCampaign): string | undefined {
-  // 예약 발송 시각 — schedule 객체에서 우선 추출
   const scheduledTime = c.schedule?.next_send_time ?? c.schedule?.time ?? c.schedule?.start_time
   if (scheduledTime) return scheduledTime
   return c.first_sent || c.last_sent || c.updated_at
+}
+
+function toLocalTimeKey(iso: string): string {
+  const d = new Date(iso)
+  if (isNaN(d.getTime())) return ''
+  const date = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+  const time = `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`
+  return `${date} ${time}`
 }
 
 function toLocalDateKey(iso: string): string {
@@ -17,18 +24,26 @@ function toLocalDateKey(iso: string): string {
 }
 
 function todayKey(): string {
-  return toLocalDateKey(new Date().toISOString())
+  const d = new Date()
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
 }
 
-function dateLabel(key: string): string {
-  const [, m, d] = key.split('-')
+function dateLabel(timeKey: string): string {
+  const [datePart] = timeKey.split(' ')
+  const [, m, d] = datePart.split('-')
   return `${Number(m)}/${Number(d)}`
 }
 
-function dayDiffFromKey(dateKey: string): number {
+function timeLabel(timeKey: string): string {
+  const parts = timeKey.split(' ')
+  return parts[1] ?? ''
+}
+
+function dayDiffFromTimeKey(timeKey: string): number {
   const today = todayKey()
+  const datePart = timeKey.split(' ')[0]
   const a = new Date(today).getTime()
-  const b = new Date(dateKey).getTime()
+  const b = new Date(datePart).getTime()
   return Math.round((b - a) / 86400000)
 }
 
@@ -42,35 +57,35 @@ interface Props {
   campaigns: EnrichedCampaign[]
   loading: boolean
   error: string | null
+  brazeBaseUrl?: string | null
 }
 
-export function ScheduledCampaignList({ campaigns, loading, error }: Props) {
+export function ScheduledCampaignList({ campaigns, loading, error, brazeBaseUrl }: Props) {
   const today = todayKey()
 
-  // scheduled 캠페인만 추출하고 7일 이내로 필터
   const scheduled = campaigns
     .filter(c => c.schedule_type === 'time_based' || c.schedule_type === 'scheduled')
     .filter(c => {
       const iso = getRelevantDate(c)
       if (!iso) return false
-      const diff = dayDiffFromKey(toLocalDateKey(iso))
-      return diff >= -7 && diff <= 14  // 7일 전 ~ 14일 후
+      const diff = dayDiffFromTimeKey(toLocalTimeKey(iso))
+      return diff >= -3 && diff <= 7
     })
 
-  // 날짜별 그룹핑
+  // 날짜+시간별 그룹핑
   const grouped = new Map<string, EnrichedCampaign[]>()
   for (const c of scheduled) {
     const iso = getRelevantDate(c)
     if (!iso) continue
-    const key = toLocalDateKey(iso)
+    const key = toLocalTimeKey(iso)
     if (!key) continue
     const list = grouped.get(key) ?? []
     list.push(c)
     grouped.set(key, list)
   }
 
-  // 날짜 키 정렬 (오름차순 — 과거→미래)
-  const dateKeys = [...grouped.keys()].sort()
+  // 시간 오름차순 정렬 (과거→현재→미래)
+  const timeKeys = [...grouped.keys()].sort()
 
   const totalCount = scheduled.length
 
@@ -84,7 +99,7 @@ export function ScheduledCampaignList({ campaigns, loading, error }: Props) {
             {totalCount}
           </span>
         )}
-        <span className="ml-auto text-[11px] text-[#9CA3AF]">7일 전 ~ 14일 후 · 날짜 순</span>
+        <span className="ml-auto text-[11px] text-[#9CA3AF]">3일 전 ~ 7일 후 · 시간 순</span>
       </div>
 
       {loading && (
@@ -98,28 +113,29 @@ export function ScheduledCampaignList({ campaigns, loading, error }: Props) {
         <div className="px-6 py-4 text-xs text-[#EF4444]">Braze 오류: {error}</div>
       )}
 
-      {!loading && !error && dateKeys.length === 0 && (
+      {!loading && !error && timeKeys.length === 0 && (
         <div className="px-6 py-8 text-center text-xs text-[#9CA3AF]">
-          최근 7일 이내 Scheduled 캠페인이 없습니다.
+          최근 3일 ~ 7일 후 Scheduled 캠페인이 없습니다.
         </div>
       )}
 
-      {!loading && !error && dateKeys.length > 0 && (
+      {!loading && !error && timeKeys.length > 0 && (
         <div className="overflow-x-auto">
           <div className="flex min-w-max gap-0 px-6 py-4">
-            {dateKeys.map((dateKey, colIdx) => {
-              const diff = dayDiffFromKey(dateKey)
-              const isToday = dateKey === today
+            {timeKeys.map((timeKey, colIdx) => {
+              const diff = dayDiffFromTimeKey(timeKey)
+              const datePart = timeKey.split(' ')[0]
+              const isToday = datePart === today
               const isFuture = diff > 0
-              const items = grouped.get(dateKey) ?? []
+              const items = grouped.get(timeKey) ?? []
 
               return (
-                <div key={dateKey} className="flex">
-                  {/* 날짜 컬럼 */}
+                <div key={timeKey} className="flex">
                   <div className="flex flex-col items-center" style={{ minWidth: 140 }}>
-                    {/* X축 날짜 헤더 */}
+                    {/* 헤더: 날짜 + 시간 + D-Day 뱃지 */}
                     <div className={`flex flex-col items-center gap-0.5 pb-3 ${isToday ? 'text-[#0066cc]' : isFuture ? 'text-[#1d1d1f]' : 'text-[#9CA3AF]'}`}>
-                      <span className="text-xs font-semibold tabular-nums">{dateLabel(dateKey)}</span>
+                      <span className="text-xs font-semibold tabular-nums">{dateLabel(timeKey)}</span>
+                      <span className="text-[11px] font-mono tabular-nums">{timeLabel(timeKey)}</span>
                       <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded ${
                         isToday ? 'bg-[#0066cc] text-white' :
                         isFuture ? 'bg-[#e8f0fb] text-[#0066cc]' :
@@ -129,17 +145,14 @@ export function ScheduledCampaignList({ campaigns, loading, error }: Props) {
                       </span>
                     </div>
 
-                    {/* 가로 연결선 위 도트 */}
+                    {/* 타임라인 도트 */}
                     <div className="relative flex items-center w-full justify-center mb-3">
-                      {/* 왼쪽 연결선 */}
                       {colIdx > 0 && (
                         <div className="absolute right-1/2 top-1/2 -translate-y-1/2 h-0.5 bg-[#e0e0e0]" style={{ left: 0, right: '50%' }} />
                       )}
-                      {/* 오른쪽 연결선 */}
-                      {colIdx < dateKeys.length - 1 && (
+                      {colIdx < timeKeys.length - 1 && (
                         <div className="absolute top-1/2 -translate-y-1/2 h-0.5 bg-[#e0e0e0]" style={{ left: '50%', right: 0 }} />
                       )}
-                      {/* 도트 */}
                       <div className={`relative z-10 h-3 w-3 rounded-full border-2 ${
                         isToday ? 'border-[#0066cc] bg-[#0066cc]' :
                         isFuture ? 'border-[#0066cc] bg-white' :
@@ -177,7 +190,7 @@ export function ScheduledCampaignList({ campaigns, loading, error }: Props) {
                                 {c.name}
                               </p>
                               <a
-                                href={c.type === 'canvas' ? brazeCanvasUrl(c.id) : brazeCampaignUrl(c.id)}
+                                href={c.type === 'canvas' ? brazeCanvasUrl(c.id, brazeBaseUrl) : brazeCampaignUrl(c.id, brazeBaseUrl)}
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="shrink-0 text-[#9CA3AF] hover:text-[#0066cc] opacity-0 group-hover:opacity-100 transition-opacity mt-0.5"
@@ -190,8 +203,6 @@ export function ScheduledCampaignList({ campaigns, loading, error }: Props) {
                       })}
                     </div>
                   </div>
-
-                  {/* 컬럼 간 수직 구분선 제거 — 연결선으로 대체 */}
                 </div>
               )
             })}

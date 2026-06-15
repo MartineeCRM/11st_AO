@@ -71,28 +71,11 @@ export interface AttDataRow {
   category: string                    // 분류
   impression_or_send_user: number
   open_or_click_user: number
-  purchase_item_count_6h: number
-  purchase_count_6h: number
-  purchase_user_count_6h: number
-  purchase_amount_6h: number
-  join_membership: number
-  add_to_cart: number
-  pdp_view: number
-  exhibition_view: number
-  push_subscribe: number
-  coupon_used: number
-  promo_event_complete: number
-  promo_page_view: number
-  plus_subscribe_start: number        // 11plus_subscribe_start
-  family_member_join: number
-  family_order_complete: number
-  family_order_request: number
-  family_order_request_received: number
-  lotto_issued: number                // 11lotto_issued
-  lotto_my_page_view: number          // 11lotto_my_page_view
-  lotto_attendance_check: number      // 11lotto_attendance_check
-  noti_setting_view: number
-  my_11st_view: number
+  purchase_count: number              // PURCHASE_COUNT
+  purchase_item_count: number         // PURCHASE_ITEM_COUNT
+  purchase_amount: number             // PURCHASE_AMOUNT
+  purchase_amount_6h: number          // PURCHASE_AMOUNT_6H (있는 경우)
+  extra_events: Record<string, number> // 고객사별 동적 이벤트 컬럼
 }
 
 export interface DateRange {

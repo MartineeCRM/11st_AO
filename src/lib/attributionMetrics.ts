@@ -7,84 +7,46 @@ import type { AttDataRow } from '@/types/sheets'
 export interface AttSums {
   impression_or_send_user: number
   open_or_click_user: number
-  purchase_item_count_6h: number
-  purchase_count_6h: number
-  purchase_user_count_6h: number
+  purchase_count: number
+  purchase_item_count: number
+  purchase_amount: number
   purchase_amount_6h: number
-  join_membership: number
-  add_to_cart: number
-  pdp_view: number
-  exhibition_view: number
-  push_subscribe: number
-  coupon_used: number
-  promo_event_complete: number
-  promo_page_view: number
-  plus_subscribe_start: number
-  family_member_join: number
-  family_order_complete: number
-  family_order_request: number
-  family_order_request_received: number
-  lotto_issued: number
-  lotto_my_page_view: number
-  lotto_attendance_check: number
-  noti_setting_view: number
-  my_11st_view: number
+  extra_events: Record<string, number>
 }
 
 export function sumRows(rows: AttDataRow[]): AttSums {
   const s: AttSums = {
     impression_or_send_user: 0,
     open_or_click_user: 0,
-    purchase_item_count_6h: 0,
-    purchase_count_6h: 0,
-    purchase_user_count_6h: 0,
+    purchase_count: 0,
+    purchase_item_count: 0,
+    purchase_amount: 0,
     purchase_amount_6h: 0,
-    join_membership: 0,
-    add_to_cart: 0,
-    pdp_view: 0,
-    exhibition_view: 0,
-    push_subscribe: 0,
-    coupon_used: 0,
-    promo_event_complete: 0,
-    promo_page_view: 0,
-    plus_subscribe_start: 0,
-    family_member_join: 0,
-    family_order_complete: 0,
-    family_order_request: 0,
-    family_order_request_received: 0,
-    lotto_issued: 0,
-    lotto_my_page_view: 0,
-    lotto_attendance_check: 0,
-    noti_setting_view: 0,
-    my_11st_view: 0,
+    extra_events: {},
   }
   for (const r of rows) {
     s.impression_or_send_user += r.impression_or_send_user
     s.open_or_click_user += r.open_or_click_user
-    s.purchase_item_count_6h += r.purchase_item_count_6h
-    s.purchase_count_6h += r.purchase_count_6h
-    s.purchase_user_count_6h += r.purchase_user_count_6h
+    s.purchase_count += r.purchase_count
+    s.purchase_item_count += r.purchase_item_count
+    s.purchase_amount += r.purchase_amount
     s.purchase_amount_6h += r.purchase_amount_6h
-    s.join_membership += r.join_membership
-    s.add_to_cart += r.add_to_cart
-    s.pdp_view += r.pdp_view
-    s.exhibition_view += r.exhibition_view
-    s.push_subscribe += r.push_subscribe
-    s.coupon_used += r.coupon_used
-    s.promo_event_complete += r.promo_event_complete
-    s.promo_page_view += r.promo_page_view
-    s.plus_subscribe_start += r.plus_subscribe_start
-    s.family_member_join += r.family_member_join
-    s.family_order_complete += r.family_order_complete
-    s.family_order_request += r.family_order_request
-    s.family_order_request_received += r.family_order_request_received
-    s.lotto_issued += r.lotto_issued
-    s.lotto_my_page_view += r.lotto_my_page_view
-    s.lotto_attendance_check += r.lotto_attendance_check
-    s.noti_setting_view += r.noti_setting_view
-    s.my_11st_view += r.my_11st_view
+    for (const [k, v] of Object.entries(r.extra_events)) {
+      s.extra_events[k] = (s.extra_events[k] ?? 0) + v
+    }
   }
   return s
+}
+
+// 데이터에 존재하는 이벤트 키 목록 추출 (0이 아닌 값 우선, 전체 유니온)
+export function collectEventKeys(rows: AttDataRow[]): string[] {
+  const keys = new Set<string>()
+  for (const r of rows) {
+    for (const k of Object.keys(r.extra_events)) {
+      keys.add(k)
+    }
+  }
+  return [...keys].sort()
 }
 
 // ────────────────────────────────────────────────────────────
@@ -92,15 +54,15 @@ export function sumRows(rows: AttDataRow[]): AttSums {
 // ────────────────────────────────────────────────────────────
 
 export interface PurchaseMetrics {
-  user_cvr: number        // PURCHASE_USER_COUNT_6H / IMPRESSION_OR_SEND_USER
-  count_cvr: number       // PURCHASE_COUNT_6H / IMPRESSION_OR_SEND_USER
-  purchase_count: number  // PURCHASE_COUNT_6H
-  revenue: number         // PURCHASE_AMOUNT_6H
-  aov: number             // PURCHASE_AMOUNT_6H / PURCHASE_COUNT_6H
-  arppu: number           // PURCHASE_AMOUNT_6H / PURCHASE_USER_COUNT_6H
-  frequency: number       // PURCHASE_COUNT_6H / PURCHASE_USER_COUNT_6H
-  items_per_order: number // PURCHASE_ITEM_COUNT_6H / PURCHASE_COUNT_6H
-  items_per_user: number  // PURCHASE_ITEM_COUNT_6H / PURCHASE_USER_COUNT_6H
+  user_cvr: number        // open_or_click_user / impression_or_send_user (proxy)
+  count_cvr: number       // purchase_count / impression_or_send_user
+  purchase_count: number
+  revenue: number         // purchase_amount
+  aov: number             // purchase_amount / purchase_count
+  arppu: number           // purchase_amount / open_or_click_user (proxy)
+  frequency: number       // purchase_count / open_or_click_user (proxy)
+  items_per_order: number // purchase_item_count / purchase_count
+  items_per_user: number  // purchase_item_count / open_or_click_user (proxy)
 }
 
 function safeDivide(a: number, b: number): number {
@@ -109,15 +71,15 @@ function safeDivide(a: number, b: number): number {
 
 export function calcPurchaseMetrics(s: AttSums): PurchaseMetrics {
   return {
-    user_cvr: safeDivide(s.purchase_user_count_6h, s.impression_or_send_user),
-    count_cvr: safeDivide(s.purchase_count_6h, s.impression_or_send_user),
-    purchase_count: s.purchase_count_6h,
-    revenue: s.purchase_amount_6h,
-    aov: safeDivide(s.purchase_amount_6h, s.purchase_count_6h),
-    arppu: safeDivide(s.purchase_amount_6h, s.purchase_user_count_6h),
-    frequency: safeDivide(s.purchase_count_6h, s.purchase_user_count_6h),
-    items_per_order: safeDivide(s.purchase_item_count_6h, s.purchase_count_6h),
-    items_per_user: safeDivide(s.purchase_item_count_6h, s.purchase_user_count_6h),
+    user_cvr: safeDivide(s.open_or_click_user, s.impression_or_send_user),
+    count_cvr: safeDivide(s.purchase_count, s.impression_or_send_user),
+    purchase_count: s.purchase_count,
+    revenue: s.purchase_amount,
+    aov: safeDivide(s.purchase_amount, s.purchase_count),
+    arppu: safeDivide(s.purchase_amount, s.open_or_click_user),
+    frequency: safeDivide(s.purchase_count, s.open_or_click_user),
+    items_per_order: safeDivide(s.purchase_item_count, s.purchase_count),
+    items_per_user: safeDivide(s.purchase_item_count, s.open_or_click_user),
   }
 }
 
@@ -125,17 +87,14 @@ export function calcPurchaseMetrics(s: AttSums): PurchaseMetrics {
 // 이벤트 CVR 계산
 // ────────────────────────────────────────────────────────────
 
-export type EventKey = keyof Omit<AttSums,
-  | 'impression_or_send_user'
-  | 'open_or_click_user'
-  | 'purchase_item_count_6h'
-  | 'purchase_count_6h'
-  | 'purchase_user_count_6h'
-  | 'purchase_amount_6h'
->
+export type EventKey = string
 
 export function calcEventCvr(s: AttSums, eventKey: EventKey): number {
-  return safeDivide(s[eventKey], s.impression_or_send_user)
+  return safeDivide(s.extra_events[eventKey] ?? 0, s.impression_or_send_user)
+}
+
+export function getEventCount(s: AttSums, eventKey: EventKey): number {
+  return s.extra_events[eventKey] ?? 0
 }
 
 // ────────────────────────────────────────────────────────────
@@ -143,7 +102,7 @@ export function calcEventCvr(s: AttSums, eventKey: EventKey): number {
 // ────────────────────────────────────────────────────────────
 
 export interface PeriodDelta {
-  wow: number | null  // null = 비교 데이터 없음
+  wow: number | null
   mom: number | null
 }
 
@@ -182,7 +141,6 @@ export function buildTrendData(
   startDate: string,
   endDate: string,
 ): TrendPoint[] {
-  // 날짜별 그룹
   const byDate = new Map<string, AttDataRow[]>()
   for (const r of rows) {
     const list = byDate.get(r.date) ?? []
@@ -239,7 +197,7 @@ export function buildEventTrendData(
   while (cur <= end) {
     const dateStr = cur.toISOString().slice(0, 10)
     const curRows = byDate.get(dateStr) ?? []
-    const value = sumRows(curRows)[eventKey]
+    const value = sumRows(curRows).extra_events[eventKey] ?? 0
     points.push({ date: dateStr, value })
     cur.setDate(cur.getDate() + 1)
   }
