@@ -1,3 +1,5 @@
+import { supabase } from './supabase'
+
 const REQUIRED_PERMISSIONS: Record<string, string> = {
   '/campaigns/list': 'campaigns.list',
   '/campaigns/details': 'campaigns.details',
@@ -29,7 +31,6 @@ async function parseErrorBody(res: Response) {
 }
 
 async function getAuthHeaders(): Promise<Record<string, string>> {
-  const { supabase } = await import('./supabase')
   const { data: { session } } = await supabase.auth.getSession()
   const projectId = localStorage.getItem('crm_project_id')
   const headers: Record<string, string> = {}
