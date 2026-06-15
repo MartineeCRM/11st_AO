@@ -59,6 +59,10 @@ export function CRMAttribution() {
 
   const { filteredRows, extendedRows, filterOptions } = useAttributionFiltered(rows, resolvedFilters)
 
+  const [sectionTab, setSectionTab] = useState<SectionTab>('purchase')
+  const [activeMetric, setActiveMetric] = useState<PurchaseMetricKey>('user_cvr')
+  const [activeEvent, setActiveEvent] = useState<EventKey>('')
+
   // 데이터 로드 후 첫 번째 이벤트 자동 선택
   React.useEffect(() => {
     if (activeEvent === '' && filteredRows.length > 0) {
@@ -66,10 +70,6 @@ export function CRMAttribution() {
       if (keys.length > 0) setActiveEvent(keys[0])
     }
   }, [filteredRows, activeEvent])
-
-  const [sectionTab, setSectionTab] = useState<SectionTab>('purchase')
-  const [activeMetric, setActiveMetric] = useState<PurchaseMetricKey>('user_cvr')
-  const [activeEvent, setActiveEvent] = useState<EventKey>('')
 
   const { user } = useAuth()
   const { project, saveDashboardLayout } = useProject(user?.id ?? null)
