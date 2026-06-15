@@ -10,8 +10,13 @@ interface CacheEntry {
   fetchedAt: number
 }
 
-let cache: CacheEntry | undefined
-let pendingRequest: Promise<AttDataRow[]> | undefined
+// 캐시 키에 project_id 포함 — 프로젝트 전환 시 다른 슬롯 사용
+const cache = new Map<string, CacheEntry>()
+const pendingRequest = new Map<string, Promise<AttDataRow[]>>()
+
+function getProjectId(): string {
+  return localStorage.getItem('crm_project_id') ?? 'default'
+}
 
 export interface AttributionData {
   rows: AttDataRow[]       // 전체 rows (WoW/MoM 계산용 확장 범위 포함)
@@ -27,6 +32,8 @@ export function useAttributionData(): AttributionData {
   const [error, setError] = useState<string | null>(null)
   const mounted = useRef(true)
 
+  const pid = getProjectId()
+
   useEffect(() => {
     mounted.current = true
 
@@ -35,19 +42,21 @@ export function useAttributionData(): AttributionData {
       setError(null)
       try {
         const now = Date.now()
-        const needsFetch = !cache || now - cache.fetchedAt > CACHE_TTL_MS
+        const cached = cache.get(pid)
+        const needsFetch = !cached || now - cached.fetchedAt > CACHE_TTL_MS
 
-        if (needsFetch && !pendingRequest) {
-          pendingRequest = fetchAttData().finally(() => {
-            pendingRequest = undefined
+        if (needsFetch && !pendingRequest.has(pid)) {
+          const req = fetchAttData().finally(() => {
+            pendingRequest.delete(pid)
           })
+          pendingRequest.set(pid, req)
         }
 
         const data = needsFetch
-          ? await pendingRequest!
-          : cache!.data
+          ? await pendingRequest.get(pid)!
+          : cached!.data
 
-        if (needsFetch) cache = { data, fetchedAt: Date.now() }
+        if (needsFetch) cache.set(pid, { data, fetchedAt: Date.now() })
 
         if (mounted.current) setRows(data)
       } catch (err) {
@@ -61,7 +70,7 @@ export function useAttributionData(): AttributionData {
 
     void load()
     return () => { mounted.current = false }
-  }, [])
+  }, [pid])
 
   const dates = rows.map(r => r.date).filter(Boolean).sort()
   const dateRange = dates.length > 0

@@ -22,9 +22,10 @@ interface Props {
   campaigns: EnrichedCampaign[]
   loading: boolean
   error: string | null
+  brazeBaseUrl?: string | null
 }
 
-export function LiveCampaignTable({ campaigns, loading, error }: Props) {
+export function LiveCampaignTable({ campaigns, loading, error, brazeBaseUrl }: Props) {
   const [activeChannel, setActiveChannel] = useState<ChannelTab>('전체')
 
   const filtered =
@@ -146,7 +147,7 @@ export function LiveCampaignTable({ campaigns, loading, error }: Props) {
                     </td>
                     <td className="px-3 py-3 text-center">
                       <a
-                        href={c.type === 'canvas' ? brazeCanvasUrl(c.id) : brazeCampaignUrl(c.id)}
+                        href={c.type === 'canvas' ? brazeCanvasUrl(c.id, brazeBaseUrl) : brazeCampaignUrl(c.id, brazeBaseUrl)}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="inline-flex items-center justify-center text-[#9CA3AF] hover:text-[#0066cc] transition-colors"

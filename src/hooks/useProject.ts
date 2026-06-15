@@ -62,7 +62,7 @@ export function useProject(userId: string | null): ProjectState {
 
       const { data: projects, error: projErr } = await supabase
         .from('projects')
-        .select('id, name, chart_colors, metric_definitions, spreadsheet_id, trigger_mappings, dashboard_layout')
+        .select('id, name, chart_colors, metric_definitions, spreadsheet_id, trigger_mappings, dashboard_layout, braze_base_url')
         .in('id', projectIds)
 
       if (projErr || !projects) {

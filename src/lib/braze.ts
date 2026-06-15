@@ -207,14 +207,35 @@ export function scheduleTypeLabel(t: string): string {
   return map[t] ?? t
 }
 
+/**
+ * Braze REST endpoint → Dashboard base URL 변환
+ * ref: https://www.braze.com/docs/api/basics#endpoints
+ *
+ * rest.iad-07.braze.com  → https://dashboard-07.braze.com
+ * rest.fra-01.braze.com  → https://dashboard.fra-01.braze.com
+ * rest.au-01.braze.com   → https://dashboard.au-01.braze.com
+ * rest.kr-01.braze.com   → https://dashboard.kr-01.braze.com
+ */
+export function brazeDashboardBase(restEndpoint: string | null | undefined): string {
+  if (!restEndpoint) return 'https://dashboard-07.braze.com'
+  const clean = restEndpoint.replace(/^https?:\/\//, '').replace(/\/+$/, '')
+  // US clusters: rest.iad-NN.braze.com → dashboard-NN.braze.com
+  const usMatch = clean.match(/^rest\.iad-(\d+)\.braze\.com$/)
+  if (usMatch) return `https://dashboard-${usMatch[1]}.braze.com`
+  // Regional clusters: rest.XX-NN.braze.com → dashboard.XX-NN.braze.com
+  const regionalMatch = clean.match(/^rest\.([a-z]{2,3}-\d+)\.braze\.com$/)
+  if (regionalMatch) return `https://dashboard.${regionalMatch[1]}.braze.com`
+  return 'https://dashboard-07.braze.com'
+}
+
 /** Braze 캠페인 대시보드 URL */
-export function brazeCampaignUrl(campaignId: string): string {
-  return `https://dashboard-07.braze.com/engagement/campaigns/${campaignId}`
+export function brazeCampaignUrl(campaignId: string, restEndpoint?: string | null): string {
+  return `${brazeDashboardBase(restEndpoint)}/engagement/campaigns/${campaignId}`
 }
 
 /** Braze Canvas 대시보드 URL */
-export function brazeCanvasUrl(canvasId: string): string {
-  return `https://dashboard-07.braze.com/engagement/canvas/${canvasId}`
+export function brazeCanvasUrl(canvasId: string, restEndpoint?: string | null): string {
+  return `${brazeDashboardBase(restEndpoint)}/engagement/canvas/${canvasId}`
 }
 
 export interface BrazeCanvas {

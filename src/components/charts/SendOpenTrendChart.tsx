@@ -41,14 +41,28 @@ export function SendOpenTrendChart({ data }: Props) {
             />
             <YAxis
               yAxisId="left"
+              orientation="left"
               tickFormatter={v => formatKorean(v)}
               tick={{ fontSize: 11, fill: '#9CA3AF' }}
               tickLine={false}
               axisLine={false}
               width={56}
             />
+            <YAxis
+              yAxisId="right"
+              orientation="right"
+              tickFormatter={v => `${(v * 100).toFixed(1)}%`}
+              tick={{ fontSize: 11, fill: '#9CA3AF' }}
+              tickLine={false}
+              axisLine={false}
+              width={48}
+            />
             <Tooltip
-              formatter={(value: number, name: string) => [formatKorean(value), name]}
+              formatter={(value: number, name: string) =>
+                name === 'CTR'
+                  ? [`${(value * 100).toFixed(2)}%`, name]
+                  : [formatKorean(value), name]
+              }
               contentStyle={{ fontSize: 12, borderRadius: 8, border: '1px solid #e0e0e0' }}
             />
             <Legend
@@ -66,14 +80,23 @@ export function SendOpenTrendChart({ data }: Props) {
               radius={[3, 3, 0, 0]}
               maxBarSize={40}
             />
-            <Line
+            <Bar
               yAxisId="left"
-              type="monotone"
               dataKey="openClick"
               name="Open/Click"
-              stroke={colors[1]}
+              fill={colors[1]}
+              opacity={0.85}
+              radius={[3, 3, 0, 0]}
+              maxBarSize={40}
+            />
+            <Line
+              yAxisId="right"
+              type="monotone"
+              dataKey="ctr"
+              name="CTR"
+              stroke={colors[2]}
               strokeWidth={2}
-              dot={{ r: 3, fill: colors[1] }}
+              dot={{ r: 3, fill: colors[2] }}
               activeDot={{ r: 5 }}
             />
           </ComposedChart>

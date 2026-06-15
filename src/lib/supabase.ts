@@ -29,4 +29,5 @@ export interface Project {
   metric_definitions: { col: string; label: string }[]
   trigger_mappings: Record<string, string>
   dashboard_layout: DashboardLayout
+  braze_base_url: string | null
 }

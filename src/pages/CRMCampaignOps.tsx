@@ -70,6 +70,7 @@ export function CRMCampaignOps() {
         campaigns={campaigns}
         loading={brazeLoading}
         error={brazeError}
+        brazeBaseUrl={project?.braze_base_url}
       />
     ),
     trigger_cards: (
@@ -86,6 +87,7 @@ export function CRMCampaignOps() {
         campaigns={campaigns}
         loading={brazeLoading}
         error={brazeError}
+        brazeBaseUrl={project?.braze_base_url}
       />
     ),
   }

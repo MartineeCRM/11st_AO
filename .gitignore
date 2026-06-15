@@ -26,3 +26,4 @@ npm-debug.log*
 !tsconfig*.json
 !package.json
 !package-lock.json
+.gstack/

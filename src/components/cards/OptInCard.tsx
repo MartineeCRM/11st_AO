@@ -11,7 +11,7 @@ import {
   TrendingUp,
   Users,
 } from 'lucide-react'
-import { LineChart, Line, XAxis, ResponsiveContainer, Tooltip as RTooltip } from 'recharts'
+import { LineChart, Line, XAxis, YAxis, ResponsiveContainer, Tooltip as RTooltip } from 'recharts'
 import { cn } from '@/lib/utils'
 import { formatNumber, formatWoW } from '@/lib/formatters'
 import type { OptInData } from '@/types/metrics'
@@ -40,6 +40,7 @@ function MiniTrendChart({ data, color }: { data: { date: string; value: number }
       <ResponsiveContainer width="100%" height={40}>
         <LineChart data={data}>
           <XAxis dataKey="date" hide />
+          <YAxis hide domain={['auto', 'auto']} />
           <Line type="monotone" dataKey="value" stroke={color} strokeWidth={1.5} dot={false} />
           <RTooltip
             labelFormatter={(label: string) => label}
