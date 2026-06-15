@@ -22,6 +22,11 @@ const kpiCache = new Map<KpiKey, CacheEntry<KpiCacheData>>()
 const pendingMartinee = new Map<MarineeKey, Promise<MartineeUnionRow[]>>()
 const pendingKpi = new Map<KpiKey, Promise<KpiCacheData>>()
 
+export function invalidateSheetDataCache(projectId: string) {
+  martineeCache.delete(`${projectId}:martinee`)
+  kpiCache.delete(`${projectId}:kpi`)
+}
+
 function getProjectId(): string {
   return localStorage.getItem('crm_project_id') ?? 'default'
 }

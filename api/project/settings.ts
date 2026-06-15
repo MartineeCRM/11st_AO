@@ -31,12 +31,17 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method === 'GET') {
     const { data, error } = await admin
       .from('projects')
-      .select('id, name, spreadsheet_id, google_api_key, braze_api_key, braze_base_url, chart_colors, metric_definitions')
+      .select('id, name, spreadsheet_id, google_api_key, braze_api_key, braze_base_url, chart_colors, metric_definitions, sheet_mapping')
       .eq('id', auth.projectId)
       .single()
 
     if (error || !data) return res.status(503).json({ error: '설정을 불러올 수 없습니다.' })
-    return res.status(200).json(data)
+    const { google_api_key, braze_api_key, ...safeSettings } = data
+    return res.status(200).json({
+      ...safeSettings,
+      has_google_api_key: Boolean(google_api_key),
+      has_braze_api_key: Boolean(braze_api_key),
+    })
   }
 
   if (req.method === 'PATCH') {

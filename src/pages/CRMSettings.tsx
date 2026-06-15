@@ -1,6 +1,9 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
 import type { Project } from '@/lib/supabase'
+import { invalidateSheetDataCache } from '@/hooks/useSheetData'
+import { invalidateAttributionDataCache } from '@/hooks/useAttributionData'
+import { invalidateBrazeCampaignCache } from '@/hooks/useBrazeCampaigns'
 
 interface FullSettings {
   id: string
@@ -8,6 +11,8 @@ interface FullSettings {
   spreadsheet_id: string
   google_api_key: string
   braze_api_key: string | null
+  has_google_api_key: boolean
+  has_braze_api_key: boolean
   braze_base_url: string | null
   chart_colors: string[]
   metric_definitions: { col: string; label: string }[]
@@ -61,23 +66,27 @@ export function CRMSettings({ project }: Props) {
       const data = await res.json() as FullSettings
       setSettings({
         ...data,
+        google_api_key: '',
+        braze_api_key: '',
         chart_colors: data.chart_colors?.length ? data.chart_colors : DEFAULT_COLORS,
         sheet_mapping: data.sheet_mapping ?? {},
       })
       setLoading(false)
     }
     load()
-  }, [])
+  }, [project.id])
 
   async function loadSheetTabs() {
     if (!settings) return
     setSheetLoading(true)
     setSheetError(null)
-    const params = new URLSearchParams({
-      spreadsheet_id: settings.spreadsheet_id,
-      google_api_key: settings.google_api_key,
+    const res = await apiFetch('/api/project/sheets-meta', {
+      method: 'POST',
+      body: JSON.stringify({
+        spreadsheet_id: settings.spreadsheet_id,
+        google_api_key: settings.google_api_key || undefined,
+      }),
     })
-    const res = await apiFetch(`/api/project/sheets-meta?${params}`)
     const json = await res.json()
     if (!res.ok) {
       setSheetError(json.error ?? '시트 목록을 불러올 수 없습니다.')
@@ -94,17 +103,19 @@ export function CRMSettings({ project }: Props) {
     setError(null)
     setSuccess(null)
 
+    const update: Record<string, unknown> = {
+      name: settings.name,
+      spreadsheet_id: settings.spreadsheet_id,
+      braze_base_url: settings.braze_base_url,
+      chart_colors: settings.chart_colors,
+      sheet_mapping: settings.sheet_mapping,
+    }
+    if (settings.google_api_key) update.google_api_key = settings.google_api_key
+    if (settings.braze_api_key) update.braze_api_key = settings.braze_api_key
+
     const res = await apiFetch('/api/project/settings', {
       method: 'PATCH',
-      body: JSON.stringify({
-        name: settings.name,
-        spreadsheet_id: settings.spreadsheet_id,
-        google_api_key: settings.google_api_key,
-        braze_api_key: settings.braze_api_key,
-        braze_base_url: settings.braze_base_url,
-        chart_colors: settings.chart_colors,
-        sheet_mapping: settings.sheet_mapping,
-      }),
+      body: JSON.stringify(update),
     })
 
     setSaving(false)
@@ -112,6 +123,16 @@ export function CRMSettings({ project }: Props) {
       const json = await res.json()
       setError(json.error ?? '저장에 실패했습니다.')
     } else {
+      invalidateSheetDataCache(project.id)
+      invalidateAttributionDataCache(project.id)
+      invalidateBrazeCampaignCache(project.id)
+      setSettings(prev => prev ? {
+        ...prev,
+        google_api_key: '',
+        braze_api_key: '',
+        has_google_api_key: prev.has_google_api_key || Boolean(settings.google_api_key),
+        has_braze_api_key: prev.has_braze_api_key || Boolean(settings.braze_api_key),
+      } : prev)
       setSuccess('설정이 저장됐습니다.')
       setTimeout(() => setSuccess(null), 3000)
     }
@@ -178,9 +199,11 @@ export function CRMSettings({ project }: Props) {
         </Field>
         <Field label="API Key">
           <input
+            type="password"
             value={settings.braze_api_key ?? ''}
             onChange={e => setSettings({ ...settings, braze_api_key: e.target.value })}
-            placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+            placeholder={settings.has_braze_api_key ? '설정됨 - 변경할 때만 새 키 입력' : 'Braze REST API Key'}
+            autoComplete="new-password"
             className={inputCls}
           />
         </Field>
@@ -198,15 +221,17 @@ export function CRMSettings({ project }: Props) {
         </Field>
         <Field label="Google API Key">
           <input
+            type="password"
             value={settings.google_api_key}
             onChange={e => setSettings({ ...settings, google_api_key: e.target.value })}
-            placeholder="AIzaSy..."
+            placeholder={settings.has_google_api_key ? '설정됨 - 변경할 때만 새 키 입력' : 'Google Sheets API Key'}
+            autoComplete="new-password"
             className={inputCls}
           />
         </Field>
         <button
           onClick={loadSheetTabs}
-          disabled={sheetLoading || !settings.spreadsheet_id || !settings.google_api_key}
+          disabled={sheetLoading || !settings.spreadsheet_id || (!settings.google_api_key && !settings.has_google_api_key)}
           className="mt-1 rounded-lg border border-[#0066cc] px-4 py-2 text-xs font-semibold text-[#0066cc] hover:bg-[#e8f0fb] disabled:opacity-40"
         >
           {sheetLoading ? '불러오는 중...' : '시트 탭 목록 불러오기'}

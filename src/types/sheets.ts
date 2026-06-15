@@ -71,6 +71,7 @@ export interface AttDataRow {
   category: string                    // 분류
   impression_or_send_user: number
   open_or_click_user: number
+  purchase_user_count: number          // PURCHASE_USER_COUNT(_6H)
   purchase_count: number              // PURCHASE_COUNT
   purchase_item_count: number         // PURCHASE_ITEM_COUNT
   purchase_amount: number             // PURCHASE_AMOUNT

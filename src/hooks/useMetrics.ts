@@ -173,7 +173,7 @@ export function useMetrics(
         icon: 'message-square',
       },
     ]
-  }, [filteredMartinee, filteredKpi, prevMartinee, prevKpi, momMartinee, momKpi, allKpi, allMartinee, endDate])
+  }, [filteredMartinee, filteredKpi, prevMartinee, prevKpi, momMartinee, momKpi, allKpi, allMartinee, endDate, wowEnd, momEnd])
 
   // ── 수신동의 카드 ─────────────────────────────────────────
   const optInData: OptInData[] = useMemo(() => {

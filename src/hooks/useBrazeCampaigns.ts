@@ -47,6 +47,7 @@ export interface UseBrazeCampaignsResult {
   campaigns: EnrichedCampaign[]
   loading: boolean
   error: string | null
+  warning: string | null
 }
 
 const CACHE_TTL_MS = 3 * 60 * 1000
@@ -56,9 +57,19 @@ const DETAIL_CONCURRENCY = 8
 interface CacheSlot {
   data: EnrichedCampaign[]
   cachedAt: number
-  pending?: Promise<EnrichedCampaign[]>
+  warning: string | null
+  pending?: Promise<LiveCampaignResult>
 }
 const cache = new Map<string, CacheSlot>()
+
+export function invalidateBrazeCampaignCache(projectId: string) {
+  cache.delete(projectId)
+}
+
+interface LiveCampaignResult {
+  campaigns: EnrichedCampaign[]
+  warning: string | null
+}
 
 function getProjectId(): string {
   return localStorage.getItem('crm_project_id') ?? 'default'
@@ -92,16 +103,42 @@ async function fetchDetailsWithConcurrency(
   return results
 }
 
-async function fetchLiveCampaigns(): Promise<EnrichedCampaign[]> {
-  // Campaign과 Canvas 목록을 병렬로 가져옴
-  const [campaignList, canvasList] = await Promise.all([
-    fetchAllCampaigns().catch(() => [] as BrazeCampaign[]),
-    fetchAllCanvases().catch(() => [] as BrazeCampaign[]),
+function errorMessage(reason: unknown): string {
+  return reason instanceof Error ? reason.message : String(reason)
+}
+
+async function fetchLiveCampaigns(): Promise<LiveCampaignResult> {
+  const warnings: string[] = []
+  const [campaignResult, canvasResult] = await Promise.allSettled([
+    fetchAllCampaigns(),
+    fetchAllCanvases(),
   ])
+
+  if (campaignResult.status === 'rejected' && canvasResult.status === 'rejected') {
+    throw new Error(
+      `Braze 목록 조회 실패: Campaign ${errorMessage(campaignResult.reason)}; Canvas ${errorMessage(canvasResult.reason)}`,
+    )
+  }
+
+  const campaignList =
+    campaignResult.status === 'fulfilled' ? campaignResult.value : []
+  const canvasList =
+    canvasResult.status === 'fulfilled' ? canvasResult.value : []
+
+  if (campaignResult.status === 'rejected') {
+    warnings.push(`Campaign 목록 조회 실패: ${errorMessage(campaignResult.reason)}`)
+  }
+  if (canvasResult.status === 'rejected') {
+    warnings.push(`Canvas 목록 조회 실패: ${errorMessage(canvasResult.reason)}`)
+  }
 
   // Campaign 상세 fetch
   const campaignTargets = campaignList.slice(0, DETAIL_LIMIT)
   const campaignDetailResults = await fetchDetailsWithConcurrency(campaignTargets, fetchCampaignDetails)
+  const campaignDetailFailures = campaignDetailResults.filter(r => r.status === 'rejected')
+  if (campaignDetailFailures.length > 0) {
+    warnings.push(`Campaign 상세 ${campaignDetailFailures.length}건 조회 실패`)
+  }
 
   const enrichedCampaigns: EnrichedCampaign[] = campaignTargets.flatMap((c, i) => {
     const detail =
@@ -135,6 +172,10 @@ async function fetchLiveCampaigns(): Promise<EnrichedCampaign[]> {
   // Canvas 상세 fetch — fetchDetailsWithConcurrency는 BrazeCampaign[] 기대하므로 id/name 호환됨
   const canvasTargets = canvasList.slice(0, DETAIL_LIMIT)
   const canvasDetailResults = await fetchDetailsWithConcurrency(canvasTargets, fetchCanvasDetails)
+  const canvasDetailFailures = canvasDetailResults.filter(r => r.status === 'rejected')
+  if (canvasDetailFailures.length > 0) {
+    warnings.push(`Canvas 상세 ${canvasDetailFailures.length}건 조회 실패`)
+  }
 
   const enrichedCanvases: EnrichedCampaign[] = canvasTargets.flatMap((c, i) => {
     const raw =
@@ -166,22 +207,28 @@ async function fetchLiveCampaigns(): Promise<EnrichedCampaign[]> {
     }]
   })
 
-  return [...enrichedCampaigns, ...enrichedCanvases]
+  return {
+    campaigns: [...enrichedCampaigns, ...enrichedCanvases],
+    warning: warnings.length > 0 ? warnings.join(' · ') : null,
+  }
 }
 
 export function useBrazeCampaigns(): UseBrazeCampaignsResult {
   const pid = getProjectId()
   const slot = cache.get(pid)
+  const hasFreshCache = Boolean(slot && Date.now() - slot.cachedAt < CACHE_TTL_MS)
   const [campaigns, setCampaigns] = useState<EnrichedCampaign[]>(slot?.data ?? [])
-  const [loading, setLoading] = useState(!slot || slot.data.length === 0)
+  const [loading, setLoading] = useState(!hasFreshCache)
   const [error, setError] = useState<string | null>(null)
+  const [warning, setWarning] = useState<string | null>(slot?.warning ?? null)
 
   useEffect(() => {
     const pid = getProjectId()
     const slot = cache.get(pid)
 
-    if (slot && Date.now() - slot.cachedAt < CACHE_TTL_MS && slot.data.length > 0) {
+    if (slot && Date.now() - slot.cachedAt < CACHE_TTL_MS) {
       setCampaigns(slot.data)
+      setWarning(slot.warning)
       setLoading(false)
       return
     }
@@ -191,8 +238,9 @@ export function useBrazeCampaigns(): UseBrazeCampaignsResult {
     async function load() {
       setLoading(true)
       setError(null)
+      setWarning(null)
       try {
-        const current = cache.get(pid) ?? { data: [], cachedAt: 0 }
+        const current = cache.get(pid) ?? { data: [], cachedAt: 0, warning: null }
         if (!current.pending) {
           current.pending = fetchLiveCampaigns().finally(() => {
             const s = cache.get(pid)
@@ -200,11 +248,12 @@ export function useBrazeCampaigns(): UseBrazeCampaignsResult {
           })
           cache.set(pid, current)
         }
-        const enriched = await current.pending!
+        const result = await current.pending
 
         if (!cancelled) {
-          cache.set(pid, { data: enriched, cachedAt: Date.now() })
-          setCampaigns(enriched)
+          cache.set(pid, { data: result.campaigns, cachedAt: Date.now(), warning: result.warning })
+          setCampaigns(result.campaigns)
+          setWarning(result.warning)
           setLoading(false)
         }
       } catch (e) {
@@ -219,5 +268,5 @@ export function useBrazeCampaigns(): UseBrazeCampaignsResult {
     return () => { cancelled = true }
   }, [pid])
 
-  return { campaigns, loading, error }
+  return { campaigns, loading, error, warning }
 }
