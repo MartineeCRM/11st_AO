@@ -9,6 +9,12 @@ import { ChartColorsContext, DEFAULT_CHART_COLORS } from '@/lib/chartColors'
 
 type Tab = 'performance' | 'attribution' | 'ops' | 'settings'
 
+const CHUNK_RELOAD_KEY = 'crm_dashboard_chunk_reload_attempted'
+
+function isDynamicImportError(error: Error): boolean {
+  return /Failed to fetch dynamically imported module|Importing a module script failed|Loading chunk/i.test(error.message)
+}
+
 class ErrorBoundary extends Component<{ children: ReactNode }, { error: Error | null }> {
   constructor(props: { children: ReactNode }) {
     super(props)
@@ -19,6 +25,10 @@ class ErrorBoundary extends Component<{ children: ReactNode }, { error: Error | 
   }
   componentDidCatch(error: Error, info: ErrorInfo) {
     console.error('[ErrorBoundary]', error, info.componentStack)
+    if (isDynamicImportError(error) && sessionStorage.getItem(CHUNK_RELOAD_KEY) !== '1') {
+      sessionStorage.setItem(CHUNK_RELOAD_KEY, '1')
+      window.location.reload()
+    }
   }
   render() {
     const { error } = this.state
@@ -48,6 +58,11 @@ export default function App() {
   const [activeTab, setActiveTab] = useState<Tab>('performance')
   const [pendingId, setPendingId] = useState<string | null>(null)
 
+  function handleTabChange(tab: Tab) {
+    sessionStorage.removeItem(CHUNK_RELOAD_KEY)
+    setActiveTab(tab)
+  }
+
   return (
     <ProtectedRoute>
       {({ project, availableProjects, setProjectId }) => {
@@ -63,7 +78,7 @@ export default function App() {
         <div className="min-h-screen bg-[#f5f5f7]">
           <TopNav
             activeTab={activeTab}
-            onTabChange={setActiveTab}
+            onTabChange={handleTabChange}
             project={project}
             availableProjects={availableProjects}
             onProjectChange={handleProjectChange}
