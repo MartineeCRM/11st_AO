@@ -4,15 +4,11 @@ export function formatNumber(n: number): string {
   return n.toLocaleString('ko-KR')
 }
 
-/** 한국식 숫자 축약: ≤10,000 전체 표기 / 만 단위 / 억 단위 */
+/** 한국식 숫자 축약: 억 미만 전체 표기 / 억 이상 축약 */
 export function formatKorean(n: number): string {
   const abs = Math.abs(n)
   const sign = n < 0 ? '-' : ''
-  if (abs <= 10000) return `${sign}${Math.round(abs).toLocaleString('ko-KR')}`
-  if (abs < 100_000_000) {
-    const man = Math.floor(abs / 10000)
-    return `${sign}${man.toLocaleString('ko-KR')}만`
-  }
+  if (abs < 100_000_000) return `${sign}${Math.round(abs).toLocaleString('ko-KR')}`
   const eok = abs / 100_000_000
   return `${sign}${eok.toFixed(1)}억`
 }
