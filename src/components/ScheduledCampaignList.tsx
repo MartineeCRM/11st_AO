@@ -4,9 +4,12 @@ import { channelLabel, channelBadgeColor, brazeCampaignUrl, brazeCanvasUrl } fro
 import type { EnrichedCampaign } from '@/hooks/useBrazeCampaigns'
 
 function getRelevantDate(c: EnrichedCampaign): string | undefined {
-  const scheduledTime = c.schedule?.next_send_time ?? c.schedule?.time ?? c.schedule?.start_time
-  if (scheduledTime) return scheduledTime
-  return c.first_sent || c.last_sent || c.updated_at
+  const now = new Date()
+  if (c.next_send_time) {
+    const sendAt = new Date(c.next_send_time)
+    if (!isNaN(sendAt.getTime()) && sendAt > now) return c.next_send_time
+  }
+  return c.first_sent || undefined
 }
 
 function toLocalTimeKey(iso: string): string {

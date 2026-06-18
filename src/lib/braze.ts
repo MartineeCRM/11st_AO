@@ -318,6 +318,29 @@ export async function fetchCanvasDetails(canvasId: string): Promise<BrazeCanvasD
   return json.canvas ?? json
 }
 
+export interface BrazeScheduledBroadcast {
+  name: string
+  id: string
+  type: 'Campaign' | 'Canvas'
+  tags: string[]
+  next_send_time: string
+  schedule_type: string
+}
+
+interface ScheduledBroadcastsResponse {
+  scheduled_broadcasts?: BrazeScheduledBroadcast[]
+}
+
+/** 예정된 scheduled 발송 목록 (next_send_time 포함) */
+export async function fetchScheduledBroadcasts(endTime: string): Promise<BrazeScheduledBroadcast[]> {
+  const json = await brazeGet<ScheduledBroadcastsResponse>(
+    '/messages/scheduled_broadcasts',
+    { end_time: endTime },
+    'Braze /messages/scheduled_broadcasts',
+  )
+  return json.scheduled_broadcasts ?? []
+}
+
 /** Canvas schedule.type → schedule_type 정규화 */
 export function resolveCanvasScheduleType(detail: { schedule_type?: string; schedule?: { type?: string } }): string {
   if (detail.schedule_type) return detail.schedule_type

@@ -4,6 +4,7 @@ import {
   fetchCampaignDetails,
   fetchAllCanvases,
   fetchCanvasDetails,
+  fetchScheduledBroadcasts,
   resolveCanvasScheduleType,
   extractCanvasChannels,
   type BrazeCampaign,
@@ -40,6 +41,7 @@ export interface EnrichedCampaign extends BrazeCampaign {
   trigger_action?: string
   first_sent?: string
   last_sent?: string
+  next_send_time?: string
   schedule?: { time?: string; next_send_time?: string; start_time?: string; [key: string]: unknown }
 }
 
@@ -109,6 +111,14 @@ function errorMessage(reason: unknown): string {
 
 async function fetchLiveCampaigns(): Promise<LiveCampaignResult> {
   const warnings: string[] = []
+
+  // 앞으로 14일 scheduled 발송 목록 (next_send_time 포함)
+  const futureEnd = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString()
+  const scheduledBroadcastsResult = await fetchScheduledBroadcasts(futureEnd).catch(() => [])
+  const nextSendTimeById = new Map<string, string>(
+    scheduledBroadcastsResult.map(b => [b.id, b.next_send_time]),
+  )
+
   const [campaignResult, canvasResult] = await Promise.allSettled([
     fetchAllCampaigns(),
     fetchAllCanvases(),
@@ -165,6 +175,7 @@ async function fetchLiveCampaigns(): Promise<LiveCampaignResult> {
       trigger_action: resolveTriggerAction(detail),
       first_sent: detail.first_sent,
       last_sent: detail.last_sent,
+      next_send_time: nextSendTimeById.get(c.id),
       schedule: detail.schedule,
     }]
   })
@@ -207,6 +218,7 @@ async function fetchLiveCampaigns(): Promise<LiveCampaignResult> {
       trigger_action: resolveTriggerAction(raw),
       first_sent: raw.first_sent,
       last_sent: raw.last_sent,
+      next_send_time: nextSendTimeById.get(c.id),
       schedule: raw.schedule as Record<string, unknown> | undefined,
     }]
   })
