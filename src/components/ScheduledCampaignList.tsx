@@ -6,7 +6,7 @@ import type { EnrichedCampaign } from '@/hooks/useBrazeCampaigns'
 function getRelevantDate(c: EnrichedCampaign): string | undefined {
   const scheduledTime = c.schedule?.next_send_time ?? c.schedule?.time ?? c.schedule?.start_time
   if (scheduledTime) return scheduledTime
-  return c.last_sent || c.first_sent || undefined
+  return c.first_sent || c.last_sent || c.updated_at
 }
 
 function toLocalTimeKey(iso: string): string {
