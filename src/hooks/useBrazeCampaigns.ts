@@ -168,6 +168,10 @@ async function fetchLiveCampaigns(): Promise<LiveCampaignResult> {
       schedule: detail.schedule,
     }]
   })
+  // DEBUG: log schedule fields — remove after inspection
+  enrichedCampaigns.filter(c => c.schedule_type === 'time_based' || c.schedule_type === 'scheduled').forEach(c => {
+    console.log('[schedule debug]', c.name, JSON.stringify(c.schedule))
+  })
 
   // Canvas 상세 fetch — fetchDetailsWithConcurrency는 BrazeCampaign[] 기대하므로 id/name 호환됨
   const canvasTargets = canvasList.slice(0, DETAIL_LIMIT)
