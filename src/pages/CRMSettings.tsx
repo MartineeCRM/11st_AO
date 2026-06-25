@@ -57,9 +57,18 @@ export function CRMSettings({ project }: Props) {
   useEffect(() => {
     async function load() {
       setLoading(true)
-      const res = await apiFetch('/api/project/settings')
+      let res = await apiFetch('/api/project/settings')
+      if (res.status === 401) {
+        // session may not be ready yet — wait and retry once
+        await new Promise(r => setTimeout(r, 800))
+        res = await apiFetch('/api/project/settings')
+      }
       if (!res.ok) {
-        setError('설정을 불러올 수 없습니다.')
+        setError(
+          res.status === 401 || res.status === 403
+            ? '인증 오류입니다. 페이지를 새로고침 해주세요.'
+            : '설정을 불러올 수 없습니다.',
+        )
         setLoading(false)
         return
       }

@@ -169,7 +169,7 @@ export function useMetrics(
         formattedValue: curMsg.toFixed(1),
         wow: wowMsg,
         mom: momMartinee.length > 0 ? calcWoW(curMsg, momMsg) : null,
-        trendData: [],
+        trendData: calcTrend14d(allMartinee, 'msgPerUser', endDate),
         icon: 'message-square',
       },
     ]

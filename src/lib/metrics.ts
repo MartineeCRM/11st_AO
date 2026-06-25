@@ -99,7 +99,7 @@ function lastNDates(n: number, endDate: string): string[] {
 /** martinee_union 기준 14일 트렌드 (임의 field) */
 export function calcTrend14d(
   rows: MartineeUnionRow[],
-  field: 'sentImpression' | 'ctr' | 'cvr' | 'revenue',
+  field: 'sentImpression' | 'ctr' | 'cvr' | 'revenue' | 'msgPerUser',
   endDate: string,
 ): number[] {
   const byDate = groupByDate(rows)
@@ -109,6 +109,7 @@ export function calcTrend14d(
     if (field === 'ctr') return calcCTR(dayRows)
     if (field === 'cvr') return calcCVR(dayRows)
     if (field === 'revenue') return dayRows.reduce((s, r) => s + r.revenue, 0)
+    if (field === 'msgPerUser') return calcMsgPerUser(dayRows)
     return 0
   })
 }

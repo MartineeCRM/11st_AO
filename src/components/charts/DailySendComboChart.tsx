@@ -16,6 +16,7 @@ import { useChartNotes } from '@/hooks/useChartNotes'
 import { NoteMarker } from './ChartNoteOverlay'
 import { ChartSectionNote } from './ChartSectionNote'
 import { useChartColors } from '@/lib/chartColors'
+import { calcIQRDomain, extractValues } from '@/lib/outlier'
 
 interface Props {
   data: DailyComboPoint[]
@@ -47,11 +48,23 @@ function NoteDot(props: {
 export function DailySendComboChart({ data }: Props) {
   const colors = useChartColors()
   const { notes, upsertNote, deleteNote } = useChartNotes('daily_send')
+  const siOutlier = calcIQRDomain(extractValues(data, 'sentImpression'))
+  const ctrOutlier = calcIQRDomain(extractValues(data, 'ctr'))
+  const cvrOutlier = calcIQRDomain(extractValues(data, 'cvr'))
+  const hasOutlier = siOutlier.hasOutlier || ctrOutlier.hasOutlier || cvrOutlier.hasOutlier
 
   return (
     <div className="rounded-[18px] border border-[#e0e0e0] bg-white p-5 flex flex-col h-full">
-      <div className="mb-4">
+      <div className="mb-4 flex items-start justify-between">
         <ChartSectionNote sectionId="perf_daily_send" title="일별 발송량 / CTR / CVR 추이" />
+        {hasOutlier && (
+          <span
+            className="ml-2 shrink-0 rounded-full bg-[#FEF3C7] px-2 py-0.5 text-[10px] font-medium text-[#92400E] cursor-default"
+            title={`이상치 감지: 발송/노출 최댓값 ${formatKorean(siOutlier.rawMax)} (Y축 클리핑됨)`}
+          >
+            ⚠ 이상치
+          </span>
+        )}
       </div>
       <div className="flex-1 min-h-0">
         {data.length === 0 ? <EmptyChartState /> : <ResponsiveContainer width="100%" height="100%">
@@ -67,16 +80,18 @@ export function DailySendComboChart({ data }: Props) {
             {/* 왼쪽 Y축: 발송/노출 */}
             <YAxis
               yAxisId="left"
+              domain={siOutlier.domain}
               tickFormatter={v => formatKorean(v as number)}
               tick={{ fontSize: 11, fill: '#9CA3AF' }}
               tickLine={false}
               axisLine={false}
               width={52}
             />
-            {/* 오른쪽 Y축: CTR / CVR (%) */}
+            {/* 오른쪽 Y축: CTR / CVR (%) — merge both domains for shared axis */}
             <YAxis
               yAxisId="right"
               orientation="right"
+              domain={[0, Math.max(ctrOutlier.domain[1], cvrOutlier.domain[1])]}
               tickFormatter={v => `${v}%`}
               tick={{ fontSize: 11, fill: '#9CA3AF' }}
               tickLine={false}

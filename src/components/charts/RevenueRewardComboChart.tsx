@@ -14,6 +14,7 @@ import type { DailyRevenuePoint } from '@/types/metrics'
 import { EmptyChartState } from '@/components/EmptyChartState'
 import { ChartSectionNote } from './ChartSectionNote'
 import { useChartColors } from '@/lib/chartColors'
+import { calcIQRDomain, extractValues } from '@/lib/outlier'
 
 interface Props {
   data: DailyRevenuePoint[]
@@ -21,10 +22,21 @@ interface Props {
 
 export function RevenueRewardComboChart({ data }: Props) {
   const colors = useChartColors()
+  const revOutlier = calcIQRDomain(extractValues(data, 'revenuePerSend'))
+  const rewardOutlier = calcIQRDomain(extractValues(data, 'expectedReward'))
+  const hasOutlier = revOutlier.hasOutlier || rewardOutlier.hasOutlier
   return (
     <div className="rounded-[18px] border border-[#e0e0e0] bg-white p-5 flex flex-col h-full">
-      <div className="mb-4">
+      <div className="mb-4 flex items-start justify-between">
         <ChartSectionNote sectionId="perf_revenue_reward" title="발송당 Revenue / 예상 Reward 추이" />
+        {hasOutlier && (
+          <span
+            className="ml-2 shrink-0 rounded-full bg-[#FEF3C7] px-2 py-0.5 text-[10px] font-medium text-[#92400E] cursor-default"
+            title={`이상치 감지: 발송당 Revenue 최댓값 ${formatKorean(revOutlier.rawMax)} (Y축 클리핑됨)`}
+          >
+            ⚠ 이상치
+          </span>
+        )}
       </div>
       <div className="flex-1 min-h-0">
         {data.length === 0 ? <EmptyChartState /> : <ResponsiveContainer width="100%" height="100%">
@@ -40,6 +52,7 @@ export function RevenueRewardComboChart({ data }: Props) {
             {/* 왼쪽 Y축: 발송당 Revenue */}
             <YAxis
               yAxisId="left"
+              domain={revOutlier.domain}
               tickFormatter={v => formatKorean(v as number)}
               tick={{ fontSize: 11, fill: '#9CA3AF' }}
               tickLine={false}
@@ -50,6 +63,7 @@ export function RevenueRewardComboChart({ data }: Props) {
             <YAxis
               yAxisId="right"
               orientation="right"
+              domain={rewardOutlier.domain}
               tickFormatter={v => `${(v as number).toFixed(3)}%`}
               tick={{ fontSize: 11, fill: '#9CA3AF' }}
               tickLine={false}

@@ -39,7 +39,7 @@ export function AttributionSummaryBanner({ current, hasData }: Props) {
 
   return (
     <div className="mx-6 mb-5 flex items-center gap-6 rounded-xl border border-[#e8f0fb] bg-[#e8f0fb] px-5 py-3">
-      <span className="text-xs font-semibold text-[#0066cc] whitespace-nowrap">6h Attribution</span>
+      <span className="text-xs font-semibold text-[#0066cc] whitespace-nowrap">Summary</span>
       <div className="h-4 w-px bg-[#e8f0fb]" />
       {items.map((item, i) => (
         <div key={item.label} className="flex items-center gap-2">
