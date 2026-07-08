@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { Check, ChevronDown } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { cn } from '@/lib/utils'
-import type { Project } from '@/lib/supabase'
+import type { Project, TabVisibility } from '@/lib/supabase'
 
 type Tab = 'performance' | 'attribution' | 'ops' | 'settings'
 
@@ -12,6 +12,7 @@ interface Props {
   project: Project
   availableProjects: Project[]
   onProjectChange: (id: string) => void
+  tabVisibility: TabVisibility
 }
 
 const TABS: { key: Tab; label: string }[] = [
@@ -21,7 +22,7 @@ const TABS: { key: Tab; label: string }[] = [
   { key: 'settings', label: '설정' },
 ]
 
-export function TopNav({ activeTab, onTabChange, project, availableProjects, onProjectChange }: Props) {
+export function TopNav({ activeTab, onTabChange, project, availableProjects, onProjectChange, tabVisibility }: Props) {
   const [dropdownOpen, setDropdownOpen] = useState(false)
   const dropdownRef = useRef<HTMLDivElement>(null)
   const canSwitch = availableProjects.length >= 2
@@ -59,7 +60,7 @@ export function TopNav({ activeTab, onTabChange, project, availableProjects, onP
 
       {/* 탭 */}
       <nav className="flex items-center gap-1">
-        {TABS.map(({ key, label }) => (
+        {TABS.filter(({ key }) => key === 'settings' || tabVisibility[key as keyof TabVisibility]).map(({ key, label }) => (
           <button
             key={key}
             onClick={() => onTabChange(key)}

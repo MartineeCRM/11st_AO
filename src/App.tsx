@@ -1,4 +1,4 @@
-import { useState, lazy, Suspense, Component, type ReactNode, type ErrorInfo } from 'react'
+import { useState, useEffect, lazy, Suspense, Component, type ReactNode, type ErrorInfo } from 'react'
 import { TopNav } from '@/components/TopNav'
 import { CRMPerformance } from '@/pages/CRMPerformance'
 const CRMAttribution = lazy(() => import('@/pages/CRMAttribution').then(m => ({ default: m.CRMAttribution })))
@@ -73,6 +73,16 @@ export default function App() {
           setProjectId(id)
         }
 
+        const tabVisibility = project.dashboard_layout?.tabVisibility ?? { performance: true, attribution: true, ops: true }
+        const TAB_ORDER: Tab[] = ['performance', 'attribution', 'ops', 'settings']
+
+        useEffect(() => {
+          if (activeTab === 'settings') return
+          if (tabVisibility[activeTab as keyof typeof tabVisibility]) return
+          const nextVisible = TAB_ORDER.find(t => t === 'settings' || tabVisibility[t as keyof typeof tabVisibility])
+          if (nextVisible) setActiveTab(nextVisible)
+        }, [activeTab, tabVisibility])
+
         return (
         <ChartColorsContext.Provider value={project?.chart_colors?.length ? project.chart_colors : DEFAULT_CHART_COLORS}>
         <div className="min-h-screen bg-[#f5f5f7]">
@@ -82,6 +92,7 @@ export default function App() {
             project={project}
             availableProjects={availableProjects}
             onProjectChange={handleProjectChange}
+            tabVisibility={tabVisibility}
           />
           <main>
             {switching ? (
