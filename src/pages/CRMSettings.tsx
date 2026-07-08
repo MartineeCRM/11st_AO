@@ -4,6 +4,10 @@ import type { Project } from '@/lib/supabase'
 import { invalidateSheetDataCache } from '@/hooks/useSheetData'
 import { invalidateAttributionDataCache } from '@/hooks/useAttributionData'
 import { invalidateBrazeCampaignCache } from '@/hooks/useBrazeCampaigns'
+import { useAuth } from '@/hooks/useAuth'
+import { useProject } from '@/hooks/useProject'
+import { DEFAULT_LAYOUT } from '@/hooks/useDashboardLayout'
+import type { TabKey } from '@/lib/supabase'
 
 interface FullSettings {
   id: string
@@ -43,6 +47,52 @@ interface Props {
 }
 
 export function CRMSettings({ project }: Props) {
+  const { user } = useAuth()
+  const { saveDashboardLayout } = useProject(user?.id ?? null)
+  const [layoutSaving, setLayoutSaving] = useState(false)
+  const [layoutError, setLayoutError] = useState<string | null>(null)
+  const [layoutSuccess, setLayoutSuccess] = useState<string | null>(null)
+
+  const tabVisibility = project.dashboard_layout?.tabVisibility ?? DEFAULT_LAYOUT.tabVisibility
+
+  async function handleToggleTab(tab: TabKey) {
+    setLayoutSaving(true)
+    setLayoutError(null)
+    setLayoutSuccess(null)
+    try {
+      const nextLayout = {
+        ...project.dashboard_layout,
+        tabVisibility: { ...tabVisibility, [tab]: !tabVisibility[tab] },
+      }
+      await saveDashboardLayout(nextLayout)
+      setLayoutSuccess('탭 노출 설정이 저장됐습니다.')
+      setTimeout(() => setLayoutSuccess(null), 3000)
+    } catch (e) {
+      setLayoutError(e instanceof Error ? e.message : '저장 중 오류가 발생했습니다.')
+    } finally {
+      setLayoutSaving(false)
+    }
+  }
+
+  async function handleResetLayout() {
+    const confirmed = window.confirm(
+      '모든 탭의 차트 순서·표시 여부·탭 노출 설정이 기본값으로 되돌아갑니다. 계속할까요?',
+    )
+    if (!confirmed) return
+    setLayoutSaving(true)
+    setLayoutError(null)
+    setLayoutSuccess(null)
+    try {
+      await saveDashboardLayout(DEFAULT_LAYOUT)
+      setLayoutSuccess('레이아웃이 초기화됐습니다.')
+      setTimeout(() => setLayoutSuccess(null), 3000)
+    } catch (e) {
+      setLayoutError(e instanceof Error ? e.message : '초기화 중 오류가 발생했습니다.')
+    } finally {
+      setLayoutSaving(false)
+    }
+  }
+
   const [settings, setSettings] = useState<FullSettings | null>(null)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -306,6 +356,43 @@ export function CRMSettings({ project }: Props) {
           )}
         </div>
         <p className="text-[11px] text-[#9CA3AF]">최대 8개. 차트에 순서대로 적용됩니다.</p>
+      </Section>
+
+      {/* 대시보드 레이아웃 */}
+      <Section title="대시보드 레이아웃">
+        <div className="flex flex-col gap-3">
+          {([
+            { key: 'performance' as TabKey, label: 'CRM 성과 모니터링' },
+            { key: 'attribution' as TabKey, label: 'CRM Attribution' },
+            { key: 'ops' as TabKey, label: '캠페인 운영 현황' },
+          ]).map(({ key, label }) => (
+            <div key={key} className="flex items-center justify-between">
+              <span className="text-sm text-[#1d1d1f]">{label}</span>
+              <button
+                onClick={() => handleToggleTab(key)}
+                disabled={layoutSaving}
+                className={`relative h-6 w-11 rounded-full transition-colors disabled:opacity-50 ${
+                  tabVisibility[key] ? 'bg-[#0066cc]' : 'bg-[#D1D5DB]'
+                }`}
+              >
+                <span
+                  className={`absolute top-0.5 h-5 w-5 rounded-full bg-white transition-transform ${
+                    tabVisibility[key] ? 'translate-x-5' : 'translate-x-0.5'
+                  }`}
+                />
+              </button>
+            </div>
+          ))}
+        </div>
+        <button
+          onClick={handleResetLayout}
+          disabled={layoutSaving}
+          className="mt-2 self-start rounded-lg border border-[#EF4444] px-4 py-2 text-xs font-semibold text-[#EF4444] hover:bg-red-50 disabled:opacity-50"
+        >
+          레이아웃 초기화
+        </button>
+        {layoutSuccess && <p className="text-xs text-[#10B981]">{layoutSuccess}</p>}
+        {layoutError && <p className="text-xs text-[#EF4444]">{layoutError}</p>}
       </Section>
 
       {/* 저장 */}
