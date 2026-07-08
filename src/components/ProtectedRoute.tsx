@@ -3,12 +3,13 @@ import { useAuth } from '@/hooks/useAuth'
 import { useProject } from '@/hooks/useProject'
 import { Login } from '@/pages/Login'
 import { ProjectSelect } from '@/pages/ProjectSelect'
-import type { Project } from '@/lib/supabase'
+import type { Project, DashboardLayout } from '@/lib/supabase'
 
 interface ProjectContext {
   project: Project
   availableProjects: Project[]
   setProjectId: (id: string) => void
+  saveDashboardLayout: (layout: DashboardLayout) => Promise<void>
 }
 
 interface Props {
@@ -17,7 +18,7 @@ interface Props {
 
 export function ProtectedRoute({ children }: Props) {
   const { user, loading: authLoading } = useAuth()
-  const { project, availableProjects, loading: projectLoading, error, setProjectId } = useProject(user?.id ?? null)
+  const { project, availableProjects, loading: projectLoading, error, setProjectId, saveDashboardLayout } = useProject(user?.id ?? null)
 
   if (authLoading || projectLoading) {
     return (
@@ -62,5 +63,5 @@ export function ProtectedRoute({ children }: Props) {
     )
   }
 
-  return <>{children({ project, availableProjects, setProjectId })}</>
+  return <>{children({ project, availableProjects, setProjectId, saveDashboardLayout })}</>
 }

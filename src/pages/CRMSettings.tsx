@@ -4,10 +4,8 @@ import type { Project } from '@/lib/supabase'
 import { invalidateSheetDataCache } from '@/hooks/useSheetData'
 import { invalidateAttributionDataCache } from '@/hooks/useAttributionData'
 import { invalidateBrazeCampaignCache } from '@/hooks/useBrazeCampaigns'
-import { useAuth } from '@/hooks/useAuth'
-import { useProject } from '@/hooks/useProject'
-import { DEFAULT_LAYOUT } from '@/hooks/useDashboardLayout'
-import type { TabKey } from '@/lib/supabase'
+import { DEFAULT_LAYOUT, resolveLayout } from '@/hooks/useDashboardLayout'
+import type { TabKey, DashboardLayout } from '@/lib/supabase'
 
 interface FullSettings {
   id: string
@@ -44,11 +42,10 @@ async function apiFetch(path: string, options?: RequestInit) {
 
 interface Props {
   project: Project
+  saveDashboardLayout: (layout: DashboardLayout) => Promise<void>
 }
 
-export function CRMSettings({ project }: Props) {
-  const { user } = useAuth()
-  const { saveDashboardLayout } = useProject(user?.id ?? null)
+export function CRMSettings({ project, saveDashboardLayout }: Props) {
   const [layoutSaving, setLayoutSaving] = useState(false)
   const [layoutError, setLayoutError] = useState<string | null>(null)
   const [layoutSuccess, setLayoutSuccess] = useState<string | null>(null)
@@ -60,9 +57,10 @@ export function CRMSettings({ project }: Props) {
     setLayoutError(null)
     setLayoutSuccess(null)
     try {
+      const resolved = resolveLayout(project.dashboard_layout)
       const nextLayout = {
-        ...project.dashboard_layout,
-        tabVisibility: { ...tabVisibility, [tab]: !tabVisibility[tab] },
+        ...resolved,
+        tabVisibility: { ...resolved.tabVisibility, [tab]: !tabVisibility[tab] },
       }
       await saveDashboardLayout(nextLayout)
       setLayoutSuccess('탭 노출 설정이 저장됐습니다.')

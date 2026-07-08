@@ -48,7 +48,7 @@ function mergeWithDefault(saved: LayoutSection[], defaults: LayoutSection[]): La
   return [...saved, ...missing]
 }
 
-function resolveLayout(raw: Partial<DashboardLayout> | null | undefined): DashboardLayout {
+export function resolveLayout(raw: Partial<DashboardLayout> | null | undefined): DashboardLayout {
   if (!raw || Object.keys(raw).length === 0) return DEFAULT_LAYOUT
   return {
     performance: raw.performance ? mergeWithDefault(raw.performance, DEFAULT_LAYOUT.performance) : DEFAULT_LAYOUT.performance,

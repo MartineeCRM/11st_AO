@@ -66,7 +66,7 @@ export default function App() {
 
   return (
     <ProtectedRoute>
-      {({ project, availableProjects, setProjectId }) => {
+      {({ project, availableProjects, setProjectId, saveDashboardLayout }) => {
         const switching = pendingId !== null && pendingId !== project.id
 
         function handleProjectChange(id: string) {
@@ -114,7 +114,7 @@ export default function App() {
                   </Suspense>
                 )}
                 {activeTab === 'ops' && <CRMCampaignOps key={project.id} />}
-                {activeTab === 'settings' && <CRMSettings project={project} />}
+                {activeTab === 'settings' && <CRMSettings project={project} saveDashboardLayout={saveDashboardLayout} />}
               </ErrorBoundary>
             )}
           </main>
