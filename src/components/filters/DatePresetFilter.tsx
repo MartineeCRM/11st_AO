@@ -131,6 +131,8 @@ export function DatePresetFilter({ value, minDate, maxDate, activePreset, onPres
                 toDate={toDate(maxDate)}
                 numberOfMonths={2}
                 defaultMonth={toDate(value.start ?? minDate)}
+                modifiers={pendingFrom ? { pending: pendingFrom } : undefined}
+                modifiersClassNames={{ pending: 'bg-[#0066cc] text-white rounded-md' }}
                 styles={{
                   root: { margin: 0, padding: '12px 16px', fontSize: 13 },
                 }}
