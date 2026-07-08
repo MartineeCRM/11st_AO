@@ -1,7 +1,5 @@
 import { useState, useMemo } from 'react'
-import type { DashboardLayout, LayoutSection, SectionId } from '@/lib/supabase'
-
-export type TabKey = 'performance' | 'attribution' | 'ops'
+import type { DashboardLayout, LayoutSection, SectionId, TabKey } from '@/lib/supabase'
 
 export const SECTION_LABELS: Record<SectionId, string> = {
   kpi_cards:      'KPI 요약 카드',
@@ -10,6 +8,7 @@ export const SECTION_LABELS: Record<SectionId, string> = {
   funnel_events:  '퍼널 & 커스텀 이벤트',
   table_optin:    '비즈니스 지표 테이블 & 수신동의',
   revenue:        'Revenue 차트',
+  att_trend:      '발송&노출 / 오픈&클릭 / CTR 트렌드',
   att_filter:     'Attribution 필터',
   att_summary:    'Attribution 요약 배너',
   att_metrics:    'Attribution 지표 (구매/이벤트)',
@@ -29,6 +28,7 @@ export const DEFAULT_LAYOUT: DashboardLayout = {
     { id: 'revenue',       visible: true },
   ],
   attribution: [
+    { id: 'att_trend',   visible: true },
     { id: 'att_filter',  visible: true },
     { id: 'att_summary', visible: true },
     { id: 'att_metrics', visible: true },
@@ -39,6 +39,7 @@ export const DEFAULT_LAYOUT: DashboardLayout = {
     { id: 'trigger_cards',   visible: true },
     { id: 'scheduled_list',  visible: true },
   ],
+  tabVisibility: { performance: true, attribution: true, ops: true },
 }
 
 function mergeWithDefault(saved: LayoutSection[], defaults: LayoutSection[]): LayoutSection[] {
@@ -47,12 +48,13 @@ function mergeWithDefault(saved: LayoutSection[], defaults: LayoutSection[]): La
   return [...saved, ...missing]
 }
 
-function resolveLayout(raw: Partial<DashboardLayout> | null | undefined): DashboardLayout {
+export function resolveLayout(raw: Partial<DashboardLayout> | null | undefined): DashboardLayout {
   if (!raw || Object.keys(raw).length === 0) return DEFAULT_LAYOUT
   return {
     performance: raw.performance ? mergeWithDefault(raw.performance, DEFAULT_LAYOUT.performance) : DEFAULT_LAYOUT.performance,
     attribution: raw.attribution ? mergeWithDefault(raw.attribution, DEFAULT_LAYOUT.attribution) : DEFAULT_LAYOUT.attribution,
     ops:         raw.ops         ? mergeWithDefault(raw.ops,         DEFAULT_LAYOUT.ops)         : DEFAULT_LAYOUT.ops,
+    tabVisibility: raw.tabVisibility ?? DEFAULT_LAYOUT.tabVisibility,
   }
 }
 
@@ -63,6 +65,7 @@ interface UseDashboardLayoutResult {
   cancelEditing: () => void
   reorder: (oldIndex: number, newIndex: number) => void
   toggleVisible: (id: SectionId) => void
+  resetToDefault: () => void
   save: () => Promise<void>
   saving: boolean
   saveError: string | null
@@ -109,6 +112,12 @@ export function useDashboardLayout(
     })
   }
 
+  function resetToDefault() {
+    setDraft(DEFAULT_LAYOUT)
+    setSaveError(null)
+    setIsEditing(true)
+  }
+
   async function save() {
     if (!draft) return
     setSaving(true)
@@ -124,5 +133,5 @@ export function useDashboardLayout(
     }
   }
 
-  return { sections, isEditing, startEditing, cancelEditing, reorder, toggleVisible, save, saving, saveError }
+  return { sections, isEditing, startEditing, cancelEditing, reorder, toggleVisible, resetToDefault, save, saving, saveError }
 }

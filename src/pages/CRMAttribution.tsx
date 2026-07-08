@@ -19,6 +19,8 @@ import { DraggableSectionWrapper } from '@/components/DraggableSectionWrapper'
 import { useAuth } from '@/hooks/useAuth'
 import { useProject } from '@/hooks/useProject'
 import { useDashboardLayout } from '@/hooks/useDashboardLayout'
+import { buildAttributionComboData } from '@/lib/metrics'
+import { SendOpenTrendChart } from '@/components/charts/SendOpenTrendChart'
 
 type SectionTab = 'purchase' | 'event'
 
@@ -119,6 +121,11 @@ export function CRMAttribution() {
   }
 
   const sectionContent: Record<string, React.ReactNode> = {
+    att_trend: (
+      <div className="px-6 pt-4">
+        <SendOpenTrendChart data={buildAttributionComboData(filteredRows)} />
+      </div>
+    ),
     att_filter: (
       <AttributionFilterBar
         filters={resolvedFilters}
