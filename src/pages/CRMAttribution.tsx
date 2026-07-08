@@ -121,11 +121,6 @@ export function CRMAttribution() {
   }
 
   const sectionContent: Record<string, React.ReactNode> = {
-    att_trend: (
-      <div className="px-6 pt-4">
-        <SendOpenTrendChart data={buildAttributionComboData(filteredRows)} />
-      </div>
-    ),
     att_filter: (
       <AttributionFilterBar
         filters={resolvedFilters}
@@ -148,6 +143,11 @@ export function CRMAttribution() {
         current={kpis.current}
         hasData={filteredRows.length > 0}
       />
+    ),
+    att_trend: (
+      <div className="h-72 px-6 pt-4">
+        <SendOpenTrendChart data={buildAttributionComboData(filteredRows)} />
+      </div>
     ),
     att_metrics: (
       <div className="px-6 py-5">

@@ -28,9 +28,9 @@ export const DEFAULT_LAYOUT: DashboardLayout = {
     { id: 'revenue',       visible: true },
   ],
   attribution: [
-    { id: 'att_trend',   visible: true },
     { id: 'att_filter',  visible: true },
     { id: 'att_summary', visible: true },
+    { id: 'att_trend',   visible: true },
     { id: 'att_metrics', visible: true },
   ],
   ops: [
