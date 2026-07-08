@@ -1,4 +1,4 @@
-import type { MartineeUnionRow, DailyKpiRow } from '@/types/sheets'
+import type { MartineeUnionRow, DailyKpiRow, AttDataRow } from '@/types/sheets'
 import type {
   DailyComboPoint,
   DailyRevenuePoint,
@@ -169,6 +169,24 @@ export function buildDailyComboData(rows: MartineeUnionRow[], limitDays?: number
       ctr: parseFloat((calcCTR(dayRows) * 100).toFixed(2)),
       cvr: parseFloat((calcCVR(dayRows) * 100).toFixed(2)),
     }
+  })
+}
+
+/** Attribution 시트 기반 일별 발송&노출/오픈&클릭/CTR 추이 */
+export function buildAttributionComboData(rows: AttDataRow[]): DailyComboPoint[] {
+  const byDate = new Map<string, AttDataRow[]>()
+  for (const row of rows) {
+    const list = byDate.get(row.date) ?? []
+    list.push(row)
+    byDate.set(row.date, list)
+  }
+  const dates = Array.from(byDate.keys()).sort()
+  return dates.map(date => {
+    const dayRows = byDate.get(date)!
+    const sentImpression = dayRows.reduce((sum, r) => sum + r.impression_or_send_user, 0)
+    const openClick = dayRows.reduce((sum, r) => sum + r.open_or_click_user, 0)
+    const ctr = sentImpression > 0 ? parseFloat(((openClick / sentImpression) * 100).toFixed(2)) : 0
+    return { date: formatDateShort(date), sentImpression, openClick, ctr, cvr: 0 }
   })
 }
 
