@@ -80,16 +80,12 @@ export default function App() {
         // 활성 탭이 비활성화되면 노출된 첫 탭으로 전환 (렌더 중 상태 보정, useEffect 아님 —
         // 이 콜백은 컴포넌트 함수가 아니라 render-prop이라 훅을 호출할 수 없음)
         const visibilityCheckKey = `${activeTab}:${JSON.stringify(tabVisibility)}`
-        if (
-          lastCheckedVisibility.current !== visibilityCheckKey &&
-          activeTab !== 'settings' &&
-          !tabVisibility[activeTab as keyof typeof tabVisibility]
-        ) {
+        if (lastCheckedVisibility.current !== visibilityCheckKey) {
           lastCheckedVisibility.current = visibilityCheckKey
-          const nextVisible = TAB_ORDER.find(t => t === 'settings' || tabVisibility[t as keyof typeof tabVisibility])
-          if (nextVisible) setActiveTab(nextVisible)
-        } else if (lastCheckedVisibility.current !== visibilityCheckKey) {
-          lastCheckedVisibility.current = visibilityCheckKey
+          if (activeTab !== 'settings' && !tabVisibility[activeTab as keyof typeof tabVisibility]) {
+            const nextVisible = TAB_ORDER.find(t => t === 'settings' || tabVisibility[t as keyof typeof tabVisibility])
+            if (nextVisible) setActiveTab(nextVisible)
+          }
         }
 
         return (
