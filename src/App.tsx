@@ -1,4 +1,4 @@
-import { useState, useEffect, lazy, Suspense, Component, type ReactNode, type ErrorInfo } from 'react'
+import { useState, useRef, lazy, Suspense, Component, type ReactNode, type ErrorInfo } from 'react'
 import { TopNav } from '@/components/TopNav'
 import { CRMPerformance } from '@/pages/CRMPerformance'
 const CRMAttribution = lazy(() => import('@/pages/CRMAttribution').then(m => ({ default: m.CRMAttribution })))
@@ -57,6 +57,7 @@ class ErrorBoundary extends Component<{ children: ReactNode }, { error: Error | 
 export default function App() {
   const [activeTab, setActiveTab] = useState<Tab>('performance')
   const [pendingId, setPendingId] = useState<string | null>(null)
+  const lastCheckedVisibility = useRef<string | null>(null)
 
   function handleTabChange(tab: Tab) {
     sessionStorage.removeItem(CHUNK_RELOAD_KEY)
@@ -76,12 +77,20 @@ export default function App() {
         const tabVisibility = project.dashboard_layout?.tabVisibility ?? { performance: true, attribution: true, ops: true }
         const TAB_ORDER: Tab[] = ['performance', 'attribution', 'ops', 'settings']
 
-        useEffect(() => {
-          if (activeTab === 'settings') return
-          if (tabVisibility[activeTab as keyof typeof tabVisibility]) return
+        // 활성 탭이 비활성화되면 노출된 첫 탭으로 전환 (렌더 중 상태 보정, useEffect 아님 —
+        // 이 콜백은 컴포넌트 함수가 아니라 render-prop이라 훅을 호출할 수 없음)
+        const visibilityCheckKey = `${activeTab}:${JSON.stringify(tabVisibility)}`
+        if (
+          lastCheckedVisibility.current !== visibilityCheckKey &&
+          activeTab !== 'settings' &&
+          !tabVisibility[activeTab as keyof typeof tabVisibility]
+        ) {
+          lastCheckedVisibility.current = visibilityCheckKey
           const nextVisible = TAB_ORDER.find(t => t === 'settings' || tabVisibility[t as keyof typeof tabVisibility])
           if (nextVisible) setActiveTab(nextVisible)
-        }, [activeTab, tabVisibility])
+        } else if (lastCheckedVisibility.current !== visibilityCheckKey) {
+          lastCheckedVisibility.current = visibilityCheckKey
+        }
 
         return (
         <ChartColorsContext.Provider value={project?.chart_colors?.length ? project.chart_colors : DEFAULT_CHART_COLORS}>
