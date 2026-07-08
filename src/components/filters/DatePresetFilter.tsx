@@ -31,6 +31,7 @@ export function DatePresetFilter({ value, minDate, maxDate, activePreset, onPres
     from: toDate(value.start),
     to: toDate(value.end),
   })
+  const [pendingFrom, setPendingFrom] = useState<Date | undefined>(undefined)
   const calRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -54,17 +55,24 @@ export function DatePresetFilter({ value, minDate, maxDate, activePreset, onPres
     }
   }
 
-  function handleDayPickerSelect(selected: DayRange | undefined) {
-    setRange(selected ?? {})
-    if (selected?.from && selected?.to) {
-      onChange({ start: toStr(selected.from), end: toStr(selected.to) })
-      onPresetChange(null)
-      setCalOpen(false)
+  function handleDayPickerSelect(_selected: DayRange | undefined, triggerDate: Date) {
+    if (!pendingFrom) {
+      setPendingFrom(triggerDate)
+      setRange({ from: triggerDate, to: undefined })
+      return
     }
+    const start = triggerDate < pendingFrom ? triggerDate : pendingFrom
+    const end = triggerDate < pendingFrom ? pendingFrom : triggerDate
+    setRange({ from: start, to: end })
+    onChange({ start: toStr(start), end: toStr(end) })
+    onPresetChange(null)
+    setPendingFrom(undefined)
+    setCalOpen(false)
   }
 
   function openCalendar() {
     setRange({ from: toDate(value.start), to: toDate(value.end) })
+    setPendingFrom(undefined)
     setCalOpen(o => !o)
   }
 
