@@ -7,7 +7,7 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey)
 
 export type SectionId =
   | 'kpi_cards' | 'trends_top10' | 'channel_table' | 'funnel_events' | 'table_optin' | 'revenue'
-  | 'att_filter' | 'att_summary' | 'att_metrics'
+  | 'att_trend' | 'att_filter' | 'att_summary' | 'att_metrics'
   | 'send_trend' | 'live_table' | 'trigger_cards' | 'scheduled_list'
 
 export interface LayoutSection {
@@ -15,10 +15,19 @@ export interface LayoutSection {
   visible: boolean
 }
 
+export type TabKey = 'performance' | 'attribution' | 'ops'
+
+export interface TabVisibility {
+  performance: boolean
+  attribution: boolean
+  ops: boolean
+}
+
 export interface DashboardLayout {
   performance: LayoutSection[]
   attribution: LayoutSection[]
   ops: LayoutSection[]
+  tabVisibility: TabVisibility
 }
 
 export interface Project {
