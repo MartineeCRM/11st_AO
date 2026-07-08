@@ -369,13 +369,13 @@ export function CRMSettings({ project, saveDashboardLayout }: Props) {
               <button
                 onClick={() => handleToggleTab(key)}
                 disabled={layoutSaving}
-                className={`relative h-6 w-11 rounded-full transition-colors disabled:opacity-50 ${
+                className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors disabled:opacity-50 ${
                   tabVisibility[key] ? 'bg-[#0066cc]' : 'bg-[#D1D5DB]'
                 }`}
               >
                 <span
-                  className={`absolute top-0.5 h-5 w-5 rounded-full bg-white transition-transform ${
-                    tabVisibility[key] ? 'translate-x-5' : 'translate-x-0.5'
+                  className={`inline-block h-5 w-5 rounded-full bg-white transition-transform ${
+                    tabVisibility[key] ? 'translate-x-[22px]' : 'translate-x-0.5'
                   }`}
                 />
               </button>
