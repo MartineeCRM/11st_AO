@@ -9,24 +9,13 @@ function getAdminClient() {
   return createClient(supabaseUrl, serviceRoleKey)
 }
 
-// GET /api/project/settings — 현재 프로젝트 설정 전체 반환 (민감 정보 포함, admin only)
-// PATCH /api/project/settings — 설정 업데이트
+// GET /api/project/settings — 현재 프로젝트 설정 전체 반환 (민감 정보 포함, 프로젝트 멤버 전원)
+// PATCH /api/project/settings — 설정 업데이트 (프로젝트 멤버 전원)
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   const auth = await verifyProjectAccess(req as any, res as any)
   if (!auth) return
 
-  // admin 권한 확인
   const admin = getAdminClient()
-  const { data: membership } = await admin
-    .from('project_members')
-    .select('role')
-    .eq('project_id', auth.projectId)
-    .eq('user_id', auth.userId)
-    .single()
-
-  if (membership?.role !== 'admin') {
-    return res.status(403).json({ error: '관리자만 설정을 변경할 수 있습니다.' })
-  }
 
   if (req.method === 'GET') {
     const { data, error } = await admin
