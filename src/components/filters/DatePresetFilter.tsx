@@ -3,6 +3,7 @@ import { DayPicker } from 'react-day-picker'
 import type { DateRange as DayRange } from 'react-day-picker'
 import 'react-day-picker/dist/style.css'
 import { cn } from '@/lib/utils'
+import { parseDateStr, toDateStr } from '@/lib/formatters'
 import type { DateRange } from '@/types/sheets'
 import { PRESETS, type Preset, presetToRange } from './datePresets'
 
@@ -16,13 +17,12 @@ interface Props {
 }
 
 function toDate(s: string) {
-  const d = new Date(s)
-  return isNaN(d.getTime()) ? undefined : d
+  return parseDateStr(s) ?? undefined
 }
 
 function toStr(d: Date | undefined) {
   if (!d) return ''
-  return d.toISOString().slice(0, 10)
+  return toDateStr(d)
 }
 
 export function DatePresetFilter({ value, minDate, maxDate, activePreset, onPresetChange, onChange }: Props) {
