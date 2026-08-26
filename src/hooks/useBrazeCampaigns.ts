@@ -150,6 +150,7 @@ async function fetchLiveCampaigns(): Promise<LiveCampaignResult> {
     warnings.push(`Campaign 상세 ${campaignDetailFailures.length}건 조회 실패`)
   }
 
+  let triggerDebugCount = 0
   const enrichedCampaigns: EnrichedCampaign[] = campaignTargets.flatMap((c, i) => {
     const detail =
       campaignDetailResults[i].status === 'fulfilled'
@@ -158,6 +159,11 @@ async function fetchLiveCampaigns(): Promise<LiveCampaignResult> {
     if (!detail) return []
     const isLive = detail.enabled && !detail.archived && !detail.draft
     if (!isLive) return []
+    // DEBUG: log raw detail for action_based campaigns — remove after inspection
+    if (detail.schedule_type === 'action_based' && triggerDebugCount < 3) {
+      triggerDebugCount += 1
+      console.log('[trigger debug]', detail.name, JSON.stringify(detail))
+    }
     return [{
       ...c,
       type: 'campaign' as const,
@@ -201,6 +207,11 @@ async function fetchLiveCampaigns(): Promise<LiveCampaignResult> {
     const isLive = raw.enabled && !raw.archived && !raw.draft
     if (!isLive) return []
     const scheduleType = resolveCanvasScheduleType(raw)
+    // DEBUG: log raw detail for action_based canvases — remove after inspection
+    if (scheduleType === 'action_based' && triggerDebugCount < 6) {
+      triggerDebugCount += 1
+      console.log('[trigger debug canvas]', raw.name, JSON.stringify(raw))
+    }
     return [{
       ...c,
       type: 'canvas' as const,
