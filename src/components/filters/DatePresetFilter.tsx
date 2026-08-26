@@ -25,6 +25,15 @@ function toStr(d: Date | undefined) {
   return toDateStr(d)
 }
 
+/** 캘린더를 열 때 종료일이 보이는 달을 오른쪽 패널에 오도록 시작 달을 계산 (범위가 넓으면 종료일 우선 표시) */
+function defaultCalendarMonth(value: DateRange, minDate: string, maxDate: string): Date | undefined {
+  const end = toDate(value.end || maxDate)
+  if (!end) return toDate(minDate)
+  const month = new Date(end)
+  month.setMonth(month.getMonth() - 1)
+  return month
+}
+
 export function DatePresetFilter({ value, minDate, maxDate, activePreset, onPresetChange, onChange }: Props) {
   const [calOpen, setCalOpen] = useState(false)
   const [range, setRange] = useState<DayRange>({
@@ -135,7 +144,7 @@ export function DatePresetFilter({ value, minDate, maxDate, activePreset, onPres
                 fromDate={toDate(minDate)}
                 toDate={toDate(maxDate)}
                 numberOfMonths={2}
-                defaultMonth={toDate(value.start ?? minDate)}
+                defaultMonth={defaultCalendarMonth(value, minDate, maxDate)}
                 modifiers={pendingFrom ? { pending: pendingFrom } : undefined}
                 modifiersClassNames={{
                   pending: 'bg-[#0066cc] text-white rounded-md ring-2 ring-[#0066cc] ring-offset-2 font-bold',
