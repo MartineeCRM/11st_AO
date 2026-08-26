@@ -123,6 +123,11 @@ export function DatePresetFilter({ value, minDate, maxDate, activePreset, onPres
 
           {calOpen && (
             <div className="absolute top-full left-0 z-50 mt-1 rounded-xl border border-[#e0e0e0] bg-white shadow-lg">
+              {pendingFrom && (
+                <div className="border-b border-[#e0e0e0] px-4 py-2 text-xs font-medium text-[#0066cc]">
+                  시작일 {toStr(pendingFrom)} 선택됨 · 종료일을 선택하세요
+                </div>
+              )}
               <DayPicker
                 mode="range"
                 selected={range}
@@ -132,7 +137,9 @@ export function DatePresetFilter({ value, minDate, maxDate, activePreset, onPres
                 numberOfMonths={2}
                 defaultMonth={toDate(value.start ?? minDate)}
                 modifiers={pendingFrom ? { pending: pendingFrom } : undefined}
-                modifiersClassNames={{ pending: 'bg-[#0066cc] text-white rounded-md' }}
+                modifiersClassNames={{
+                  pending: 'bg-[#0066cc] text-white rounded-md ring-2 ring-[#0066cc] ring-offset-2 font-bold',
+                }}
                 styles={{
                   root: { margin: 0, padding: '12px 16px', fontSize: 13 },
                 }}
