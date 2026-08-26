@@ -1,7 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import { DayPicker } from 'react-day-picker'
 import type { DateRange as DayRange } from 'react-day-picker'
-import 'react-day-picker/dist/style.css'
 import { cn } from '@/lib/utils'
 import { parseDateStr, toDateStr } from '@/lib/formatters'
 import type { DateRange } from '@/types/sheets'
