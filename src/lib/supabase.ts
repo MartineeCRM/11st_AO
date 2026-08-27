@@ -10,9 +10,15 @@ export type SectionId =
   | 'att_trend' | 'att_filter' | 'att_summary' | 'att_metrics'
   | 'send_trend' | 'live_table' | 'trigger_cards' | 'scheduled_list'
 
+export interface LayoutItem {
+  id: string
+  visible: boolean
+}
+
 export interface LayoutSection {
   id: SectionId
   visible: boolean
+  items?: LayoutItem[]
 }
 
 export type TabKey = 'performance' | 'attribution' | 'ops'

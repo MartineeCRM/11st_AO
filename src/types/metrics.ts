@@ -1,4 +1,7 @@
+export type KpiCardId = 'push_opt_in' | 'dau' | 'mau' | 'revenue' | 'sent_impression' | 'ctr' | 'msg_per_user'
+
 export interface KpiCardData {
+  id: KpiCardId
   label: string
   value: number
   formattedValue: string
@@ -49,7 +52,10 @@ export interface BusinessKpiRow {
   isFullNumber?: boolean
 }
 
+export type OptInCardId = 'push_opt_in' | 'sms_opt_in' | 'kakao_opt_in'
+
 export interface OptInData {
+  id: OptInCardId
   label: string
   icon: string
   value: number

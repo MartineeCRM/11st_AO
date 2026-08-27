@@ -101,6 +101,7 @@ export function useMetrics(
 
     return [
       {
+        id: 'push_opt_in',
         label: '푸시 수신동의',
         value: curPush,
         formattedValue: formatNumber(Math.round(curPush)),
@@ -112,6 +113,7 @@ export function useMetrics(
         primary: true,
       },
       {
+        id: 'dau',
         label: 'DAU',
         value: curDAU,
         formattedValue: formatNumber(Math.round(curDAU)),
@@ -122,6 +124,7 @@ export function useMetrics(
         anomaly: isAnomaly('dau', wowDAU),
       },
       {
+        id: 'mau',
         label: 'MAU',
         value: curMAU,
         formattedValue: formatNumber(curMAU),
@@ -131,6 +134,7 @@ export function useMetrics(
         icon: 'users',
       },
       {
+        id: 'revenue',
         label: 'Revenue',
         value: curRev,
         formattedValue: `₩${formatNumber(curRev)}`,
@@ -143,6 +147,7 @@ export function useMetrics(
         primary: true,
       },
       {
+        id: 'sent_impression',
         label: '전체 발송/노출',
         value: curSI,
         formattedValue: formatNumber(curSI),
@@ -153,6 +158,7 @@ export function useMetrics(
         anomaly: isAnomaly('sentImpression', wowSI),
       },
       {
+        id: 'ctr',
         label: '전체 평균 CTR',
         value: curCTR,
         formattedValue: formatRate(curCTR),
@@ -164,6 +170,7 @@ export function useMetrics(
         anomaly: isAnomaly('ctr', wowCTR),
       },
       {
+        id: 'msg_per_user',
         label: '유저당 메시지 수',
         value: curMsg,
         formattedValue: curMsg.toFixed(1),
@@ -192,6 +199,7 @@ export function useMetrics(
     const prevKakao = prevLatestRow?.kakao_opt_in ?? 0
     return [
       {
+        id: 'push_opt_in',
         label: '푸시 수신 동의',
         icon: 'bell-ring',
         value: curPush,
@@ -200,6 +208,7 @@ export function useMetrics(
         color: '#0066cc',
       },
       {
+        id: 'sms_opt_in',
         label: 'SMS 수신 동의',
         icon: 'message-square',
         value: curSms,
@@ -208,6 +217,7 @@ export function useMetrics(
         color: '#10B981',
       },
       {
+        id: 'kakao_opt_in',
         label: '카카오 수신 동의',
         icon: 'message-circle',
         value: curKakao,
