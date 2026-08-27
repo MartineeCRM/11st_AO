@@ -48,8 +48,8 @@ export function DraggableItemWrapper({ id, visible, isEditing, onToggleVisible, 
   }
 
   return (
-    <div ref={setNodeRef} style={style} className={cn('pointer-events-auto relative min-w-0', className)}>
-      <div className="absolute -top-2 -right-2 z-10 flex items-center gap-0.5 rounded-full border border-[#e0e0e0] bg-white px-1 py-0.5 shadow-sm">
+    <div ref={setNodeRef} style={style} className={cn('relative min-w-0', className)}>
+      <div className="pointer-events-auto absolute -top-2 -right-2 z-10 flex items-center gap-0.5 rounded-full border border-[#e0e0e0] bg-white px-1 py-0.5 shadow-sm">
         <button
           className="cursor-grab p-0.5 text-[#9CA3AF] hover:text-[#1d1d1f] active:cursor-grabbing touch-none"
           {...attributes}

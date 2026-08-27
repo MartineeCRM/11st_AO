@@ -154,7 +154,7 @@ export function CRMAttribution() {
     att_metrics: (
       <div className="px-6 py-5">
         {/* 섹션 탭 */}
-        <div className="mb-5 flex gap-1 border-b border-[#e0e0e0]">
+        <div className="pointer-events-auto mb-5 flex gap-1 border-b border-[#e0e0e0]">
           {([
             { key: 'purchase', label: '구매 지표' },
             { key: 'event', label: '기타 이벤트' },
