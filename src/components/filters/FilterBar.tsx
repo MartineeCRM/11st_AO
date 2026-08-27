@@ -1,3 +1,4 @@
+import { RotateCcw } from 'lucide-react'
 import type { FilterState } from '@/types/sheets'
 import { DatePresetFilter } from './DatePresetFilter'
 import { MultiSelectFilter } from './MultiSelectFilter'
@@ -34,6 +35,24 @@ export function FilterBar({
   onPresetChange,
   editButton,
 }: Props) {
+  const hasActiveFilters =
+    filters.campaignDepth1.length > 0 ||
+    filters.os.length > 0 ||
+    filters.category.length > 0 ||
+    filters.channel.length > 0 ||
+    filters.messageType.length > 0
+
+  function resetFilters() {
+    onFiltersChange({
+      ...filters,
+      campaignDepth1: [],
+      os: [],
+      category: [],
+      channel: [],
+      messageType: [],
+    })
+  }
+
   return (
     <div className="sticky top-14 z-30 flex items-center gap-3 border-b border-[#e0e0e0] bg-white px-6 py-3">
       <DatePresetFilter
@@ -81,6 +100,16 @@ export function FilterBar({
         selected={filters.messageType}
         onChange={messageType => onFiltersChange({ ...filters, messageType })}
       />
+
+      {hasActiveFilters && (
+        <button
+          onClick={resetFilters}
+          className="flex items-center gap-1.5 rounded-lg border border-[#e0e0e0] bg-[#F9FAFB] px-2.5 py-1.5 text-xs font-medium text-[#6B7280] hover:bg-[#F3F4F6] hover:text-[#1d1d1f]"
+        >
+          <RotateCcw size={12} />
+          필터 초기화
+        </button>
+      )}
 
       {editButton && <div className="ml-auto">{editButton}</div>}
     </div>
