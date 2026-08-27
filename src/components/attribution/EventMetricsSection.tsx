@@ -1,7 +1,10 @@
 import { MetricToggleGroup } from './MetricToggleGroup'
 import { EventTrendChart } from './AttributionTrendChart'
+import { DraggableItemWrapper } from '@/components/DraggableItemWrapper'
+import { ItemSortableRow } from '@/components/ItemSortableRow'
 import { formatKorean } from '@/lib/formatters'
 import type { EventTrendPoint } from '@/hooks/useAttributionMetrics'
+import type { LayoutItem } from '@/lib/supabase'
 import { ChartSectionNote } from '@/components/charts/ChartSectionNote'
 
 function formatAdaptiveRate(v: number): string {
@@ -11,6 +14,8 @@ function formatAdaptiveRate(v: number): string {
   return `${pct.toFixed(decimals)}%`
 }
 
+type EventCardId = 'cvr' | 'count' | 'exposure_users'
+
 interface Props {
   activeEvent: string
   onEventChange: (key: string) => void
@@ -19,6 +24,10 @@ interface Props {
   eventImpression: number
   eventTrend: EventTrendPoint[]
   availableEvents: string[]
+  items?: LayoutItem[]
+  isEditing: boolean
+  onReorder: (oldIndex: number, newIndex: number) => void
+  onToggleVisible: (id: string) => void
 }
 
 export function EventMetricsSection({
@@ -29,6 +38,10 @@ export function EventMetricsSection({
   eventImpression,
   eventTrend,
   availableEvents,
+  items,
+  isEditing,
+  onReorder,
+  onToggleVisible,
 }: Props) {
   const options = availableEvents.map(k => ({ key: k, label: k }))
 
@@ -41,6 +54,33 @@ export function EventMetricsSection({
   }
 
   const activeLabel = activeEvent
+
+  const cardContent: Record<EventCardId, React.ReactNode> = {
+    cvr: (
+      <div className="rounded-xl border border-[#e0e0e0] bg-white px-4 py-3">
+        <p className="text-[11px] text-[#9CA3AF]">{activeLabel} CVR</p>
+        <p className="text-xl font-bold text-[#1d1d1f]">{formatAdaptiveRate(eventCvr)}</p>
+        <p className="mt-0.5 text-[10px] text-[#9CA3AF]">이벤트 수 ÷ 노출+발송 유저</p>
+      </div>
+    ),
+    count: (
+      <div className="rounded-xl border border-[#e0e0e0] bg-white px-4 py-3">
+        <p className="text-[11px] text-[#9CA3AF]">{activeLabel} 발생수</p>
+        <p className="text-xl font-bold text-[#1d1d1f]">{formatKorean(eventRawCount)}</p>
+        <p className="mt-0.5 text-[10px] text-[#9CA3AF]">기간 내 이벤트 합계</p>
+      </div>
+    ),
+    exposure_users: (
+      <div className="rounded-xl border border-[#e0e0e0] bg-white px-4 py-3">
+        <p className="text-[11px] text-[#9CA3AF]">노출+발송 유저</p>
+        <p className="text-xl font-bold text-[#1d1d1f]">{formatKorean(eventImpression)}</p>
+        <p className="mt-0.5 text-[10px] text-[#9CA3AF]">IMPRESSION_OR_SEND_USER</p>
+      </div>
+    ),
+  }
+
+  const DEFAULT_EVENT_ITEM_IDS: EventCardId[] = ['cvr', 'count', 'exposure_users']
+  const order = items ?? DEFAULT_EVENT_ITEM_IDS.map(id => ({ id, visible: true }))
 
   return (
     <div className="flex flex-col gap-4">
@@ -57,23 +97,28 @@ export function EventMetricsSection({
         <EventTrendChart data={eventTrend} eventLabel={activeLabel} />
       </div>
 
-      <div className="grid grid-cols-3 gap-3">
-        <div className="rounded-xl border border-[#e0e0e0] bg-white px-4 py-3">
-          <p className="text-[11px] text-[#9CA3AF]">{activeLabel} CVR</p>
-          <p className="text-xl font-bold text-[#1d1d1f]">{formatAdaptiveRate(eventCvr)}</p>
-          <p className="mt-0.5 text-[10px] text-[#9CA3AF]">이벤트 수 ÷ 노출+발송 유저</p>
-        </div>
-        <div className="rounded-xl border border-[#e0e0e0] bg-white px-4 py-3">
-          <p className="text-[11px] text-[#9CA3AF]">{activeLabel} 발생수</p>
-          <p className="text-xl font-bold text-[#1d1d1f]">{formatKorean(eventRawCount)}</p>
-          <p className="mt-0.5 text-[10px] text-[#9CA3AF]">기간 내 이벤트 합계</p>
-        </div>
-        <div className="rounded-xl border border-[#e0e0e0] bg-white px-4 py-3">
-          <p className="text-[11px] text-[#9CA3AF]">노출+발송 유저</p>
-          <p className="text-xl font-bold text-[#1d1d1f]">{formatKorean(eventImpression)}</p>
-          <p className="mt-0.5 text-[10px] text-[#9CA3AF]">IMPRESSION_OR_SEND_USER</p>
-        </div>
-      </div>
+      <ItemSortableRow
+        ids={order.map(it => it.id)}
+        strategy="grid"
+        onReorder={onReorder}
+        className="grid grid-cols-3 gap-3"
+      >
+        {order.map(it => {
+          const content = cardContent[it.id as EventCardId]
+          if (!content) return null
+          return (
+            <DraggableItemWrapper
+              key={it.id}
+              id={it.id}
+              visible={it.visible}
+              isEditing={isEditing}
+              onToggleVisible={() => onToggleVisible(it.id)}
+            >
+              {content}
+            </DraggableItemWrapper>
+          )
+        })}
+      </ItemSortableRow>
     </div>
   )
 }

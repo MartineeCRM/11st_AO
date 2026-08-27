@@ -199,6 +199,10 @@ export function CRMAttribution() {
             eventImpression={eventImpression}
             eventTrend={eventTrend}
             availableEvents={availableEvents}
+            items={attMetricsSection?.items}
+            isEditing={isEditing}
+            onReorder={(oldIndex, newIndex) => reorderItem('att_metrics', oldIndex, newIndex)}
+            onToggleVisible={id => toggleItemVisible('att_metrics', id)}
           />
         )}
       </div>
