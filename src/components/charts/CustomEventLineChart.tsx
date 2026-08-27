@@ -12,6 +12,7 @@ import {
 import { formatKorean, formatDateShort } from '@/lib/formatters'
 import type { DailyKpiRow } from '@/types/sheets'
 import { ChartSectionNote } from './ChartSectionNote'
+import { OutlierBadge } from './OutlierBadge'
 import { useChartColors } from '@/lib/chartColors'
 import { calcIQRDomain } from '@/lib/outlier'
 
@@ -84,14 +85,7 @@ export function CustomEventLineChart({ kpiRows, eventColumns }: Props) {
     <div className="rounded-[18px] border border-[#e0e0e0] bg-white p-5 flex flex-col h-full">
       <div className="mb-3 flex items-start justify-between">
         <ChartSectionNote sectionId="perf_custom_event" title="커스텀 이벤트 일별 추이" />
-        {eventOutlier.hasOutlier && (
-          <span
-            className="ml-2 shrink-0 rounded-full bg-[#FEF3C7] px-2 py-0.5 text-[10px] font-medium text-[#92400E] cursor-default"
-            title={`이상치 감지: 최댓값 ${formatKorean(eventOutlier.rawMax)} (Y축 클리핑됨)`}
-          >
-            ⚠ 이상치
-          </span>
-        )}
+        <OutlierBadge series={[{ label: '선택된 이벤트', result: eventOutlier }]} className="ml-2" />
       </div>
 
       {/* 이벤트 선택 체크박스 */}

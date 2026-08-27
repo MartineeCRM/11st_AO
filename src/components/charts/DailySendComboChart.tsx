@@ -15,6 +15,7 @@ import { EmptyChartState } from '@/components/EmptyChartState'
 import { useChartNotes } from '@/hooks/useChartNotes'
 import { NoteMarker } from './ChartNoteOverlay'
 import { ChartSectionNote } from './ChartSectionNote'
+import { OutlierBadge } from './OutlierBadge'
 import { useChartColors } from '@/lib/chartColors'
 import { calcIQRDomain, extractValues } from '@/lib/outlier'
 
@@ -51,20 +52,19 @@ export function DailySendComboChart({ data }: Props) {
   const siOutlier = calcIQRDomain(extractValues(data, 'sentImpression'))
   const ctrOutlier = calcIQRDomain(extractValues(data, 'ctr'))
   const cvrOutlier = calcIQRDomain(extractValues(data, 'cvr'))
-  const hasOutlier = siOutlier.hasOutlier || ctrOutlier.hasOutlier || cvrOutlier.hasOutlier
 
   return (
     <div className="rounded-[18px] border border-[#e0e0e0] bg-white p-5 flex flex-col h-full">
       <div className="mb-4 flex items-start justify-between">
         <ChartSectionNote sectionId="perf_daily_send" title="일별 발송량 / CTR / CVR 추이" />
-        {hasOutlier && (
-          <span
-            className="ml-2 shrink-0 rounded-full bg-[#FEF3C7] px-2 py-0.5 text-[10px] font-medium text-[#92400E] cursor-default"
-            title={`이상치 감지: 발송/노출 최댓값 ${formatKorean(siOutlier.rawMax)} (Y축 클리핑됨)`}
-          >
-            ⚠ 이상치
-          </span>
-        )}
+        <OutlierBadge
+          series={[
+            { label: '발송/노출', result: siOutlier },
+            { label: 'CTR', result: ctrOutlier },
+            { label: 'CVR', result: cvrOutlier },
+          ]}
+          className="ml-2"
+        />
       </div>
       <div className="flex-1 min-h-0">
         {data.length === 0 ? <EmptyChartState /> : <ResponsiveContainer width="100%" height="100%">

@@ -13,6 +13,7 @@ import { formatKorean, formatCurrency } from '@/lib/formatters'
 import type { DailyRevenuePoint } from '@/types/metrics'
 import { EmptyChartState } from '@/components/EmptyChartState'
 import { ChartSectionNote } from './ChartSectionNote'
+import { OutlierBadge } from './OutlierBadge'
 import { useChartColors } from '@/lib/chartColors'
 import { calcIQRDomain, extractValues } from '@/lib/outlier'
 
@@ -24,19 +25,17 @@ export function AovRevenueComboChart({ data }: Props) {
   const colors = useChartColors()
   const revenueOutlier = calcIQRDomain(extractValues(data, 'revenue'))
   const aovOutlier = calcIQRDomain(extractValues(data, 'aov'))
-  const hasOutlier = revenueOutlier.hasOutlier || aovOutlier.hasOutlier
   return (
     <div className="rounded-xl border border-[#e0e0e0] bg-white p-5 flex flex-col h-full">
       <div className="mb-4 flex items-start justify-between">
         <ChartSectionNote sectionId="perf_aov_revenue" title="Revenue / AOV 추이" />
-        {hasOutlier && (
-          <span
-            className="ml-2 shrink-0 rounded-full bg-[#FEF3C7] px-2 py-0.5 text-[10px] font-medium text-[#92400E] cursor-default"
-            title={`이상치 감지: Revenue 최댓값 ₩${formatKorean(revenueOutlier.rawMax)} (Y축 클리핑됨)`}
-          >
-            ⚠ 이상치
-          </span>
-        )}
+        <OutlierBadge
+          series={[
+            { label: 'Revenue', result: revenueOutlier },
+            { label: 'AOV', result: aovOutlier },
+          ]}
+          className="ml-2"
+        />
       </div>
       <div className="flex-1 min-h-0">
         {data.length === 0 ? <EmptyChartState /> : <ResponsiveContainer width="100%" height="100%">
