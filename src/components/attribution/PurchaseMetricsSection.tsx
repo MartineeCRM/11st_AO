@@ -3,9 +3,12 @@ import { PurchaseTrendChart } from './AttributionTrendChart'
 import { AttributionKpiCard } from './AttributionKpiCard'
 import { PurchaseDataTable } from './PurchaseDataTable'
 import { CampaignRoiTable } from './CampaignRoiTable'
+import { DraggableItemWrapper } from '@/components/DraggableItemWrapper'
+import { ItemSortableRow } from '@/components/ItemSortableRow'
 import { formatKorean, formatRate, formatCurrency } from '@/lib/formatters'
 import type { PurchaseMetricKey, PurchaseMetrics, KpiDelta, TrendPoint } from '@/hooks/useAttributionMetrics'
 import type { AttDataRow } from '@/types/sheets'
+import type { LayoutItem } from '@/lib/supabase'
 import { ChartSectionNote } from '@/components/charts/ChartSectionNote'
 
 const PURCHASE_METRIC_OPTIONS: { key: PurchaseMetricKey; label: string }[] = [
@@ -62,6 +65,10 @@ interface Props {
   delta: Record<PurchaseMetricKey, KpiDelta>
   filteredRows: AttDataRow[]
   allRows?: AttDataRow[]
+  items?: LayoutItem[]
+  isEditing: boolean
+  onReorder: (oldIndex: number, newIndex: number) => void
+  onToggleVisible: (id: string) => void
 }
 
 export function PurchaseMetricsSection({
@@ -72,8 +79,84 @@ export function PurchaseMetricsSection({
   delta,
   filteredRows,
   allRows,
+  items,
+  isEditing,
+  onReorder,
+  onToggleVisible,
 }: Props) {
   const formatter = (v: number) => formatMetricValue(activeMetric, v)
+
+  const cardContent: Record<PurchaseMetricKey, React.ReactNode> = {
+    user_cvr: (
+      <AttributionKpiCard
+        title="CVR"
+        value={formatRate(current.user_cvr)}
+        subValue={formatRate(current.count_cvr)}
+        subLabel="건수 CVR"
+        delta={delta.user_cvr}
+        highlighted={activeMetric === 'user_cvr'}
+      />
+    ),
+    count_cvr: null, // count_cvr은 독립 카드가 아니라 user_cvr 카드의 subValue로만 표시됨
+    purchase_count: (
+      <AttributionKpiCard
+        title="Purchase"
+        value={formatKorean(current.purchase_count)}
+        delta={delta.purchase_count}
+        highlighted={activeMetric === 'purchase_count'}
+      />
+    ),
+    revenue: (
+      <AttributionKpiCard
+        title="Revenue"
+        value={formatKorean(current.revenue)}
+        delta={delta.revenue}
+        highlighted={activeMetric === 'revenue'}
+      />
+    ),
+    aov: (
+      <AttributionKpiCard
+        title="AOV"
+        value={formatCurrency(current.aov)}
+        delta={delta.aov}
+        highlighted={activeMetric === 'aov'}
+      />
+    ),
+    arppu: (
+      <AttributionKpiCard
+        title="ARPPU"
+        value={formatCurrency(current.arppu)}
+        delta={delta.arppu}
+        highlighted={activeMetric === 'arppu'}
+      />
+    ),
+    frequency: (
+      <AttributionKpiCard
+        title="Frequency"
+        value={current.frequency.toFixed(2)}
+        delta={delta.frequency}
+        highlighted={activeMetric === 'frequency'}
+      />
+    ),
+    items_per_order: (
+      <AttributionKpiCard
+        title="주문당 제품수"
+        value={current.items_per_order.toFixed(2)}
+        delta={delta.items_per_order}
+        highlighted={activeMetric === 'items_per_order'}
+      />
+    ),
+    items_per_user: (
+      <AttributionKpiCard
+        title="유저당 제품주문수"
+        value={current.items_per_user.toFixed(2)}
+        delta={delta.items_per_user}
+        highlighted={activeMetric === 'items_per_user'}
+      />
+    ),
+  }
+
+  const order = items ?? PURCHASE_METRIC_OPTIONS.map(o => ({ id: o.key, visible: true }))
 
   return (
     <div className="flex flex-col gap-4">
@@ -94,59 +177,28 @@ export function PurchaseMetricsSection({
         />
       </div>
 
-      <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
-        {/* CVR 카드: 유저CVR + 건수CVR 병기 */}
-        <AttributionKpiCard
-          title="CVR"
-          value={formatRate(current.user_cvr)}
-          subValue={formatRate(current.count_cvr)}
-          subLabel="건수 CVR"
-          delta={delta.user_cvr}
-          highlighted={activeMetric === 'user_cvr'}
-        />
-        <AttributionKpiCard
-          title="Purchase"
-          value={formatKorean(current.purchase_count)}
-          delta={delta.purchase_count}
-          highlighted={activeMetric === 'purchase_count'}
-        />
-        <AttributionKpiCard
-          title="Revenue"
-          value={formatKorean(current.revenue)}
-          delta={delta.revenue}
-          highlighted={activeMetric === 'revenue'}
-        />
-        <AttributionKpiCard
-          title="AOV"
-          value={formatCurrency(current.aov)}
-          delta={delta.aov}
-          highlighted={activeMetric === 'aov'}
-        />
-        <AttributionKpiCard
-          title="ARPPU"
-          value={formatCurrency(current.arppu)}
-          delta={delta.arppu}
-          highlighted={activeMetric === 'arppu'}
-        />
-        <AttributionKpiCard
-          title="Frequency"
-          value={current.frequency.toFixed(2)}
-          delta={delta.frequency}
-          highlighted={activeMetric === 'frequency'}
-        />
-        <AttributionKpiCard
-          title="주문당 제품수"
-          value={current.items_per_order.toFixed(2)}
-          delta={delta.items_per_order}
-          highlighted={activeMetric === 'items_per_order'}
-        />
-        <AttributionKpiCard
-          title="유저당 제품주문수"
-          value={current.items_per_user.toFixed(2)}
-          delta={delta.items_per_user}
-          highlighted={activeMetric === 'items_per_user'}
-        />
-      </div>
+      <ItemSortableRow
+        ids={order.map(it => it.id)}
+        strategy="grid"
+        onReorder={onReorder}
+        className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5"
+      >
+        {order.map(it => {
+          const content = cardContent[it.id as PurchaseMetricKey]
+          if (!content) return null
+          return (
+            <DraggableItemWrapper
+              key={it.id}
+              id={it.id}
+              visible={it.visible}
+              isEditing={isEditing}
+              onToggleVisible={() => onToggleVisible(it.id)}
+            >
+              {content}
+            </DraggableItemWrapper>
+          )
+        })}
+      </ItemSortableRow>
 
       <PurchaseDataTable rows={filteredRows} allRows={allRows} />
       <CampaignRoiTable rows={filteredRows} />

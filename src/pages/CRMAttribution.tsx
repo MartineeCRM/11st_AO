@@ -76,7 +76,7 @@ export function CRMAttribution() {
   const { user } = useAuth()
   const { project, saveDashboardLayout } = useProject(user?.id ?? null)
 
-  const { sections, isEditing, startEditing, cancelEditing, reorder, toggleVisible, save, saving, saveError } =
+  const { sections, isEditing, startEditing, cancelEditing, reorder, toggleVisible, reorderItem, toggleItemVisible, save, saving, saveError } =
     useDashboardLayout('attribution', project?.dashboard_layout, saveDashboardLayout)
 
   const sensors = useSensors(
@@ -119,6 +119,8 @@ export function CRMAttribution() {
       </div>
     )
   }
+
+  const attMetricsSection = sections.find(s => s.id === 'att_metrics')
 
   const sectionContent: Record<string, React.ReactNode> = {
     att_filter: (
@@ -181,6 +183,10 @@ export function CRMAttribution() {
             delta={kpis.delta}
             filteredRows={filteredRows}
             allRows={extendedRows}
+            items={attMetricsSection?.items}
+            isEditing={isEditing}
+            onReorder={(oldIndex, newIndex) => reorderItem('att_metrics', oldIndex, newIndex)}
+            onToggleVisible={id => toggleItemVisible('att_metrics', id)}
           />
         )}
 
