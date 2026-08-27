@@ -144,7 +144,7 @@ export function CRMPerformance() {
     },
   )
 
-  const { sections, isEditing, startEditing, cancelEditing, reorder, toggleVisible, save, saving, saveError } =
+  const { sections, isEditing, startEditing, cancelEditing, reorder, toggleVisible, reorderItem, toggleItemVisible, save, saving, saveError } =
     useDashboardLayout('performance', project?.dashboard_layout, saveDashboardLayout)
 
   const sensors = useSensors(
@@ -160,12 +160,32 @@ export function CRMPerformance() {
     reorder(oldIndex, newIndex)
   }
 
+  const kpiSection = sections.find(s => s.id === 'kpi_cards')
+  const optInSection = sections.find(s => s.id === 'table_optin')
+
   const sectionContent: Record<SectionId, React.ReactNode> = {
-    kpi_cards:      <Row1KpiSummary kpiCards={kpiCards} />,
+    kpi_cards: (
+      <Row1KpiSummary
+        kpiCards={kpiCards}
+        items={kpiSection?.items}
+        isEditing={isEditing}
+        onReorder={(oldIndex, newIndex) => reorderItem('kpi_cards', oldIndex, newIndex)}
+        onToggleVisible={id => toggleItemVisible('kpi_cards', id)}
+      />
+    ),
     trends_top10:   <Row2TrendsTop10 dailyCombo={dailyCombo} top10={top10} top10Metric={top10Metric} onTop10MetricChange={setTop10Metric} />,
     channel_table:  <div className="px-6 pb-4"><ChannelPerformanceTable rows={filteredMartinee} /></div>,
     funnel_events:  <Row3FunnelEvents funnel={funnel} funnelSteps={funnelSteps} onFunnelStepsChange={setFunnelSteps} kpiRows={filteredKpi} eventColumns={kpiEventColumns} />,
-    table_optin:    <Row4TableOptIn bizKpiTable={bizKpiTable} optInData={optInData} />,
+    table_optin: (
+      <Row4TableOptIn
+        bizKpiTable={bizKpiTable}
+        optInData={optInData}
+        items={optInSection?.items}
+        isEditing={isEditing}
+        onReorder={(oldIndex, newIndex) => reorderItem('table_optin', oldIndex, newIndex)}
+        onToggleVisible={id => toggleItemVisible('table_optin', id)}
+      />
+    ),
     revenue:        <Row5RevenueCharts dailyRevenue={dailyRevenue} />,
     att_filter:     null,
     att_summary:    null,
