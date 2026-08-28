@@ -18,9 +18,9 @@ export function formatRate(n: number): string {
   return `${(Math.round(n * 10000) / 100).toFixed(2)}%`
 }
 
-/** Rate 옆에 분자(원본 건수)를 괄호로 병기 — 예: "12.34%(1,234)" */
+/** Rate 옆에 분자(원본 건수)를 괄호로 병기 — 예: "12.34% (1,234)" */
 export function formatRateWithCount(rate: number, count: number): string {
-  return `${formatRate(rate)}(${formatNumber(Math.round(count))})`
+  return `${formatRate(rate)} (${formatNumber(Math.round(count))})`
 }
 
 /** 단가성 지표 전체 숫자 표기 (AOV, ARPU, ARPPU, 노출당 Rev 등) — 정수 반올림 */

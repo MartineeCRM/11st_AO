@@ -16,6 +16,7 @@ import {
 import { LineChart, Line, ResponsiveContainer, Tooltip as RTooltip } from 'recharts'
 import { cn } from '@/lib/utils'
 import { formatWoW } from '@/lib/formatters'
+import { RateWithCount } from '@/components/RateWithCount'
 import type { KpiCardData } from '@/types/metrics'
 
 const ICON_MAP = {
@@ -118,7 +119,9 @@ export function KpiCard({ data }: Props) {
         </div>
 
         {/* 값 */}
-        <p className={cn('mb-2 font-bold text-[#1d1d1f] leading-none', primary ? 'text-3xl' : 'text-2xl')}>{formattedValue}</p>
+        <p className={cn('mb-2 font-bold text-[#1d1d1f] leading-none', primary ? 'text-3xl' : 'text-2xl')}>
+          <RateWithCount value={formattedValue} countClassName={primary ? 'text-lg' : 'text-base'} />
+        </p>
 
         {/* WoW + MoM */}
         <div className="flex flex-col gap-0.5">

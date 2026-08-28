@@ -1,5 +1,6 @@
 import { TrendingUp, TrendingDown, Minus } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { RateWithCount } from '@/components/RateWithCount'
 import type { KpiDelta } from '@/hooks/useAttributionMetrics'
 
 interface DeltaBadgeProps {
@@ -57,10 +58,14 @@ export function AttributionKpiCard({
       )}
     >
       <p className="text-[11px] font-medium text-[#9CA3AF]">{title}</p>
-      <p className="text-lg font-bold leading-none text-[#1d1d1f]">{value}</p>
+      <p className="text-lg font-bold leading-none text-[#1d1d1f]">
+        <RateWithCount value={value} countClassName="text-sm" />
+      </p>
       {subValue && subLabel && (
         <p className="text-xs text-[#6B7280]">
-          <span className="font-medium text-[#1d1d1f]">{subValue}</span>
+          <span className="font-medium text-[#1d1d1f]">
+            <RateWithCount value={subValue} countClassName="text-[10px] font-normal" />
+          </span>
           <span className="ml-1 text-[10px]">{subLabel}</span>
         </p>
       )}
