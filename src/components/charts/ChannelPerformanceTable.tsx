@@ -108,7 +108,7 @@ export function ChannelPerformanceTable({ rows }: Props) {
                   ₩{formatKorean(Math.round(row.revenue))}
                 </td>
                 <td className="px-3 py-2 text-right text-xs tabular-nums text-[#1d1d1f]">
-                  ₩{row.revenuePerSend.toFixed(1)}
+                  ₩{row.revenuePerSend.toLocaleString('ko-KR', { minimumFractionDigits: 1, maximumFractionDigits: 1 })}
                 </td>
               </tr>
             ))}
