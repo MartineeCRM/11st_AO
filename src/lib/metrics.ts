@@ -7,7 +7,7 @@ import type {
   FunnelStep,
   BusinessKpiRow,
 } from '@/types/metrics'
-import { addDays, formatNumber, formatRate, formatCurrency, formatDateShort, toDateStr } from './formatters'
+import { addDays, formatNumber, formatRate, formatRateWithCount, formatCurrency, formatDateShort, toDateStr } from './formatters'
 
 // ─── 기본 집계 ────────────────────────────────────────────────
 
@@ -28,11 +28,14 @@ export function calcCTR(rows: MartineeUnionRow[]): number {
   return calcOpenClick(rows) / si
 }
 
+export function calcConversionA(rows: MartineeUnionRow[]): number {
+  return rows.reduce((s, r) => s + r.conversion_a, 0)
+}
+
 export function calcCVR(rows: MartineeUnionRow[]): number {
   const si = calcSentImpression(rows)
   if (si === 0) return 0
-  const convA = rows.reduce((s, r) => s + r.conversion_a, 0)
-  return convA / si
+  return calcConversionA(rows) / si
 }
 
 export function calcRevenuePerImpression(rows: MartineeUnionRow[]): number {
@@ -248,20 +251,27 @@ export function buildTop10(
 ): Top10Item[] {
   const byName = groupByCampaign(rows)
 
-  const scored: { name: string; value: number }[] = []
+  const scored: { name: string; value: number; rawCount: number }[] = []
   byName.forEach((campaignRows, name) => {
     let value = 0
+    let rawCount = 0
     if (metric === '발송/노출량') value = calcSentImpression(campaignRows)
     else if (metric === '오픈/클릭율') value = calcOpenClick(campaignRows)
-    else if (metric === 'CTR') value = calcCTR(campaignRows)
-    else if (metric === '구매 CVR') value = calcCVR(campaignRows)
+    else if (metric === 'CTR') {
+      value = calcCTR(campaignRows)
+      rawCount = calcOpenClick(campaignRows)
+    }
+    else if (metric === '구매 CVR') {
+      value = calcCVR(campaignRows)
+      rawCount = calcConversionA(campaignRows)
+    }
     else if (metric === 'Revenue') value = campaignRows.reduce((s, r) => s + r.revenue, 0)
     else if (metric === 'AOV') {
       const rev = campaignRows.reduce((s, r) => s + r.revenue, 0)
       const conv = campaignRows.reduce((s, r) => s + r.conversion_a, 0)
       value = conv > 0 ? rev / conv : 0
     }
-    scored.push({ name, value })
+    scored.push({ name, value, rawCount })
   })
 
   return scored
@@ -269,7 +279,7 @@ export function buildTop10(
     .slice(0, 10)
     .map(item => {
       let formattedValue = ''
-      if (metric === 'CTR' || metric === '구매 CVR') formattedValue = formatRate(item.value)
+      if (metric === 'CTR' || metric === '구매 CVR') formattedValue = formatRateWithCount(item.value, item.rawCount)
       else if (metric === 'AOV') formattedValue = formatCurrency(Math.round(item.value))
       else if (metric === 'Revenue') formattedValue = `₩${formatNumber(item.value)}`
       else formattedValue = formatNumber(item.value)

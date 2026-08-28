@@ -58,6 +58,7 @@ export function collectEventKeys(rows: AttDataRow[]): string[] {
 
 export interface PurchaseMetrics {
   user_cvr: number        // purchase_user_count / impression_or_send_user
+  purchase_user_count: number
   count_cvr: number       // purchase_count / impression_or_send_user
   purchase_count: number
   revenue: number         // purchase_amount
@@ -75,6 +76,7 @@ function safeDivide(a: number, b: number): number {
 export function calcPurchaseMetrics(s: AttSums): PurchaseMetrics {
   return {
     user_cvr: safeDivide(s.purchase_user_count, s.impression_or_send_user),
+    purchase_user_count: s.purchase_user_count,
     count_cvr: safeDivide(s.purchase_count, s.impression_or_send_user),
     purchase_count: s.purchase_count,
     revenue: s.purchase_amount,

@@ -1,7 +1,7 @@
 import { useMemo, useState, useRef } from 'react'
 import { ArrowDownUp, ChevronDown } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { formatKorean, formatRate, formatCurrency } from '@/lib/formatters'
+import { formatKorean, formatRate, formatRateWithCount, formatCurrency } from '@/lib/formatters'
 import { sumRows, calcPurchaseMetrics } from '@/lib/attributionMetrics'
 import type { AttDataRow } from '@/types/sheets'
 
@@ -11,6 +11,7 @@ interface CampaignRow {
   alias: string
   revenue: number
   user_cvr: number
+  purchase_user_count: number
   purchase_count: number
   aov: number
   impression: number
@@ -31,6 +32,7 @@ function buildCampaignRows(rows: AttDataRow[]): CampaignRow[] {
       alias,
       revenue: m.revenue,
       user_cvr: m.user_cvr,
+      purchase_user_count: m.purchase_user_count,
       purchase_count: m.purchase_count,
       aov: m.aov,
       impression: sums.impression_or_send_user,
@@ -63,7 +65,7 @@ export function CampaignRoiTable({ rows }: Props) {
 
   const cols: { key: SortKey; label: string; fmt: (r: CampaignRow) => string }[] = [
     { key: 'revenue', label: '기여 매출', fmt: r => `₩${formatKorean(Math.round(r.revenue))}` },
-    { key: 'user_cvr', label: '구매 CVR', fmt: r => formatRate(r.user_cvr) },
+    { key: 'user_cvr', label: '구매 CVR', fmt: r => formatRateWithCount(r.user_cvr, r.purchase_user_count) },
     { key: 'purchase_count', label: '구매 건수', fmt: r => formatKorean(r.purchase_count) },
     { key: 'aov', label: 'AOV', fmt: r => formatCurrency(r.aov) },
   ]

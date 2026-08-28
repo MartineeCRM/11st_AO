@@ -10,7 +10,7 @@ import {
   ResponsiveContainer,
 } from 'recharts'
 import type { DailyComboPoint } from '@/types/metrics'
-import { formatKorean } from '@/lib/formatters'
+import { formatKorean, formatNumber } from '@/lib/formatters'
 import { ChartSectionNote } from './ChartSectionNote'
 import { OutlierBadge } from './OutlierBadge'
 import { useChartColors } from '@/lib/chartColors'
@@ -73,9 +73,9 @@ export function SendOpenTrendChart({ data }: Props) {
               width={48}
             />
             <Tooltip
-              formatter={(value: number, name: string) =>
+              formatter={(value: number, name: string, entry: { payload?: DailyComboPoint }) =>
                 name === 'CTR'
-                  ? [`${value.toFixed(2)}%`, name]
+                  ? [`${value.toFixed(2)}%(${formatNumber(entry.payload?.openClick ?? 0)})`, name]
                   : [formatKorean(value), name]
               }
               contentStyle={{ fontSize: 12, borderRadius: 8, border: '1px solid #e0e0e0' }}

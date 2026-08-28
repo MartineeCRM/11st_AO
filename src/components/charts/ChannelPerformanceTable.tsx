@@ -1,15 +1,17 @@
 import { useMemo, useState } from 'react'
 import { cn } from '@/lib/utils'
 import { ChartSectionNote } from './ChartSectionNote'
-import { formatKorean, formatRate } from '@/lib/formatters'
-import { calcSentImpression, calcCTR, calcCVR } from '@/lib/metrics'
+import { formatKorean, formatRateWithCount } from '@/lib/formatters'
+import { calcSentImpression, calcCTR, calcCVR, calcOpenClick, calcConversionA } from '@/lib/metrics'
 import type { MartineeUnionRow } from '@/types/sheets'
 
 interface ChannelRow {
   channel: string
   sentImpression: number
   ctr: number
+  openClick: number
   cvr: number
+  conversionA: number
   revenue: number
   revenuePerSend: number
 }
@@ -30,7 +32,9 @@ function buildChannelRows(rows: MartineeUnionRow[]): ChannelRow[] {
         channel,
         sentImpression: si,
         ctr: calcCTR(rs),
+        openClick: calcOpenClick(rs),
         cvr: calcCVR(rs),
+        conversionA: calcConversionA(rs),
         revenue: rev,
         revenuePerSend: si > 0 ? rev / si : 0,
       }
@@ -92,13 +96,13 @@ export function ChannelPerformanceTable({ rows }: Props) {
                   'px-3 py-2 text-right text-xs tabular-nums font-medium',
                   row.ctr > 0.1 ? 'text-[#10B981]' : row.ctr > 0.05 ? 'text-[#1d1d1f]' : 'text-[#EF4444]',
                 )}>
-                  {formatRate(row.ctr)}
+                  {formatRateWithCount(row.ctr, row.openClick)}
                 </td>
                 <td className={cn(
                   'px-3 py-2 text-right text-xs tabular-nums font-medium',
                   row.cvr > 0.05 ? 'text-[#10B981]' : row.cvr > 0.01 ? 'text-[#1d1d1f]' : 'text-[#EF4444]',
                 )}>
-                  {formatRate(row.cvr)}
+                  {formatRateWithCount(row.cvr, row.conversionA)}
                 </td>
                 <td className="px-3 py-2 text-right text-xs tabular-nums text-[#1d1d1f]">
                   ₩{formatKorean(Math.round(row.revenue))}

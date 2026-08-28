@@ -2,7 +2,7 @@ import { useState, useMemo } from 'react'
 import { ChevronRight, ChevronDown, Settings2 } from 'lucide-react'
 import { ChartSectionNote } from '@/components/charts/ChartSectionNote'
 import { cn } from '@/lib/utils'
-import { formatRate, formatCurrency, formatKorean } from '@/lib/formatters'
+import { formatRate, formatRateWithCount, formatCurrency, formatKorean } from '@/lib/formatters'
 import { sumRows, calcPurchaseMetrics, calcDelta, offsetDate } from '@/lib/attributionMetrics'
 import { getTarget, saveTarget, distributeTarget, calcProgress, type MonthlyTarget } from '@/lib/purchaseTargets'
 import type { AttDataRow } from '@/types/sheets'
@@ -15,6 +15,7 @@ interface RowData {
   dateKey: string         // YYYY-MM-DD (일자) or YYYY-MM-DD (주 시작) or YYYY-MM (월)
   groupBy: GroupBy
   user_cvr: number
+  purchase_user_count: number
   count_cvr: number
   purchase_count: number
   revenue: number
@@ -78,6 +79,7 @@ function metricsFromRows(
   return {
     label, key, dateKey, groupBy, elapsedDays,
     user_cvr: m.user_cvr,
+    purchase_user_count: m.purchase_user_count,
     count_cvr: m.count_cvr,
     purchase_count: m.purchase_count,
     revenue: m.revenue,
@@ -211,17 +213,17 @@ function ProgressBar({ value, elapsedDays, dailyTarget }: {
   )
 }
 
-const BASE_COLS = [
-  { key: 'user_cvr', label: '유저CVR', fmt: (v: number) => formatRate(v) },
-  { key: 'count_cvr', label: '건수CVR', fmt: (v: number) => formatRate(v) },
-  { key: 'purchase_count', label: 'Purchase', fmt: (v: number) => formatKorean(v) },
-  { key: 'revenue', label: 'Revenue', fmt: (v: number) => formatKorean(v) },
-  { key: 'aov', label: 'AOV', fmt: (v: number) => formatCurrency(v) },
-  { key: 'arppu', label: 'ARPPU', fmt: (v: number) => formatCurrency(v) },
-  { key: 'frequency', label: 'Frequency', fmt: (v: number) => v.toFixed(2) },
-  { key: 'items_per_order', label: '주문당제품수', fmt: (v: number) => v.toFixed(2) },
-  { key: 'items_per_user', label: '유저당제품주문수', fmt: (v: number) => v.toFixed(2) },
-] as const
+const BASE_COLS: { key: keyof RowData; label: string; fmt: (v: number) => string; countKey?: keyof RowData }[] = [
+  { key: 'user_cvr', label: '유저CVR', fmt: v => formatRate(v), countKey: 'purchase_user_count' },
+  { key: 'count_cvr', label: '건수CVR', fmt: v => formatRate(v), countKey: 'purchase_count' },
+  { key: 'purchase_count', label: 'Purchase', fmt: v => formatKorean(v) },
+  { key: 'revenue', label: 'Revenue', fmt: v => formatKorean(v) },
+  { key: 'aov', label: 'AOV', fmt: v => formatCurrency(v) },
+  { key: 'arppu', label: 'ARPPU', fmt: v => formatCurrency(v) },
+  { key: 'frequency', label: 'Frequency', fmt: v => v.toFixed(2) },
+  { key: 'items_per_order', label: '주문당제품수', fmt: v => v.toFixed(2) },
+  { key: 'items_per_user', label: '유저당제품주문수', fmt: v => v.toFixed(2) },
+]
 
 interface TableRowProps {
   row: RowData
@@ -259,11 +261,17 @@ function TableRow({ row, depth = 0, target, dailyTarget, compareMode }: TableRow
         </td>
 
         {/* 기본 지표 컬럼 */}
-        {BASE_COLS.map(col => (
-          <td key={col.key} className="px-3 py-2 text-right text-xs text-[#1d1d1f] tabular-nums">
-            {col.fmt(row[col.key as keyof RowData] as number)}
-          </td>
-        ))}
+        {BASE_COLS.map(col => {
+          const value = row[col.key] as number
+          const display = col.countKey
+            ? formatRateWithCount(value, row[col.countKey] as number)
+            : col.fmt(value)
+          return (
+            <td key={col.key} className="px-3 py-2 text-right text-xs text-[#1d1d1f] tabular-nums">
+              {display}
+            </td>
+          )
+        })}
 
         {/* Purchase 비교 */}
         <td className="px-3 py-2 text-right">

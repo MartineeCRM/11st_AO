@@ -5,7 +5,7 @@ import { PurchaseDataTable } from './PurchaseDataTable'
 import { CampaignRoiTable } from './CampaignRoiTable'
 import { DraggableItemWrapper } from '@/components/DraggableItemWrapper'
 import { ItemSortableRow } from '@/components/ItemSortableRow'
-import { formatKorean, formatRate, formatCurrency } from '@/lib/formatters'
+import { formatKorean, formatRate, formatRateWithCount, formatCurrency } from '@/lib/formatters'
 import type { PurchaseMetricKey, PurchaseMetrics, KpiDelta, TrendPoint } from '@/hooks/useAttributionMetrics'
 import type { AttDataRow } from '@/types/sheets'
 import type { LayoutItem } from '@/lib/supabase'
@@ -90,14 +90,15 @@ export function PurchaseMetricsSection({
     user_cvr: (
       <AttributionKpiCard
         title="CVR"
-        value={formatRate(current.user_cvr)}
-        subValue={formatRate(current.count_cvr)}
+        value={formatRateWithCount(current.user_cvr, current.purchase_user_count)}
+        subValue={formatRateWithCount(current.count_cvr, current.purchase_count)}
         subLabel="건수 CVR"
         delta={delta.user_cvr}
         highlighted={activeMetric === 'user_cvr'}
       />
     ),
     count_cvr: null, // count_cvr은 독립 카드가 아니라 user_cvr 카드의 subValue로만 표시됨
+    purchase_user_count: null, // 독립 카드 없음 — user_cvr 카드의 값 옆 카운트로만 쓰임
     purchase_count: (
       <AttributionKpiCard
         title="Purchase"

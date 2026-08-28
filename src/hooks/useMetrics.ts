@@ -4,6 +4,7 @@ import type { KpiCardData, OptInData } from '@/types/metrics'
 import {
   calcSentImpression,
   calcCTR,
+  calcOpenClick,
   calcMsgPerUser,
   calcWoW,
   calcTrend14d,
@@ -16,7 +17,7 @@ import {
   buildBusinessKpiTable,
   type FunnelFieldKey,
 } from '@/lib/metrics'
-import { formatNumber, formatRate, daysAgo, toDateStr } from '@/lib/formatters'
+import { formatNumber, formatRateWithCount, daysAgo, toDateStr } from '@/lib/formatters'
 import { isAnomaly } from '@/lib/anomalyThresholds'
 import type { Top10Metric } from '@/types/metrics'
 
@@ -70,6 +71,7 @@ export function useMetrics(
     const curCTR = calcCTR(filteredMartinee)
     const prevCTR = calcCTR(prevMartinee)
     const momCTR = calcCTR(momMartinee)
+    const curOpenClick = calcOpenClick(filteredMartinee)
     const curMsg = calcMsgPerUser(filteredMartinee)
     const prevMsg = calcMsgPerUser(prevMartinee)
     const momMsg = calcMsgPerUser(momMartinee)
@@ -161,7 +163,7 @@ export function useMetrics(
         id: 'ctr',
         label: '전체 평균 CTR',
         value: curCTR,
-        formattedValue: formatRate(curCTR),
+        formattedValue: formatRateWithCount(curCTR, curOpenClick),
         wow: wowCTR,
         mom: momMartinee.length > 0 ? calcWoW(curCTR, momCTR) : null,
         trendData: calcTrend14d(allMartinee, 'ctr', endDate),
