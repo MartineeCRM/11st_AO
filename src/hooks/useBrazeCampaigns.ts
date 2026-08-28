@@ -12,15 +12,40 @@ import {
   type BrazeCanvasDetails,
 } from '@/lib/braze'
 
+// Braze는 트리거 이벤트명을 REST API로 내려주지 않는다 (실측 확인됨).
+// 대신 캠페인/캔버스에 "trg:이벤트명" 형태의 태그를 달아두면 여기서 파싱한다.
+// 태그가 없는 기존 캠페인도 있으므로 이 파싱은 어디까지나 최선 추정이며,
+// 실패 시 호출부에서 수동 매핑(trigger_mappings)으로 폴백한다.
+const TRIGGER_TAG_PREFIX = 'trg:'
+
+/** "trg:Add_To_Cart" / "trg: add to cart" 등 표기 편차를 하나의 라벨로 통일 */
+function normalizeTriggerLabel(raw: string): string {
+  return raw
+    .trim()
+    .toLowerCase()
+    .replace(/_/g, ' ')
+    .replace(/\s+/g, ' ')
+}
+
+function parseTriggerTag(tags: string[] | undefined): string | undefined {
+  if (!tags) return undefined
+  const tag = tags.find(t => t.trim().toLowerCase().startsWith(TRIGGER_TAG_PREFIX))
+  if (!tag) return undefined
+  const value = normalizeTriggerLabel(tag.trim().slice(TRIGGER_TAG_PREFIX.length))
+  return value || undefined
+}
+
 /**
  * Braze /campaigns/details 응답에서 트리거 이벤트명을 추출한다.
- * API는 최상위 trigger_action 또는 triggers 배열 중 하나로 반환할 수 있다.
+ * 1순위: "trg:" 태그 (사람이 직접 붙임)
+ * 2순위: 최상위 trigger_action 또는 triggers 배열 (Braze API가 실제로는 내려주지 않지만, 혹시 모를 워크스페이스 차이에 대비해 유지)
  */
 function resolveTriggerAction(detail: BrazeCampaignDetails): string | undefined {
-  // 최상위 필드가 있으면 우선 사용
+  const tagTrigger = parseTriggerTag(detail.tags)
+  if (tagTrigger) return tagTrigger
+
   if (detail.trigger_action) return detail.trigger_action
 
-  // triggers 배열에서 첫 번째 항목의 event_name → trigger_action 순으로 추출
   const first = detail.triggers?.[0]
   if (!first) return undefined
 
