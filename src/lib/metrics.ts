@@ -628,3 +628,60 @@ export function monthLabel(yyyyMm: string): string {
   const m = Number(yyyyMm.slice(5, 7))
   return `${m}월`
 }
+
+/** 날짜 문자열의 연도만 n만큼 이동 (월/일은 그대로 유지) */
+export function shiftYears(dateStr: string, n: number): string {
+  if (!dateStr) return dateStr
+  const year = Number(dateStr.slice(0, 4))
+  return `${year + n}${dateStr.slice(4)}`
+}
+
+/** 전년 대비 증감률. 작년 값이 0/없으면 비교 불가로 null */
+export function calcYoY(current: number, previous: number | undefined): number | null {
+  if (!previous) return null
+  return (current - previous) / previous
+}
+
+export interface AoPeriodRow {
+  campaign: string
+  impressions: number
+  sent: number
+  conversionA: number
+  /** conversionA ÷ (impressions + sent) */
+  conversionRate: number
+  revenue: number
+}
+
+/**
+ * 특정 기간(start~end)의 AO 캠페인별 실적 리더보드. Revenue 내림차순으로 정렬한다.
+ * 두 기간(예: 올해 vs 작년 동기간)을 나란히 비교하는 화면에서 각 기간을 독립적으로 호출해 쓴다.
+ */
+export function buildAoPeriodTable(rows: MartineeUnionRow[], start: string, end: string): AoPeriodRow[] {
+  const inRange = rows.filter(r => (!start || r.date >= start) && (!end || r.date <= end))
+
+  const byCampaign = new Map<string, MartineeUnionRow[]>()
+  for (const r of inRange) {
+    if (!r.campaign_depth_1) continue
+    const list = byCampaign.get(r.campaign_depth_1) ?? []
+    list.push(r)
+    byCampaign.set(r.campaign_depth_1, list)
+  }
+
+  return [...byCampaign.entries()]
+    .map(([campaign, rs]) => {
+      const impressions = rs.reduce((s, r) => s + r.impressions, 0)
+      const sent = rs.reduce((s, r) => s + r.sent, 0)
+      const conversionA = rs.reduce((s, r) => s + r.conversion_a, 0)
+      const revenue = rs.reduce((s, r) => s + r.revenue, 0)
+      const base = impressions + sent
+      return {
+        campaign,
+        impressions,
+        sent,
+        conversionA,
+        conversionRate: base > 0 ? conversionA / base : 0,
+        revenue,
+      }
+    })
+    .sort((a, b) => b.revenue - a.revenue)
+}

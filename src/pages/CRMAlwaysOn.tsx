@@ -6,6 +6,7 @@ import { CampaignSelectFilter } from '@/components/filters/CampaignSelectFilter'
 import { presetToRange, type Preset } from '@/components/filters/datePresets'
 import { AoCampaignTrendChart } from '@/components/charts/AoCampaignTrendChart'
 import { AoMonthlyPerformanceTable } from '@/components/AoMonthlyPerformanceTable'
+import { AoPeriodComparisonTable } from '@/components/AoPeriodComparisonTable'
 import { filterAoRows, listAoCampaignNames, buildAoCampaignTrend } from '@/lib/metrics'
 import { generateDemoAoRows } from '@/lib/aoDemoData'
 import { toDateStr } from '@/lib/formatters'
@@ -33,6 +34,7 @@ export function CRMAlwaysOn() {
   const [selectedCampaign, setSelectedCampaign] = useState('')
   const [granularity, setGranularity] = useState<'week' | 'month'>('week')
   const [demoMode, setDemoMode] = useState(false)
+  const [viewMode, setViewMode] = useState<'accumulated' | 'comparison'>('accumulated')
 
   // dateRange 로드 후 기본 프리셋(최근 3개월) 적용
   useEffect(() => {
@@ -136,8 +138,33 @@ export function CRMAlwaysOn() {
           </section>
 
           <section className="flex flex-col gap-2">
-            <h2 className="px-1 text-sm font-semibold text-[#1d1d1f]">월별 실적 누적</h2>
-            <AoMonthlyPerformanceTable rows={aoRows} />
+            <div className="flex items-center justify-between px-1">
+              <h2 className="text-sm font-semibold text-[#1d1d1f]">월별 실적</h2>
+              <div className="flex items-center rounded-lg border border-[#e0e0e0] bg-[#F9FAFB] p-0.5">
+                {([
+                  { key: 'accumulated' as const, label: '누적 보기' },
+                  { key: 'comparison' as const, label: '기간 비교 (YoY)' },
+                ]).map(opt => (
+                  <button
+                    key={opt.key}
+                    onClick={() => setViewMode(opt.key)}
+                    className={cn(
+                      'rounded-md px-3 py-1.5 text-xs font-medium transition-all',
+                      viewMode === opt.key
+                        ? 'border border-[#0066cc] bg-[#e8f0fb] text-[#0066cc]'
+                        : 'text-[#6B7280] hover:text-[#1d1d1f]',
+                    )}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+            {viewMode === 'accumulated' ? (
+              <AoMonthlyPerformanceTable rows={aoRows} />
+            ) : (
+              <AoPeriodComparisonTable rows={aoRows} start={start} end={end} />
+            )}
           </section>
         </div>
       )}

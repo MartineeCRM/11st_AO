@@ -3,7 +3,7 @@ import { ChevronDown, ChevronLeft, ChevronRight } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { ChartSectionNote } from './charts/ChartSectionNote'
 import { formatNumber, formatCurrency } from '@/lib/formatters'
-import { buildAoPivot, listAoYears, monthLabel } from '@/lib/metrics'
+import { buildAoPivot, listAoYears, monthLabel, shiftYears, calcYoY } from '@/lib/metrics'
 import type { MartineeUnionRow } from '@/types/sheets'
 
 interface Props {
@@ -42,6 +42,28 @@ export function AoMonthlyPerformanceTable({ rows }: Props) {
   }, [rows])
 
   const pivot = useMemo(() => buildAoPivot(rows, revealedYears), [rows, revealedYears])
+
+  // Revenue YoY 배지용 — 화면에 펼쳐지지 않은 전년도라도 비교값은 항상 계산해둔다
+  const comparisonYears = useMemo(
+    () => [...new Set(revealedYears.flatMap(y => [y, String(Number(y) - 1)]))],
+    [revealedYears],
+  )
+  const yoyPivot = useMemo(() => buildAoPivot(rows, comparisonYears), [rows, comparisonYears])
+  const yoyByCampaign = useMemo(
+    () => new Map(yoyPivot.rows.map(r => [r.campaign, r])),
+    [yoyPivot],
+  )
+
+  function revenueYoY(campaign: string, g: ColumnGroup): number | null {
+    const yoyRow = yoyByCampaign.get(campaign)
+    if (!yoyRow) return null
+    if (g.month) {
+      const priorMonth = shiftYears(g.month, -1)
+      return calcYoY(yoyRow.byMonth[g.month]?.revenue ?? 0, yoyRow.byMonth[priorMonth]?.revenue)
+    }
+    const priorYear = String(Number(g.year) - 1)
+    return calcYoY(yoyRow.byYear[g.year]?.revenue ?? 0, yoyRow.byYear[priorYear]?.revenue)
+  }
 
   const nextYear = allYears.find(y => !revealedYears.includes(y))
 
@@ -237,6 +259,15 @@ export function AoMonthlyPerformanceTable({ rows }: Props) {
                       </td>
                       <td className="border-b border-[#F3F4F6] px-3 py-2 text-right text-xs tabular-nums text-[#1d1d1f]">
                         {m ? formatCurrency(m.revenue) : '-'}
+                        {(() => {
+                          const yoy = m ? revenueYoY(row.campaign, g) : null
+                          if (yoy === null) return null
+                          return (
+                            <div className={cn('text-[10px] font-medium', yoy >= 0 ? 'text-[#10B981]' : 'text-[#EF4444]')}>
+                              {yoy >= 0 ? '▲' : '▼'} {Math.abs(yoy * 100).toFixed(0)}%
+                            </div>
+                          )
+                        })()}
                       </td>
                       {showExtra && (
                         <>
