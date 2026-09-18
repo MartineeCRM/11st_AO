@@ -143,7 +143,7 @@ export function CRMAlwaysOn() {
               <div className="flex items-center rounded-lg border border-[#e0e0e0] bg-[#F9FAFB] p-0.5">
                 {([
                   { key: 'accumulated' as const, label: '누적 보기' },
-                  { key: 'comparison' as const, label: '기간 비교 (YoY)' },
+                  { key: 'comparison' as const, label: '기간 비교' },
                 ]).map(opt => (
                   <button
                     key={opt.key}
@@ -163,7 +163,7 @@ export function CRMAlwaysOn() {
             {viewMode === 'accumulated' ? (
               <AoMonthlyPerformanceTable rows={aoRows} />
             ) : (
-              <AoPeriodComparisonTable rows={aoRows} start={start} end={end} />
+              <AoPeriodComparisonTable rows={aoRows} defaultStart={start} defaultEnd={end} />
             )}
           </section>
         </div>

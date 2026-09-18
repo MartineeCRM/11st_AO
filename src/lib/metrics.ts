@@ -642,6 +642,23 @@ export function calcYoY(current: number, previous: number | undefined): number |
   return (current - previous) / previous
 }
 
+/** 두 기간(비교 대상) 간 증감률. previous가 0/없으면 비교 불가로 null */
+export function calcPeriodDelta(current: number, previous: number): number | null {
+  if (!previous) return null
+  return (current - previous) / previous
+}
+
+/** start~end와 같은 길이의, 바로 직전 기간을 반환 (예: 9/1~9/15 → 8/17~8/31) */
+export function previousPeriodOfSameLength(start: string, end: string): { start: string; end: string } {
+  const s = parseDateStr(start)
+  const e = parseDateStr(end)
+  if (!s || !e) return { start: '', end: '' }
+  const lengthDays = Math.round((e.getTime() - s.getTime()) / 86_400_000) + 1
+  const newEnd = addDays(start, -1)
+  const newStart = addDays(newEnd, -(lengthDays - 1))
+  return { start: newStart, end: newEnd }
+}
+
 export interface AoPeriodRow {
   campaign: string
   impressions: number
