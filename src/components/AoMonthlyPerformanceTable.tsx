@@ -1,5 +1,5 @@
 import { Fragment, useEffect, useMemo, useRef, useState } from 'react'
-import { ChevronDown, ChevronRight } from 'lucide-react'
+import { ChevronDown, ChevronLeft, ChevronRight } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { ChartSectionNote } from './charts/ChartSectionNote'
 import { formatNumber, formatCurrency } from '@/lib/formatters'
@@ -18,7 +18,6 @@ interface ColumnGroup {
   /** null이면 연도가 접혀서 연간 합계 하나로 표시됨 */
   month: string | null
   label: string
-  isFirstOfYear: boolean
 }
 
 export function AoMonthlyPerformanceTable({ rows }: Props) {
@@ -26,6 +25,10 @@ export function AoMonthlyPerformanceTable({ rows }: Props) {
   const [revealedYears, setRevealedYears] = useState<string[]>([])
   const [collapsedYears, setCollapsedYears] = useState<Set<string>>(new Set())
   const initialized = useRef(false)
+
+  const scrollRef = useRef<HTMLDivElement>(null)
+  const [canScrollLeft, setCanScrollLeft] = useState(false)
+  const [canScrollRight, setCanScrollRight] = useState(false)
 
   const allYears = useMemo(() => listAoYears(rows), [rows])
 
@@ -57,44 +60,94 @@ export function AoMonthlyPerformanceTable({ rows }: Props) {
     })
   }
 
-  if (pivot.rows.length === 0) return null
-
   const colsPerMonth = showExtra ? 7 : 5
 
   // 연도별로 접혀있으면 "연간 합계" 컬럼 1개, 펼쳐있으면 그 연도의 월별 컬럼들
   const columnGroups: ColumnGroup[] = pivot.years.flatMap(year => {
     if (collapsedYears.has(year)) {
-      return [{ year, month: null, label: '연간 합계', isFirstOfYear: true }]
+      return [{ year, month: null, label: '연간 합계' }]
     }
-    return pivot.monthsByYear[year].map((month, i) => ({
-      year,
-      month,
-      label: monthLabel(month),
-      isFirstOfYear: i === 0,
-    }))
+    return pivot.monthsByYear[year].map(month => ({ year, month, label: monthLabel(month) }))
   })
+
+  function updateScrollState() {
+    const el = scrollRef.current
+    if (!el) return
+    setCanScrollLeft(el.scrollLeft > 4)
+    setCanScrollRight(el.scrollLeft + el.clientWidth < el.scrollWidth - 4)
+  }
+
+  // 컬럼 수가 바뀌면(연도 펼침/접힘, C/D 토글) 스크롤 가능 여부를 다시 계산
+  useEffect(() => {
+    const id = requestAnimationFrame(updateScrollState)
+    return () => cancelAnimationFrame(id)
+  }, [columnGroups.length, showExtra])
+
+  function scrollByPage(direction: 1 | -1) {
+    const el = scrollRef.current
+    if (!el) return
+    el.scrollBy({ left: direction * el.clientWidth * 0.8, behavior: 'smooth' })
+  }
+
+  if (pivot.rows.length === 0) return null
+
+  const canScrollAtAll = canScrollLeft || canScrollRight
 
   return (
     <div className="rounded-xl border border-[#e0e0e0] bg-white">
-      <div className="flex items-center justify-between border-b border-[#e0e0e0] px-4 py-3">
+      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#e0e0e0] px-4 py-3">
         <div>
           <ChartSectionNote sectionId="ao_monthly_table" title="캠페인 × 월 실적표" titleClassName="text-xs font-semibold text-[#1d1d1f]" />
           <p className="text-[10px] text-[#9CA3AF] mt-0.5">그 달에 발송한 캠페인만 표시 · 캠페인명 가나다순 · 연도 클릭 시 접기/펼치기</p>
         </div>
-        <button
-          onClick={() => setShowExtra(v => !v)}
-          className={cn(
-            'shrink-0 rounded-lg border px-2.5 py-1.5 text-xs font-medium transition-colors',
-            showExtra
-              ? 'border-[#0066cc] bg-[#e8f0fb] text-[#0066cc]'
-              : 'border-[#e0e0e0] bg-[#F9FAFB] text-[#6B7280] hover:text-[#1d1d1f]',
+
+        <div className="flex shrink-0 items-center gap-2">
+          {nextYear && (
+            <button
+              onClick={revealPreviousYear}
+              className="rounded-lg border border-[#e0e0e0] bg-[#F9FAFB] px-2.5 py-1.5 text-xs font-medium text-[#6B7280] hover:text-[#1d1d1f]"
+            >
+              + {nextYear}년 데이터 보기
+            </button>
           )}
-        >
-          Conversion C/D {showExtra ? '숨기기' : '표시'}
-        </button>
+
+          <button
+            onClick={() => setShowExtra(v => !v)}
+            className={cn(
+              'rounded-lg border px-2.5 py-1.5 text-xs font-medium transition-colors',
+              showExtra
+                ? 'border-[#0066cc] bg-[#e8f0fb] text-[#0066cc]'
+                : 'border-[#e0e0e0] bg-[#F9FAFB] text-[#6B7280] hover:text-[#1d1d1f]',
+            )}
+          >
+            Conversion C/D {showExtra ? '숨기기' : '표시'}
+          </button>
+
+          {canScrollAtAll && (
+            <div className="flex items-center overflow-hidden rounded-lg border border-[#e0e0e0]">
+              <button
+                onClick={() => scrollByPage(-1)}
+                disabled={!canScrollLeft}
+                className="flex items-center justify-center bg-[#F9FAFB] px-1.5 py-1.5 text-[#6B7280] hover:text-[#1d1d1f] disabled:opacity-30 disabled:hover:text-[#6B7280]"
+                title="왼쪽으로 스크롤"
+              >
+                <ChevronLeft size={14} />
+              </button>
+              <div className="h-4 w-px bg-[#e0e0e0]" />
+              <button
+                onClick={() => scrollByPage(1)}
+                disabled={!canScrollRight}
+                className="flex items-center justify-center bg-[#F9FAFB] px-1.5 py-1.5 text-[#6B7280] hover:text-[#1d1d1f] disabled:opacity-30 disabled:hover:text-[#6B7280]"
+                title="오른쪽으로 스크롤"
+              >
+                <ChevronRight size={14} />
+              </button>
+            </div>
+          )}
+        </div>
       </div>
 
-      <div className="overflow-x-auto">
+      <div ref={scrollRef} onScroll={updateScrollState} className="overflow-x-auto">
         <table className="w-full min-w-max border-separate border-spacing-0">
           <thead>
             {/* 연도 행 — 클릭해서 접기/펼치기 */}
@@ -107,7 +160,7 @@ export function AoMonthlyPerformanceTable({ rows }: Props) {
                   <th
                     key={year}
                     colSpan={span}
-                    className="border-b border-l-2 border-[#D1D5DB] bg-[#F3F4F6] px-3 py-1.5 text-center"
+                    className="border-b border-l border-[#e0e0e0] bg-[#F3F4F6] px-3 py-1.5 text-center"
                   >
                     <button
                       onClick={() => toggleYear(year)}
@@ -127,10 +180,7 @@ export function AoMonthlyPerformanceTable({ rows }: Props) {
                 <th
                   key={`${g.year}-${g.month ?? 'total'}`}
                   colSpan={colsPerMonth}
-                  className={cn(
-                    'border-b px-3 py-1.5 text-center text-[11px] font-semibold text-[#1d1d1f]',
-                    g.isFirstOfYear ? 'border-l-2 border-l-[#D1D5DB]' : 'border-l border-[#e0e0e0]',
-                  )}
+                  className="border-b border-l border-[#e0e0e0] px-3 py-1.5 text-center text-[11px] font-semibold text-[#1d1d1f]"
                 >
                   {g.label}
                 </th>
@@ -143,7 +193,7 @@ export function AoMonthlyPerformanceTable({ rows }: Props) {
               </th>
               {columnGroups.map(g => (
                 <Fragment key={`${g.year}-${g.month ?? 'total'}`}>
-                  <th className={cn('border-b px-3 py-1.5 text-right text-[10px] font-medium text-[#9CA3AF]', g.isFirstOfYear ? 'border-l-2 border-l-[#D1D5DB]' : 'border-l border-[#F3F4F6]')}>노출</th>
+                  <th className="border-b border-l border-[#F3F4F6] px-3 py-1.5 text-right text-[10px] font-medium text-[#9CA3AF]">노출</th>
                   <th className="border-b px-3 py-1.5 text-right text-[10px] font-medium text-[#9CA3AF]">발송</th>
                   <th className="border-b px-3 py-1.5 text-right text-[10px] font-medium text-[#9CA3AF]">Conv A</th>
                   <th className="border-b px-3 py-1.5 text-right text-[10px] font-medium text-[#9CA3AF]">Conv B</th>
@@ -173,7 +223,7 @@ export function AoMonthlyPerformanceTable({ rows }: Props) {
                   const m = g.month ? row.byMonth[g.month] : row.byYear[g.year]
                   return (
                     <Fragment key={`${g.year}-${g.month ?? 'total'}`}>
-                      <td className={cn('border-b border-[#F3F4F6] px-3 py-2 text-right text-xs tabular-nums text-[#1d1d1f]', g.isFirstOfYear ? 'border-l-2 border-l-[#E5E7EB]' : 'border-l border-[#F3F4F6]')}>
+                      <td className="border-b border-l border-[#F3F4F6] px-3 py-2 text-right text-xs tabular-nums text-[#1d1d1f]">
                         {m ? formatNumber(m.impressions) : '-'}
                       </td>
                       <td className="border-b border-[#F3F4F6] px-3 py-2 text-right text-xs tabular-nums text-[#1d1d1f]">
@@ -206,14 +256,6 @@ export function AoMonthlyPerformanceTable({ rows }: Props) {
           </tbody>
         </table>
       </div>
-
-      {nextYear && (
-        <div className="border-t border-[#F3F4F6] px-4 py-2.5 text-center">
-          <button onClick={revealPreviousYear} className="text-xs font-medium text-[#0066cc] hover:underline">
-            + {nextYear}년 데이터 보기
-          </button>
-        </div>
-      )}
     </div>
   )
 }
