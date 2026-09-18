@@ -363,6 +363,7 @@ export function CRMSettings({ project, saveDashboardLayout }: Props) {
             { key: 'performance' as TabKey, label: 'CRM 성과 모니터링' },
             { key: 'attribution' as TabKey, label: 'CRM Attribution' },
             { key: 'ops' as TabKey, label: '캠페인 운영 현황' },
+            { key: 'ao' as TabKey, label: 'AO 캠페인 모니터링' },
           ]).map(({ key, label }) => (
             <div key={key} className="flex items-center justify-between">
               <span className="text-sm text-[#1d1d1f]">{label}</span>

@@ -7,7 +7,7 @@ import type {
   FunnelStep,
   BusinessKpiRow,
 } from '@/types/metrics'
-import { addDays, formatNumber, formatRate, formatRateWithCount, formatCurrency, formatDateShort, toDateStr } from './formatters'
+import { addDays, formatNumber, formatRate, formatRateWithCount, formatCurrency, formatDateShort, toDateStr, parseDateStr } from './formatters'
 
 // ─── 기본 집계 ────────────────────────────────────────────────
 
@@ -466,4 +466,140 @@ export function buildBusinessKpiTable(
       isFullNumber: def.isFullNumber,
     }
   })
+}
+
+// ─── AO(Always-on) 캠페인 모니터링 ──────────────────────────────
+
+/** campaign_type이 AO(Always-on)인 행만 필터링 */
+export function filterAoRows(rows: MartineeUnionRow[]): MartineeUnionRow[] {
+  return rows.filter(r => r.campaign_type === 'AO')
+}
+
+/** AO 캠페인 목록 (campaign_depth_1 기준 — variant/CG·TG를 하나의 캠페인으로 묶음), 가나다순 */
+export function listAoCampaignNames(rows: MartineeUnionRow[]): string[] {
+  const names = new Set<string>()
+  for (const r of rows) {
+    if (r.campaign_depth_1) names.add(r.campaign_depth_1)
+  }
+  return [...names].sort((a, b) => a.localeCompare(b, 'ko'))
+}
+
+export interface AoTrendPoint {
+  period: string
+  sentImpression: number
+  conversionA: number
+  revenue: number
+}
+
+/** 날짜 → 그 주(월요일 시작) 첫날, YYYY-MM-DD */
+function weekStart(dateStr: string): string {
+  const d = parseDateStr(dateStr)
+  if (!d) return dateStr
+  const day = d.getDay() // 0=일 .. 6=토
+  const diffToMonday = day === 0 ? -6 : 1 - day
+  const monday = new Date(d)
+  monday.setDate(d.getDate() + diffToMonday)
+  return toDateStr(monday)
+}
+
+/** 날짜 → 월 (YYYY-MM) */
+function monthStart(dateStr: string): string {
+  return dateStr.slice(0, 7)
+}
+
+/** 특정 AO 캠페인(campaign_depth_1)의 주/월 단위 합산 추이 */
+export function buildAoCampaignTrend(
+  rows: MartineeUnionRow[],
+  campaignDepth1: string,
+  granularity: 'week' | 'month',
+): AoTrendPoint[] {
+  const campaignRows = rows.filter(r => r.campaign_depth_1 === campaignDepth1)
+  const byPeriod = new Map<string, MartineeUnionRow[]>()
+  for (const r of campaignRows) {
+    const key = granularity === 'week' ? weekStart(r.date) : monthStart(r.date)
+    const list = byPeriod.get(key) ?? []
+    list.push(r)
+    byPeriod.set(key, list)
+  }
+  return [...byPeriod.entries()]
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([period, rs]) => ({
+      period: granularity === 'week' ? formatDateShort(period) : monthLabel(period),
+      sentImpression: calcSentImpression(rs),
+      conversionA: calcConversionA(rs),
+      revenue: rs.reduce((s, r) => s + r.revenue, 0),
+    }))
+}
+
+export interface AoMonthlyMetrics {
+  impressions: number
+  sent: number
+  conversionA: number
+  conversionB: number
+  conversionC: number
+  conversionD: number
+  revenue: number
+}
+
+export interface AoMonthlyPivotRow {
+  campaign: string
+  months: Record<string, AoMonthlyMetrics>
+}
+
+export interface AoMonthlyPivot {
+  /** YYYY-MM, 최신 달이 먼저 */
+  months: string[]
+  rows: AoMonthlyPivotRow[]
+}
+
+/**
+ * AO 캠페인 월별 실적 피벗.
+ * 최신 달부터 visibleMonths개를 열로 삼고, 그 달들 중 하나라도 발송 이력이 있는
+ * 캠페인만 행으로 포함한다 (발송 없는 달은 해당 셀만 비움).
+ */
+export function buildAoMonthlyPivot(rows: MartineeUnionRow[], visibleMonths: number): AoMonthlyPivot {
+  const allMonths = [...new Set(rows.map(r => monthStart(r.date)))].sort().reverse()
+  const months = allMonths.slice(0, visibleMonths)
+  const monthSet = new Set(months)
+
+  const byCampaignMonth = new Map<string, Map<string, MartineeUnionRow[]>>()
+  for (const r of rows) {
+    const month = monthStart(r.date)
+    if (!monthSet.has(month)) continue
+    const campaign = r.campaign_depth_1
+    if (!campaign) continue
+    const byMonth = byCampaignMonth.get(campaign) ?? new Map<string, MartineeUnionRow[]>()
+    const list = byMonth.get(month) ?? []
+    list.push(r)
+    byMonth.set(month, list)
+    byCampaignMonth.set(campaign, byMonth)
+  }
+
+  const pivotRows: AoMonthlyPivotRow[] = [...byCampaignMonth.entries()]
+    .sort(([a], [b]) => a.localeCompare(b, 'ko'))
+    .map(([campaign, byMonth]) => {
+      const monthMetrics: Record<string, AoMonthlyMetrics> = {}
+      for (const month of months) {
+        const rs = byMonth.get(month)
+        if (!rs) continue
+        monthMetrics[month] = {
+          impressions: rs.reduce((s, r) => s + r.impressions, 0),
+          sent: rs.reduce((s, r) => s + r.sent, 0),
+          conversionA: rs.reduce((s, r) => s + r.conversion_a, 0),
+          conversionB: rs.reduce((s, r) => s + r.conversion_b, 0),
+          conversionC: rs.reduce((s, r) => s + r.conversion_c, 0),
+          conversionD: rs.reduce((s, r) => s + r.conversion_d, 0),
+          revenue: rs.reduce((s, r) => s + r.revenue, 0),
+        }
+      }
+      return { campaign, months: monthMetrics }
+    })
+
+  return { months, rows: pivotRows }
+}
+
+/** "YYYY-MM" → "N월" */
+export function monthLabel(yyyyMm: string): string {
+  const m = Number(yyyyMm.slice(5, 7))
+  return `${m}월`
 }
