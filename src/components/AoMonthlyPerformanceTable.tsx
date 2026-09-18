@@ -3,7 +3,8 @@ import { ChevronDown, ChevronLeft, ChevronRight } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { ChartSectionNote } from './charts/ChartSectionNote'
 import { formatNumber, formatCurrency } from '@/lib/formatters'
-import { buildAoPivot, listAoYears, monthLabel, shiftYears, calcYoY } from '@/lib/metrics'
+import { buildAoPivot, listAoYears, monthLabel, shiftYears, calcYoY, sortByAoMetric, type AoSortKey, type AoPivotRow } from '@/lib/metrics'
+import { AoSortSelect } from './filters/AoSortSelect'
 import type { MartineeUnionRow } from '@/types/sheets'
 
 interface Props {
@@ -22,6 +23,7 @@ interface ColumnGroup {
 
 export function AoMonthlyPerformanceTable({ rows }: Props) {
   const [showExtra, setShowExtra] = useState(false)
+  const [sortKey, setSortKey] = useState<AoSortKey>('name')
   const [revealedYears, setRevealedYears] = useState<string[]>([])
   const [collapsedYears, setCollapsedYears] = useState<Set<string>>(new Set())
   const initialized = useRef(false)
@@ -92,6 +94,22 @@ export function AoMonthlyPerformanceTable({ rows }: Props) {
     return pivot.monthsByYear[year].map(month => ({ year, month, label: monthLabel(month) }))
   })
 
+  // 정렬 기준(Revenue/발송·노출/Conversion A)은 현재 화면에 보이는 컬럼들의 합으로 계산
+  function aggregateForSort(row: AoPivotRow) {
+    let revenue = 0, sent = 0, impressions = 0, conversionA = 0
+    for (const g of columnGroups) {
+      const m = g.month ? row.byMonth[g.month] : row.byYear[g.year]
+      if (!m) continue
+      revenue += m.revenue
+      sent += m.sent
+      impressions += m.impressions
+      conversionA += m.conversionA
+    }
+    return { campaign: row.campaign, revenue, sent, impressions, conversionA }
+  }
+
+  const sortedRows = sortByAoMetric(pivot.rows, sortKey, aggregateForSort)
+
   function updateScrollState() {
     const el = scrollRef.current
     if (!el) return
@@ -120,10 +138,12 @@ export function AoMonthlyPerformanceTable({ rows }: Props) {
       <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#e0e0e0] px-4 py-3">
         <div>
           <ChartSectionNote sectionId="ao_monthly_table" title="캠페인 × 월 실적표" titleClassName="text-xs font-semibold text-[#1d1d1f]" />
-          <p className="text-[10px] text-[#9CA3AF] mt-0.5">그 달에 발송한 캠페인만 표시 · 캠페인명 가나다순 · 연도 클릭 시 접기/펼치기</p>
+          <p className="text-[10px] text-[#9CA3AF] mt-0.5">그 달에 발송한 캠페인만 표시 · 연도 클릭 시 접기/펼치기</p>
         </div>
 
         <div className="flex shrink-0 items-center gap-2">
+          <AoSortSelect value={sortKey} onChange={setSortKey} />
+
           {nextYear && (
             <button
               onClick={revealPreviousYear}
@@ -231,7 +251,7 @@ export function AoMonthlyPerformanceTable({ rows }: Props) {
             </tr>
           </thead>
           <tbody>
-            {pivot.rows.map((row, idx) => (
+            {sortedRows.map((row, idx) => (
               <tr key={row.campaign} className={cn('hover:bg-[#F3F8FF]', idx % 2 === 1 && 'bg-[#FAFAFB]')}>
                 <td
                   className={cn(

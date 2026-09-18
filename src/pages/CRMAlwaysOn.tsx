@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { FlaskConical } from 'lucide-react'
 import { useSheetData } from '@/hooks/useSheetData'
 import { DatePresetFilter } from '@/components/filters/DatePresetFilter'
@@ -7,7 +7,8 @@ import { presetToRange, type Preset } from '@/components/filters/datePresets'
 import { AoCampaignTrendChart } from '@/components/charts/AoCampaignTrendChart'
 import { AoMonthlyPerformanceTable } from '@/components/AoMonthlyPerformanceTable'
 import { AoPeriodComparisonTable } from '@/components/AoPeriodComparisonTable'
-import { filterAoRows, listAoCampaignNames, buildAoCampaignTrend } from '@/lib/metrics'
+import { DateField } from '@/components/filters/DateField'
+import { filterAoRows, listAoCampaignNames, buildAoCampaignTrend, previousPeriodOfSameLength } from '@/lib/metrics'
 import { generateDemoAoRows } from '@/lib/aoDemoData'
 import { toDateStr } from '@/lib/formatters'
 import { cn } from '@/lib/utils'
@@ -35,6 +36,9 @@ export function CRMAlwaysOn() {
   const [granularity, setGranularity] = useState<'week' | 'month'>('week')
   const [demoMode, setDemoMode] = useState(false)
   const [viewMode, setViewMode] = useState<'accumulated' | 'comparison'>('accumulated')
+  const [periodB, setPeriodB] = useState<DateRange>({ start: '', end: '' }) // 기준 기간
+  const [periodA, setPeriodA] = useState<DateRange>({ start: '', end: '' }) // 비교 기간
+  const periodInitialized = useRef(false)
 
   // dateRange 로드 후 기본 프리셋(최근 3개월) 적용
   useEffect(() => {
@@ -60,6 +64,15 @@ export function CRMAlwaysOn() {
 
   const start = range.start || minDate
   const end = range.end || maxDate
+
+  // 기간 비교의 기본값 — 상단 필터 기간을 "기준 기간"으로, 그 직전 동일 길이 구간을 "비교 기간"으로 잡음
+  // 이후엔 사용자가 두 기간을 독립적으로 자유롭게 바꿀 수 있음
+  useEffect(() => {
+    if (periodInitialized.current || !start || !end) return
+    periodInitialized.current = true
+    setPeriodB({ start, end })
+    setPeriodA(previousPeriodOfSameLength(start, end))
+  }, [start, end])
 
   const trendSourceRows = useMemo(
     () => aoRows.filter(r => (!start || r.date >= start) && (!end || r.date <= end)),
@@ -160,10 +173,28 @@ export function CRMAlwaysOn() {
                 ))}
               </div>
             </div>
+
+            {viewMode === 'comparison' && (
+              <div className="flex flex-wrap items-center gap-x-5 gap-y-2 px-1 text-xs">
+                <div className="flex items-center gap-2">
+                  <span className="text-[#6B7280]">비교 기간</span>
+                  <DateField value={periodA.start} onChange={v => setPeriodA(p => ({ ...p, start: v }))} />
+                  <span className="text-[#9CA3AF]">~</span>
+                  <DateField value={periodA.end} onChange={v => setPeriodA(p => ({ ...p, end: v }))} />
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="font-semibold text-[#1d1d1f]">기준 기간</span>
+                  <DateField value={periodB.start} onChange={v => setPeriodB(p => ({ ...p, start: v }))} />
+                  <span className="text-[#9CA3AF]">~</span>
+                  <DateField value={periodB.end} onChange={v => setPeriodB(p => ({ ...p, end: v }))} />
+                </div>
+              </div>
+            )}
+
             {viewMode === 'accumulated' ? (
               <AoMonthlyPerformanceTable rows={aoRows} />
             ) : (
-              <AoPeriodComparisonTable rows={aoRows} defaultStart={start} defaultEnd={end} />
+              <AoPeriodComparisonTable rows={aoRows} periodA={periodA} periodB={periodB} />
             )}
           </section>
         </div>

@@ -700,5 +700,35 @@ export function buildAoPeriodTable(rows: MartineeUnionRow[], start: string, end:
         revenue,
       }
     })
-    .sort((a, b) => b.revenue - a.revenue)
+}
+
+export type AoSortKey = 'name' | 'revenue' | 'reach' | 'conversionA'
+
+export const AO_SORT_OPTIONS: { key: AoSortKey; label: string }[] = [
+  { key: 'name', label: '캠페인명 (가나다순)' },
+  { key: 'revenue', label: 'Revenue 높은순' },
+  { key: 'reach', label: '발송/노출 높은순' },
+  { key: 'conversionA', label: 'Conversion A 높은순' },
+]
+
+interface AoSortable {
+  campaign: string
+  revenue: number
+  sent: number
+  impressions: number
+  conversionA: number
+}
+
+/** 캠페인 목록/피벗 행 등을 공통 정렬 기준으로 정렬. rows 자체는 AoSortable 모양이 아니어도 toMetrics로 뽑아내면 됨 */
+export function sortByAoMetric<T>(rowsIn: T[], sortKey: AoSortKey, toMetrics: (row: T) => AoSortable): T[] {
+  const arr = [...rowsIn]
+  arr.sort((a, b) => {
+    const ma = toMetrics(a)
+    const mb = toMetrics(b)
+    if (sortKey === 'name') return ma.campaign.localeCompare(mb.campaign, 'ko')
+    if (sortKey === 'revenue') return mb.revenue - ma.revenue
+    if (sortKey === 'reach') return (mb.sent + mb.impressions) - (ma.sent + ma.impressions)
+    return mb.conversionA - ma.conversionA
+  })
+  return arr
 }
