@@ -531,6 +531,36 @@ export function buildAoCampaignTrend(
     }))
 }
 
+export interface AoDailyRow {
+  date: string
+  impressions: number
+  sent: number
+  conversionA: number
+  conversionB: number
+  revenue: number
+}
+
+/** 특정 AO 캠페인의 일자별 실적 — 최신 날짜가 먼저 */
+export function buildAoCampaignDailyRows(rows: MartineeUnionRow[], campaignDepth1: string): AoDailyRow[] {
+  const campaignRows = rows.filter(r => r.campaign_depth_1 === campaignDepth1)
+  const byDate = new Map<string, MartineeUnionRow[]>()
+  for (const r of campaignRows) {
+    const list = byDate.get(r.date) ?? []
+    list.push(r)
+    byDate.set(r.date, list)
+  }
+  return [...byDate.entries()]
+    .sort(([a], [b]) => b.localeCompare(a))
+    .map(([date, rs]) => ({
+      date,
+      impressions: rs.reduce((s, r) => s + r.impressions, 0),
+      sent: rs.reduce((s, r) => s + r.sent, 0),
+      conversionA: rs.reduce((s, r) => s + r.conversion_a, 0),
+      conversionB: rs.reduce((s, r) => s + r.conversion_b, 0),
+      revenue: rs.reduce((s, r) => s + r.revenue, 0),
+    }))
+}
+
 export interface AoMonthlyMetrics {
   impressions: number
   sent: number

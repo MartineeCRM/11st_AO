@@ -5,8 +5,10 @@ import { DatePresetFilter } from '@/components/filters/DatePresetFilter'
 import { CampaignSelectFilter } from '@/components/filters/CampaignSelectFilter'
 import { presetToRange, type Preset } from '@/components/filters/datePresets'
 import { AoCampaignTrendChart } from '@/components/charts/AoCampaignTrendChart'
+import { AoCampaignDailyTable } from '@/components/AoCampaignDailyTable'
 import { AoMonthlyPerformanceTable } from '@/components/AoMonthlyPerformanceTable'
 import { AoPeriodComparisonTable } from '@/components/AoPeriodComparisonTable'
+import { SegmentedToggle } from '@/components/filters/SegmentedToggle'
 import { filterAoRows, listAoCampaignNames, buildAoCampaignTrend, previousPeriodOfSameLength } from '@/lib/metrics'
 import { generateDemoAoRows } from '@/lib/aoDemoData'
 import { toDateStr } from '@/lib/formatters'
@@ -35,6 +37,7 @@ export function CRMAlwaysOn() {
   const [granularity, setGranularity] = useState<'week' | 'month'>('week')
   const [demoMode, setDemoMode] = useState(false)
   const [viewMode, setViewMode] = useState<'accumulated' | 'comparison'>('accumulated')
+  const [trendView, setTrendView] = useState<'chart' | 'table'>('chart')
   const [periodB, setPeriodB] = useState<DateRange>({ start: '', end: '' }) // 기준 기간
   const [periodA, setPeriodA] = useState<DateRange>({ start: '', end: '' }) // 비교 기간
   const periodInitialized = useRef(false)
@@ -138,39 +141,42 @@ export function CRMAlwaysOn() {
       ) : (
         <div className="flex flex-col gap-8 px-6 py-5">
           <section className="flex flex-col gap-2">
-            <h2 className="px-1 text-sm font-semibold text-[#1d1d1f]">캠페인별 추이</h2>
-            <div className="h-80">
-              <AoCampaignTrendChart
-                campaignName={selectedCampaign}
-                data={trendData}
-                granularity={granularity}
-                onGranularityChange={setGranularity}
+            <div className="flex items-center justify-between px-1">
+              <h2 className="text-sm font-semibold text-[#1d1d1f]">캠페인별 추이</h2>
+              <SegmentedToggle
+                value={trendView}
+                onChange={setTrendView}
+                options={[
+                  { key: 'chart', label: '그래프' },
+                  { key: 'table', label: '테이블' },
+                ]}
               />
             </div>
+            {trendView === 'chart' ? (
+              <div className="h-80">
+                <AoCampaignTrendChart
+                  campaignName={selectedCampaign}
+                  data={trendData}
+                  granularity={granularity}
+                  onGranularityChange={setGranularity}
+                />
+              </div>
+            ) : (
+              <AoCampaignDailyTable rows={trendSourceRows} campaign={selectedCampaign} />
+            )}
           </section>
 
           <section className="flex flex-col gap-2">
             <div className="flex items-center justify-between px-1">
               <h2 className="text-sm font-semibold text-[#1d1d1f]">월별 실적</h2>
-              <div className="flex items-center rounded-lg border border-[#e0e0e0] bg-[#F9FAFB] p-0.5">
-                {([
-                  { key: 'accumulated' as const, label: '누적 보기' },
-                  { key: 'comparison' as const, label: '기간 비교' },
-                ]).map(opt => (
-                  <button
-                    key={opt.key}
-                    onClick={() => setViewMode(opt.key)}
-                    className={cn(
-                      'rounded-md px-3 py-1.5 text-xs font-medium transition-all',
-                      viewMode === opt.key
-                        ? 'border border-[#0066cc] bg-[#e8f0fb] text-[#0066cc]'
-                        : 'text-[#6B7280] hover:text-[#1d1d1f]',
-                    )}
-                  >
-                    {opt.label}
-                  </button>
-                ))}
-              </div>
+              <SegmentedToggle
+                value={viewMode}
+                onChange={setViewMode}
+                options={[
+                  { key: 'accumulated', label: '누적 보기' },
+                  { key: 'comparison', label: '기간 비교' },
+                ]}
+              />
             </div>
 
             {viewMode === 'accumulated' ? (

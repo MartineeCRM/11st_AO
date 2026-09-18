@@ -12,7 +12,7 @@ import {
 import type { AoTrendPoint } from '@/lib/metrics'
 import { formatKorean, formatCurrency } from '@/lib/formatters'
 import { useChartColors } from '@/lib/chartColors'
-import { cn } from '@/lib/utils'
+import { SegmentedToggle } from '@/components/filters/SegmentedToggle'
 
 interface Props {
   campaignName: string
@@ -31,22 +31,14 @@ export function AoCampaignTrendChart({ campaignName, data, granularity, onGranul
           <p className="truncate text-sm font-semibold text-[#1d1d1f]">{campaignName || '캠페인을 선택하세요'}</p>
           <p className="text-xs text-[#9CA3AF] mt-0.5">발송/노출 · Conversion A · Revenue 추이</p>
         </div>
-        <div className="flex shrink-0 items-center rounded-lg border border-[#e0e0e0] bg-[#F9FAFB] p-0.5">
-          {(['week', 'month'] as const).map(g => (
-            <button
-              key={g}
-              onClick={() => onGranularityChange(g)}
-              className={cn(
-                'rounded-md px-3 py-1.5 text-xs font-medium transition-all',
-                granularity === g
-                  ? 'border border-[#0066cc] bg-[#e8f0fb] text-[#0066cc]'
-                  : 'text-[#6B7280] hover:text-[#1d1d1f]',
-              )}
-            >
-              {g === 'week' ? '주별' : '월별'}
-            </button>
-          ))}
-        </div>
+        <SegmentedToggle
+          value={granularity}
+          onChange={onGranularityChange}
+          options={[
+            { key: 'week', label: '주별' },
+            { key: 'month', label: '월별' },
+          ]}
+        />
       </div>
 
       <div className="flex-1 min-h-0">
