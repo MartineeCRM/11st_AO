@@ -50,7 +50,8 @@ export function CRMSettings({ project, saveDashboardLayout }: Props) {
   const [layoutError, setLayoutError] = useState<string | null>(null)
   const [layoutSuccess, setLayoutSuccess] = useState<string | null>(null)
 
-  const tabVisibility = project.dashboard_layout?.tabVisibility ?? DEFAULT_LAYOUT.tabVisibility
+  // 저장된 tabVisibility에 새로 추가된 키가 없을 수 있으므로 기본값 위에 병합
+  const tabVisibility = { ...DEFAULT_LAYOUT.tabVisibility, ...project.dashboard_layout?.tabVisibility }
 
   async function handleToggleTab(tab: TabKey) {
     setLayoutSaving(true)

@@ -7,6 +7,7 @@ const CRMAlwaysOn = lazy(() => import('@/pages/CRMAlwaysOn').then(m => ({ defaul
 import { CRMSettings } from '@/pages/CRMSettings'
 import { ProtectedRoute } from '@/components/ProtectedRoute'
 import { ChartColorsContext, DEFAULT_CHART_COLORS } from '@/lib/chartColors'
+import type { TabVisibility } from '@/lib/supabase'
 
 type Tab = 'performance' | 'attribution' | 'ops' | 'ao' | 'settings'
 
@@ -75,7 +76,15 @@ export default function App() {
           setProjectId(id)
         }
 
-        const tabVisibility = project.dashboard_layout?.tabVisibility ?? { performance: true, attribution: true, ops: true, ao: true }
+        // 기존에 저장된 프로젝트는 tabVisibility에 새로 추가된 키(ao 등)가 없을 수 있으므로
+        // 기본값을 먼저 깔고 저장된 값으로 덮어써야 함 (?? 만 쓰면 누락된 키가 false 취급됨)
+        const tabVisibility: TabVisibility = {
+          performance: true,
+          attribution: true,
+          ops: true,
+          ao: true,
+          ...project.dashboard_layout?.tabVisibility,
+        }
         const TAB_ORDER: Tab[] = ['performance', 'attribution', 'ops', 'ao', 'settings']
 
         // 활성 탭이 비활성화되면 노출된 첫 탭으로 전환 (렌더 중 상태 보정, useEffect 아님 —
