@@ -160,7 +160,7 @@ export function AoMonthlyPerformanceTable({ rows }: Props) {
                   <th
                     key={year}
                     colSpan={span}
-                    className="border-b border-l border-[#e0e0e0] bg-[#F3F4F6] px-3 py-1.5 text-center"
+                    className="border-b border-[#e0e0e0] bg-[#F3F4F6] px-3 py-1.5 text-center"
                   >
                     <button
                       onClick={() => toggleYear(year)}
@@ -180,7 +180,7 @@ export function AoMonthlyPerformanceTable({ rows }: Props) {
                 <th
                   key={`${g.year}-${g.month ?? 'total'}`}
                   colSpan={colsPerMonth}
-                  className="border-b border-l border-[#e0e0e0] px-3 py-1.5 text-center text-[11px] font-semibold text-[#1d1d1f]"
+                  className="border-b border-[#e0e0e0] px-3 py-1.5 text-center text-[11px] font-semibold text-[#1d1d1f]"
                 >
                   {g.label}
                 </th>
@@ -193,7 +193,7 @@ export function AoMonthlyPerformanceTable({ rows }: Props) {
               </th>
               {columnGroups.map(g => (
                 <Fragment key={`${g.year}-${g.month ?? 'total'}`}>
-                  <th className="border-b border-l border-[#F3F4F6] px-3 py-1.5 text-right text-[10px] font-medium text-[#9CA3AF]">노출</th>
+                  <th className="border-b px-3 py-1.5 text-right text-[10px] font-medium text-[#9CA3AF]">노출</th>
                   <th className="border-b px-3 py-1.5 text-right text-[10px] font-medium text-[#9CA3AF]">발송</th>
                   <th className="border-b px-3 py-1.5 text-right text-[10px] font-medium text-[#9CA3AF]">Conv A</th>
                   <th className="border-b px-3 py-1.5 text-right text-[10px] font-medium text-[#9CA3AF]">Conv B</th>
@@ -223,7 +223,7 @@ export function AoMonthlyPerformanceTable({ rows }: Props) {
                   const m = g.month ? row.byMonth[g.month] : row.byYear[g.year]
                   return (
                     <Fragment key={`${g.year}-${g.month ?? 'total'}`}>
-                      <td className="border-b border-l border-[#F3F4F6] px-3 py-2 text-right text-xs tabular-nums text-[#1d1d1f]">
+                      <td className="border-b border-[#F3F4F6] px-3 py-2 text-right text-xs tabular-nums text-[#1d1d1f]">
                         {m ? formatNumber(m.impressions) : '-'}
                       </td>
                       <td className="border-b border-[#F3F4F6] px-3 py-2 text-right text-xs tabular-nums text-[#1d1d1f]">

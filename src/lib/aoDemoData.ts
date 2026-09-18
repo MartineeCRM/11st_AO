@@ -43,14 +43,15 @@ function demoRow(date: string, campaign: string, sent: number, conversionA: numb
 
 /**
  * 화면 미리보기 전용 가짜 AO 데이터 — 실제 시트/DB에는 절대 쓰지 않는다.
- * referenceDate 기준 과거 20개월치를 만들어 연도 경계를 넘는 장기 캠페인 시나리오를 재현한다.
+ * referenceDate 기준 과거 44개월치(3~4개 연도)를 만들어, 오래 운영되는 캠페인이
+ * 여러 해에 걸쳐 쌓였을 때 "연도 데이터 더 보기" 버튼이 어떻게 동작하는지 미리 볼 수 있게 한다.
  */
 export function generateDemoAoRows(referenceDate: string): MartineeUnionRow[] {
   const [y, m] = referenceDate.slice(0, 7).split('-').map(Number)
   const campaigns = ['(샘플) 장바구니 담기 유도', '(샘플) 첫구매 유도']
   const rows: MartineeUnionRow[] = []
 
-  for (let i = 0; i < 20; i++) {
+  for (let i = 0; i < 44; i++) {
     const total = y * 12 + (m - 1) - i
     const yy = Math.floor(total / 12)
     const mm = (total % 12) + 1
