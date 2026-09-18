@@ -152,7 +152,7 @@ export function AoMonthlyPerformanceTable({ rows }: Props) {
           <thead>
             {/* 연도 행 — 클릭해서 접기/펼치기 */}
             <tr>
-              <th className="sticky left-0 z-20 border-b border-[#e0e0e0] bg-[#F3F4F6] px-4 py-1.5" />
+              <th className="sticky left-0 z-20 border-b border-r border-[#E5E7EB] bg-[#F3F4F6] px-4 py-1.5" />
               {pivot.years.map(year => {
                 const collapsed = collapsedYears.has(year)
                 const span = collapsed ? colsPerMonth : pivot.monthsByYear[year].length * colsPerMonth
@@ -160,7 +160,7 @@ export function AoMonthlyPerformanceTable({ rows }: Props) {
                   <th
                     key={year}
                     colSpan={span}
-                    className="border-b border-[#e0e0e0] bg-[#F3F4F6] px-3 py-1.5 text-center"
+                    className="border-b border-l border-[#E5E7EB] bg-[#F3F4F6] px-3 py-1.5 text-center"
                   >
                     <button
                       onClick={() => toggleYear(year)}
@@ -175,12 +175,12 @@ export function AoMonthlyPerformanceTable({ rows }: Props) {
             </tr>
             {/* 월(또는 연간 합계) 행 */}
             <tr className="bg-[#F9FAFB]">
-              <th className="sticky left-0 z-20 border-b border-[#e0e0e0] bg-[#F9FAFB] px-4 py-1.5" />
+              <th className="sticky left-0 z-20 border-b border-r border-[#E5E7EB] bg-[#F9FAFB] px-4 py-1.5" />
               {columnGroups.map(g => (
                 <th
                   key={`${g.year}-${g.month ?? 'total'}`}
                   colSpan={colsPerMonth}
-                  className="border-b border-[#e0e0e0] px-3 py-1.5 text-center text-[11px] font-semibold text-[#1d1d1f]"
+                  className="border-b border-l border-[#E5E7EB] px-3 py-1.5 text-center text-[11px] font-semibold text-[#1d1d1f]"
                 >
                   {g.label}
                 </th>
@@ -188,20 +188,20 @@ export function AoMonthlyPerformanceTable({ rows }: Props) {
             </tr>
             {/* 지표 행 */}
             <tr className="bg-[#F9FAFB]">
-              <th className="sticky left-0 z-20 border-b border-[#e0e0e0] bg-[#F9FAFB] px-4 py-1.5 text-left text-[11px] font-semibold text-[#6B7280]">
+              <th className="sticky left-0 z-20 border-b border-r border-[#E5E7EB] bg-[#F9FAFB] px-4 py-1.5 text-left text-[11px] font-semibold text-[#6B7280]">
                 캠페인명
               </th>
               {columnGroups.map(g => (
                 <Fragment key={`${g.year}-${g.month ?? 'total'}`}>
-                  <th className="border-b px-3 py-1.5 text-right text-[10px] font-medium text-[#9CA3AF]">노출</th>
-                  <th className="border-b px-3 py-1.5 text-right text-[10px] font-medium text-[#9CA3AF]">발송</th>
-                  <th className="border-b px-3 py-1.5 text-right text-[10px] font-medium text-[#9CA3AF]">Conv A</th>
-                  <th className="border-b px-3 py-1.5 text-right text-[10px] font-medium text-[#9CA3AF]">Conv B</th>
-                  <th className="border-b px-3 py-1.5 text-right text-[10px] font-medium text-[#9CA3AF]">Revenue</th>
+                  <th className="border-b border-l border-[#E5E7EB] px-3 py-1.5 text-right text-[10px] font-medium text-[#9CA3AF]">노출</th>
+                  <th className="border-b border-[#F3F4F6] px-3 py-1.5 text-right text-[10px] font-medium text-[#9CA3AF]">발송</th>
+                  <th className="border-b border-[#F3F4F6] px-3 py-1.5 text-right text-[10px] font-medium text-[#9CA3AF]">Conv A</th>
+                  <th className="border-b border-[#F3F4F6] px-3 py-1.5 text-right text-[10px] font-medium text-[#9CA3AF]">Conv B</th>
+                  <th className="border-b border-[#F3F4F6] px-3 py-1.5 text-right text-[10px] font-medium text-[#9CA3AF]">Revenue</th>
                   {showExtra && (
                     <>
-                      <th className="border-b px-3 py-1.5 text-right text-[10px] font-medium text-[#9CA3AF]">Conv C</th>
-                      <th className="border-b px-3 py-1.5 text-right text-[10px] font-medium text-[#9CA3AF]">Conv D</th>
+                      <th className="border-b border-[#F3F4F6] px-3 py-1.5 text-right text-[10px] font-medium text-[#9CA3AF]">Conv C</th>
+                      <th className="border-b border-[#F3F4F6] px-3 py-1.5 text-right text-[10px] font-medium text-[#9CA3AF]">Conv D</th>
                     </>
                   )}
                 </Fragment>
@@ -213,7 +213,7 @@ export function AoMonthlyPerformanceTable({ rows }: Props) {
               <tr key={row.campaign} className={cn('hover:bg-[#F3F8FF]', idx % 2 === 1 && 'bg-[#FAFAFB]')}>
                 <td
                   className={cn(
-                    'sticky left-0 z-10 max-w-[220px] truncate border-b border-[#F3F4F6] px-4 py-2 text-xs font-medium text-[#1d1d1f]',
+                    'sticky left-0 z-10 max-w-[220px] truncate border-b border-r border-[#E5E7EB] px-4 py-2 text-xs font-medium text-[#1d1d1f]',
                     idx % 2 === 1 ? 'bg-[#FAFAFB]' : 'bg-white',
                   )}
                 >
@@ -223,7 +223,7 @@ export function AoMonthlyPerformanceTable({ rows }: Props) {
                   const m = g.month ? row.byMonth[g.month] : row.byYear[g.year]
                   return (
                     <Fragment key={`${g.year}-${g.month ?? 'total'}`}>
-                      <td className="border-b border-[#F3F4F6] px-3 py-2 text-right text-xs tabular-nums text-[#1d1d1f]">
+                      <td className="border-b border-l border-[#E5E7EB] px-3 py-2 text-right text-xs tabular-nums text-[#1d1d1f]">
                         {m ? formatNumber(m.impressions) : '-'}
                       </td>
                       <td className="border-b border-[#F3F4F6] px-3 py-2 text-right text-xs tabular-nums text-[#1d1d1f]">
