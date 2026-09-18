@@ -93,17 +93,23 @@ export function CRMAlwaysOn() {
       {loading ? (
         <LoadingSkeleton />
       ) : (
-        <div className="flex flex-col gap-5 px-6 py-5">
-          <div className="h-80">
-            <AoCampaignTrendChart
-              campaignName={selectedCampaign}
-              data={trendData}
-              granularity={granularity}
-              onGranularityChange={setGranularity}
-            />
-          </div>
+        <div className="flex flex-col gap-8 px-6 py-5">
+          <section className="flex flex-col gap-2">
+            <h2 className="px-1 text-sm font-semibold text-[#1d1d1f]">캠페인별 추이</h2>
+            <div className="h-80">
+              <AoCampaignTrendChart
+                campaignName={selectedCampaign}
+                data={trendData}
+                granularity={granularity}
+                onGranularityChange={setGranularity}
+              />
+            </div>
+          </section>
 
-          <AoMonthlyPerformanceTable rows={aoRows} />
+          <section className="flex flex-col gap-2 border-t border-[#e0e0e0] pt-8">
+            <h2 className="px-1 text-sm font-semibold text-[#1d1d1f]">월별 실적 누적</h2>
+            <AoMonthlyPerformanceTable rows={aoRows} />
+          </section>
         </div>
       )}
     </>

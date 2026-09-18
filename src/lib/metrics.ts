@@ -541,61 +541,86 @@ export interface AoMonthlyMetrics {
   revenue: number
 }
 
-export interface AoMonthlyPivotRow {
+export interface AoPivotRow {
   campaign: string
-  months: Record<string, AoMonthlyMetrics>
+  /** YYYY-MM 단위 실적 (그 캠페인이 실제 발송한 달만 존재) */
+  byMonth: Record<string, AoMonthlyMetrics>
+  /** YYYY 단위 연간 합계 (연도가 접혔을 때 표시) */
+  byYear: Record<string, AoMonthlyMetrics>
 }
 
-export interface AoMonthlyPivot {
-  /** YYYY-MM, 최신 달이 먼저 */
-  months: string[]
-  rows: AoMonthlyPivotRow[]
+export interface AoPivotResult {
+  /** 펼쳐진(요청된) 연도, 최신순 */
+  years: string[]
+  /** 연도별로 실제 데이터가 존재하는 월 목록 (그 연도 내림차순) */
+  monthsByYear: Record<string, string[]>
+  rows: AoPivotRow[]
+}
+
+function sumAoMetrics(rs: MartineeUnionRow[]): AoMonthlyMetrics {
+  return {
+    impressions: rs.reduce((s, r) => s + r.impressions, 0),
+    sent: rs.reduce((s, r) => s + r.sent, 0),
+    conversionA: rs.reduce((s, r) => s + r.conversion_a, 0),
+    conversionB: rs.reduce((s, r) => s + r.conversion_b, 0),
+    conversionC: rs.reduce((s, r) => s + r.conversion_c, 0),
+    conversionD: rs.reduce((s, r) => s + r.conversion_d, 0),
+    revenue: rs.reduce((s, r) => s + r.revenue, 0),
+  }
+}
+
+/** 날짜 → 연 (YYYY) */
+function yearOf(dateStr: string): string {
+  return dateStr.slice(0, 4)
+}
+
+/** AO 데이터에 존재하는 전체 연도 목록 (최신순) — 장기 운영 캠페인이 여러 해에 걸쳐 있을 수 있음 */
+export function listAoYears(rows: MartineeUnionRow[]): string[] {
+  return [...new Set(rows.map(r => yearOf(r.date)))].sort().reverse()
 }
 
 /**
- * AO 캠페인 월별 실적 피벗.
- * 최신 달부터 visibleMonths개를 열로 삼고, 그 달들 중 하나라도 발송 이력이 있는
- * 캠페인만 행으로 포함한다 (발송 없는 달은 해당 셀만 비움).
+ * AO 캠페인 실적 피벗 (연도 단위로 펼침/접음 가능).
+ * years에 포함된 해에 한 번이라도 발송한 캠페인만 행으로 포함하고,
+ * 캠페인·월 조합에 실제 발송 데이터가 없으면 byMonth에 항목 자체를 만들지 않는다.
  */
-export function buildAoMonthlyPivot(rows: MartineeUnionRow[], visibleMonths: number): AoMonthlyPivot {
-  const allMonths = [...new Set(rows.map(r => monthStart(r.date)))].sort().reverse()
-  const months = allMonths.slice(0, visibleMonths)
-  const monthSet = new Set(months)
+export function buildAoPivot(rows: MartineeUnionRow[], years: string[]): AoPivotResult {
+  const yearSet = new Set(years)
+  const relevantRows = rows.filter(r => yearSet.has(yearOf(r.date)))
 
-  const byCampaignMonth = new Map<string, Map<string, MartineeUnionRow[]>>()
-  for (const r of rows) {
-    const month = monthStart(r.date)
-    if (!monthSet.has(month)) continue
-    const campaign = r.campaign_depth_1
-    if (!campaign) continue
-    const byMonth = byCampaignMonth.get(campaign) ?? new Map<string, MartineeUnionRow[]>()
-    const list = byMonth.get(month) ?? []
-    list.push(r)
-    byMonth.set(month, list)
-    byCampaignMonth.set(campaign, byMonth)
+  const monthsByYear: Record<string, string[]> = {}
+  for (const year of years) {
+    monthsByYear[year] = [...new Set(
+      relevantRows.filter(r => yearOf(r.date) === year).map(r => monthStart(r.date)),
+    )].sort().reverse()
   }
 
-  const pivotRows: AoMonthlyPivotRow[] = [...byCampaignMonth.entries()]
+  const byCampaign = new Map<string, MartineeUnionRow[]>()
+  for (const r of relevantRows) {
+    if (!r.campaign_depth_1) continue
+    const list = byCampaign.get(r.campaign_depth_1) ?? []
+    list.push(r)
+    byCampaign.set(r.campaign_depth_1, list)
+  }
+
+  const pivotRows: AoPivotRow[] = [...byCampaign.entries()]
     .sort(([a], [b]) => a.localeCompare(b, 'ko'))
-    .map(([campaign, byMonth]) => {
-      const monthMetrics: Record<string, AoMonthlyMetrics> = {}
-      for (const month of months) {
-        const rs = byMonth.get(month)
-        if (!rs) continue
-        monthMetrics[month] = {
-          impressions: rs.reduce((s, r) => s + r.impressions, 0),
-          sent: rs.reduce((s, r) => s + r.sent, 0),
-          conversionA: rs.reduce((s, r) => s + r.conversion_a, 0),
-          conversionB: rs.reduce((s, r) => s + r.conversion_b, 0),
-          conversionC: rs.reduce((s, r) => s + r.conversion_c, 0),
-          conversionD: rs.reduce((s, r) => s + r.conversion_d, 0),
-          revenue: rs.reduce((s, r) => s + r.revenue, 0),
+    .map(([campaign, campaignRows]) => {
+      const byMonth: Record<string, AoMonthlyMetrics> = {}
+      const byYear: Record<string, AoMonthlyMetrics> = {}
+      for (const year of years) {
+        const yearRows = campaignRows.filter(r => yearOf(r.date) === year)
+        if (yearRows.length === 0) continue
+        byYear[year] = sumAoMetrics(yearRows)
+        for (const month of monthsByYear[year]) {
+          const monthRows = yearRows.filter(r => monthStart(r.date) === month)
+          if (monthRows.length > 0) byMonth[month] = sumAoMetrics(monthRows)
         }
       }
-      return { campaign, months: monthMetrics }
+      return { campaign, byMonth, byYear }
     })
 
-  return { months, rows: pivotRows }
+  return { years, monthsByYear, rows: pivotRows }
 }
 
 /** "YYYY-MM" → "N월" */
