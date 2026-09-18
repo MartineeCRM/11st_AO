@@ -7,7 +7,6 @@ import { presetToRange, type Preset } from '@/components/filters/datePresets'
 import { AoCampaignTrendChart } from '@/components/charts/AoCampaignTrendChart'
 import { AoMonthlyPerformanceTable } from '@/components/AoMonthlyPerformanceTable'
 import { AoPeriodComparisonTable } from '@/components/AoPeriodComparisonTable'
-import { DateField } from '@/components/filters/DateField'
 import { filterAoRows, listAoCampaignNames, buildAoCampaignTrend, previousPeriodOfSameLength } from '@/lib/metrics'
 import { generateDemoAoRows } from '@/lib/aoDemoData'
 import { toDateStr } from '@/lib/formatters'
@@ -174,27 +173,16 @@ export function CRMAlwaysOn() {
               </div>
             </div>
 
-            {viewMode === 'comparison' && (
-              <div className="flex flex-wrap items-center gap-x-5 gap-y-2 px-1 text-xs">
-                <div className="flex items-center gap-2">
-                  <span className="text-[#6B7280]">비교 기간</span>
-                  <DateField value={periodA.start} onChange={v => setPeriodA(p => ({ ...p, start: v }))} />
-                  <span className="text-[#9CA3AF]">~</span>
-                  <DateField value={periodA.end} onChange={v => setPeriodA(p => ({ ...p, end: v }))} />
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="font-semibold text-[#1d1d1f]">기준 기간</span>
-                  <DateField value={periodB.start} onChange={v => setPeriodB(p => ({ ...p, start: v }))} />
-                  <span className="text-[#9CA3AF]">~</span>
-                  <DateField value={periodB.end} onChange={v => setPeriodB(p => ({ ...p, end: v }))} />
-                </div>
-              </div>
-            )}
-
             {viewMode === 'accumulated' ? (
               <AoMonthlyPerformanceTable rows={aoRows} />
             ) : (
-              <AoPeriodComparisonTable rows={aoRows} periodA={periodA} periodB={periodB} />
+              <AoPeriodComparisonTable
+                rows={aoRows}
+                periodA={periodA}
+                periodB={periodB}
+                onPeriodAChange={setPeriodA}
+                onPeriodBChange={setPeriodB}
+              />
             )}
           </section>
         </div>

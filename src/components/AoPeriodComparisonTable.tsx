@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react'
 import { cn } from '@/lib/utils'
 import { ChartSectionNote } from './charts/ChartSectionNote'
 import { AoSortSelect } from './filters/AoSortSelect'
+import { DateField } from './filters/DateField'
 import { formatNumber, formatRate, formatCurrency } from '@/lib/formatters'
 import { buildAoPeriodTable, calcPeriodDelta, sortByAoMetric, type AoPeriodRow, type AoSortKey } from '@/lib/metrics'
 import type { MartineeUnionRow, DateRange } from '@/types/sheets'
@@ -11,6 +12,8 @@ interface Props {
   rows: MartineeUnionRow[]
   periodA: DateRange
   periodB: DateRange
+  onPeriodAChange: (range: DateRange) => void
+  onPeriodBChange: (range: DateRange) => void
 }
 
 const PAGE_SIZE = 10
@@ -55,7 +58,7 @@ function Leaderboard({ title, data, expanded }: { title: string; data: AoPeriodR
   )
 }
 
-export function AoPeriodComparisonTable({ rows, periodA, periodB }: Props) {
+export function AoPeriodComparisonTable({ rows, periodA, periodB, onPeriodAChange, onPeriodBChange }: Props) {
   const [expanded, setExpanded] = useState(false)
   const [sortKey, setSortKey] = useState<AoSortKey>('revenue')
 
@@ -74,12 +77,27 @@ export function AoPeriodComparisonTable({ rows, periodA, periodB }: Props) {
 
   return (
     <div className="rounded-xl border border-[#e0e0e0] bg-white">
-      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#e0e0e0] px-4 py-3">
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#e0e0e0] px-4 py-3">
         <div>
           <ChartSectionNote sectionId="ao_period_comparison" title="기간 비교" titleClassName="text-xs font-semibold text-[#1d1d1f]" />
-          <p className="text-[10px] text-[#9CA3AF] mt-0.5">위에서 고른 두 기간의 캠페인 성과를 나란히 비교</p>
+          <p className="text-[10px] text-[#9CA3AF] mt-0.5">두 기간을 골라 캠페인 성과를 나란히 비교</p>
         </div>
-        <AoSortSelect value={sortKey} onChange={setSortKey} />
+
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+          <div className="flex items-center gap-1.5 text-xs">
+            <span className="text-[#6B7280]">비교 기간</span>
+            <DateField value={periodA.start} onChange={v => onPeriodAChange({ ...periodA, start: v })} />
+            <span className="text-[#9CA3AF]">~</span>
+            <DateField value={periodA.end} onChange={v => onPeriodAChange({ ...periodA, end: v })} />
+          </div>
+          <div className="flex items-center gap-1.5 text-xs">
+            <span className="font-semibold text-[#1d1d1f]">기준 기간</span>
+            <DateField value={periodB.start} onChange={v => onPeriodBChange({ ...periodB, start: v })} />
+            <span className="text-[#9CA3AF]">~</span>
+            <DateField value={periodB.end} onChange={v => onPeriodBChange({ ...periodB, end: v })} />
+          </div>
+          <AoSortSelect value={sortKey} onChange={setSortKey} />
+        </div>
       </div>
 
       {delta !== null && (
