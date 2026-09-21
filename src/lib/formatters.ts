@@ -23,6 +23,11 @@ export function formatRateWithCount(rate: number, count: number): string {
   return `${formatRate(rate)} (${formatNumber(Math.round(count))})`
 }
 
+/** 건수 뒤에 전환율을 괄호로 병기 — 예: "1,234(12.3%)". rate는 0~1 비율 */
+export function formatCountWithRate(count: number, rate: number): string {
+  return `${formatNumber(Math.round(count))}(${(rate * 100).toFixed(1)}%)`
+}
+
 /** 단가성 지표 전체 숫자 표기 (AOV, ARPU, ARPPU, 노출당 Rev 등) — 정수 반올림 */
 export function formatCurrency(n: number): string {
   return `₩${Math.round(n).toLocaleString('ko-KR')}`

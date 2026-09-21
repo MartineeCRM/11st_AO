@@ -718,8 +718,14 @@ export interface AoPeriodRow {
   impressions: number
   sent: number
   conversionA: number
-  /** conversionA ÷ (impressions + sent) */
-  conversionRate: number
+  conversionB: number
+  conversionC: number
+  conversionD: number
+  /** 각 conversion ÷ (impressions + sent) */
+  conversionRateA: number
+  conversionRateB: number
+  conversionRateC: number
+  conversionRateD: number
   revenue: number
 }
 
@@ -744,6 +750,9 @@ export function buildAoPeriodTable(rows: MartineeUnionRow[], start: string, end:
       const impressions = rs.reduce((s, r) => s + r.impressions, 0)
       const sent = rs.reduce((s, r) => s + r.sent, 0)
       const conversionA = rs.reduce((s, r) => s + r.conversion_a, 0)
+      const conversionB = rs.reduce((s, r) => s + r.conversion_b, 0)
+      const conversionC = rs.reduce((s, r) => s + r.conversion_c, 0)
+      const conversionD = rs.reduce((s, r) => s + r.conversion_d, 0)
       const revenue = rs.reduce((s, r) => s + r.revenue, 0)
       const base = impressions + sent
       return {
@@ -751,7 +760,13 @@ export function buildAoPeriodTable(rows: MartineeUnionRow[], start: string, end:
         impressions,
         sent,
         conversionA,
-        conversionRate: base > 0 ? conversionA / base : 0,
+        conversionB,
+        conversionC,
+        conversionD,
+        conversionRateA: base > 0 ? conversionA / base : 0,
+        conversionRateB: base > 0 ? conversionB / base : 0,
+        conversionRateC: base > 0 ? conversionC / base : 0,
+        conversionRateD: base > 0 ? conversionD / base : 0,
         revenue,
       }
     })
