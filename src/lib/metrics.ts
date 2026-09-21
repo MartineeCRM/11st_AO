@@ -475,11 +475,21 @@ export function filterAoRows(rows: MartineeUnionRow[]): MartineeUnionRow[] {
   return rows.filter(r => r.campaign_type === 'AO')
 }
 
-/** AO 캠페인 목록 (campaign_depth_1 기준 — variant/CG·TG를 하나의 캠페인으로 묶음), 가나다순 */
+/**
+ * AO 캠페인 식별 키. campaign_depth_1만 쓰면 서로 다른 캠페인이 같은 이름으로 뭉쳐 보이는
+ * 경우가 있어, campaign_depth_2가 있으면 붙여서 구분한다 (variant/CG·TG는 계속 하나로 묶임).
+ */
+function aoCampaignKey(r: MartineeUnionRow): string {
+  if (!r.campaign_depth_1) return ''
+  return r.campaign_depth_2 ? `${r.campaign_depth_1} · ${r.campaign_depth_2}` : r.campaign_depth_1
+}
+
+/** AO 캠페인 목록 (campaign_depth_1 + campaign_depth_2 기준), 가나다순 */
 export function listAoCampaignNames(rows: MartineeUnionRow[]): string[] {
   const names = new Set<string>()
   for (const r of rows) {
-    if (r.campaign_depth_1) names.add(r.campaign_depth_1)
+    const key = aoCampaignKey(r)
+    if (key) names.add(key)
   }
   return [...names].sort((a, b) => a.localeCompare(b, 'ko'))
 }
@@ -507,13 +517,13 @@ function monthStart(dateStr: string): string {
   return dateStr.slice(0, 7)
 }
 
-/** 특정 AO 캠페인(campaign_depth_1)의 주/월 단위 합산 추이 */
+/** 특정 AO 캠페인(campaign_depth_1 + campaign_depth_2 키)의 주/월 단위 합산 추이 */
 export function buildAoCampaignTrend(
   rows: MartineeUnionRow[],
-  campaignDepth1: string,
+  campaign: string,
   granularity: 'week' | 'month',
 ): AoTrendPoint[] {
-  const campaignRows = rows.filter(r => r.campaign_depth_1 === campaignDepth1)
+  const campaignRows = rows.filter(r => aoCampaignKey(r) === campaign)
   const byPeriod = new Map<string, MartineeUnionRow[]>()
   for (const r of campaignRows) {
     const key = granularity === 'week' ? weekStart(r.date) : monthStart(r.date)
@@ -541,8 +551,8 @@ export interface AoDailyRow {
 }
 
 /** 특정 AO 캠페인의 일자별 실적 — 최신 날짜가 먼저 */
-export function buildAoCampaignDailyRows(rows: MartineeUnionRow[], campaignDepth1: string): AoDailyRow[] {
-  const campaignRows = rows.filter(r => r.campaign_depth_1 === campaignDepth1)
+export function buildAoCampaignDailyRows(rows: MartineeUnionRow[], campaign: string): AoDailyRow[] {
+  const campaignRows = rows.filter(r => aoCampaignKey(r) === campaign)
   const byDate = new Map<string, MartineeUnionRow[]>()
   for (const r of campaignRows) {
     const list = byDate.get(r.date) ?? []
@@ -627,10 +637,11 @@ export function buildAoPivot(rows: MartineeUnionRow[], years: string[]): AoPivot
 
   const byCampaign = new Map<string, MartineeUnionRow[]>()
   for (const r of relevantRows) {
-    if (!r.campaign_depth_1) continue
-    const list = byCampaign.get(r.campaign_depth_1) ?? []
+    const key = aoCampaignKey(r)
+    if (!key) continue
+    const list = byCampaign.get(key) ?? []
     list.push(r)
-    byCampaign.set(r.campaign_depth_1, list)
+    byCampaign.set(key, list)
   }
 
   const pivotRows: AoPivotRow[] = [...byCampaign.entries()]
@@ -708,10 +719,11 @@ export function buildAoPeriodTable(rows: MartineeUnionRow[], start: string, end:
 
   const byCampaign = new Map<string, MartineeUnionRow[]>()
   for (const r of inRange) {
-    if (!r.campaign_depth_1) continue
-    const list = byCampaign.get(r.campaign_depth_1) ?? []
+    const key = aoCampaignKey(r)
+    if (!key) continue
+    const list = byCampaign.get(key) ?? []
     list.push(r)
-    byCampaign.set(r.campaign_depth_1, list)
+    byCampaign.set(key, list)
   }
 
   return [...byCampaign.entries()]
