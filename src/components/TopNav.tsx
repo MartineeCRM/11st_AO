@@ -4,7 +4,7 @@ import { supabase } from '@/lib/supabase'
 import { cn } from '@/lib/utils'
 import type { Project, TabVisibility } from '@/lib/supabase'
 
-type Tab = 'performance' | 'attribution' | 'ops' | 'settings'
+type Tab = 'performance' | 'attribution' | 'ops' | 'ao' | 'settings'
 
 interface Props {
   activeTab: Tab
@@ -19,6 +19,7 @@ const TABS: { key: Tab; label: string }[] = [
   { key: 'performance', label: 'CRM 성과 모니터링' },
   { key: 'attribution', label: 'CRM Attribution' },
   { key: 'ops', label: '캠페인 운영 현황' },
+  { key: 'ao', label: 'AO 캠페인 모니터링' },
   { key: 'settings', label: '설정' },
 ]
 

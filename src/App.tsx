@@ -3,11 +3,13 @@ import { TopNav } from '@/components/TopNav'
 import { CRMPerformance } from '@/pages/CRMPerformance'
 const CRMAttribution = lazy(() => import('@/pages/CRMAttribution').then(m => ({ default: m.CRMAttribution })))
 import { CRMCampaignOps } from '@/pages/CRMCampaignOps'
+const CRMAlwaysOn = lazy(() => import('@/pages/CRMAlwaysOn').then(m => ({ default: m.CRMAlwaysOn })))
 import { CRMSettings } from '@/pages/CRMSettings'
 import { ProtectedRoute } from '@/components/ProtectedRoute'
 import { ChartColorsContext, DEFAULT_CHART_COLORS } from '@/lib/chartColors'
+import type { TabVisibility } from '@/lib/supabase'
 
-type Tab = 'performance' | 'attribution' | 'ops' | 'settings'
+type Tab = 'performance' | 'attribution' | 'ops' | 'ao' | 'settings'
 
 const CHUNK_RELOAD_KEY = 'crm_dashboard_chunk_reload_attempted'
 
@@ -74,8 +76,16 @@ export default function App() {
           setProjectId(id)
         }
 
-        const tabVisibility = project.dashboard_layout?.tabVisibility ?? { performance: true, attribution: true, ops: true }
-        const TAB_ORDER: Tab[] = ['performance', 'attribution', 'ops', 'settings']
+        // 기존에 저장된 프로젝트는 tabVisibility에 새로 추가된 키(ao 등)가 없을 수 있으므로
+        // 기본값을 먼저 깔고 저장된 값으로 덮어써야 함 (?? 만 쓰면 누락된 키가 false 취급됨)
+        const tabVisibility: TabVisibility = {
+          performance: true,
+          attribution: true,
+          ops: true,
+          ao: true,
+          ...project.dashboard_layout?.tabVisibility,
+        }
+        const TAB_ORDER: Tab[] = ['performance', 'attribution', 'ops', 'ao', 'settings']
 
         // 활성 탭이 비활성화되면 노출된 첫 탭으로 전환 (렌더 중 상태 보정, useEffect 아님 —
         // 이 콜백은 컴포넌트 함수가 아니라 render-prop이라 훅을 호출할 수 없음)
@@ -114,6 +124,11 @@ export default function App() {
                   </Suspense>
                 )}
                 {activeTab === 'ops' && <CRMCampaignOps key={project.id} />}
+                {activeTab === 'ao' && (
+                  <Suspense fallback={<div className="flex h-64 items-center justify-center"><div className="h-5 w-5 animate-spin rounded-full border-2 border-[#0066cc] border-t-transparent" /></div>}>
+                    <CRMAlwaysOn key={project.id} />
+                  </Suspense>
+                )}
                 {activeTab === 'settings' && <CRMSettings project={project} saveDashboardLayout={saveDashboardLayout} />}
               </ErrorBoundary>
             )}

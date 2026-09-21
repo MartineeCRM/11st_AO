@@ -56,7 +56,9 @@ export const DEFAULT_LAYOUT: DashboardLayout = {
     { id: 'trigger_cards',   visible: true },
     { id: 'scheduled_list',  visible: true },
   ],
-  tabVisibility: { performance: true, attribution: true, ops: true },
+  // AO 캠페인 모니터링 탭은 고정 레이아웃이라 드래그 가능한 섹션이 없음
+  ao: [],
+  tabVisibility: { performance: true, attribution: true, ops: true, ao: true },
 }
 
 function mergeItemsWithDefault(saved: LayoutItem[] | undefined, defaultIds: string[]): LayoutItem[] {
@@ -84,7 +86,8 @@ export function resolveLayout(raw: Partial<DashboardLayout> | null | undefined):
     performance: raw.performance ? mergeWithDefault(raw.performance, DEFAULT_LAYOUT.performance) : DEFAULT_LAYOUT.performance,
     attribution: raw.attribution ? mergeWithDefault(raw.attribution, DEFAULT_LAYOUT.attribution) : DEFAULT_LAYOUT.attribution,
     ops:         raw.ops         ? mergeWithDefault(raw.ops,         DEFAULT_LAYOUT.ops)         : DEFAULT_LAYOUT.ops,
-    tabVisibility: raw.tabVisibility ?? DEFAULT_LAYOUT.tabVisibility,
+    ao:          raw.ao          ? mergeWithDefault(raw.ao,          DEFAULT_LAYOUT.ao)          : DEFAULT_LAYOUT.ao,
+    tabVisibility: { ...DEFAULT_LAYOUT.tabVisibility, ...raw.tabVisibility },
   }
 }
 

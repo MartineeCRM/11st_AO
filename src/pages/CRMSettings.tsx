@@ -50,7 +50,8 @@ export function CRMSettings({ project, saveDashboardLayout }: Props) {
   const [layoutError, setLayoutError] = useState<string | null>(null)
   const [layoutSuccess, setLayoutSuccess] = useState<string | null>(null)
 
-  const tabVisibility = project.dashboard_layout?.tabVisibility ?? DEFAULT_LAYOUT.tabVisibility
+  // 저장된 tabVisibility에 새로 추가된 키가 없을 수 있으므로 기본값 위에 병합
+  const tabVisibility = { ...DEFAULT_LAYOUT.tabVisibility, ...project.dashboard_layout?.tabVisibility }
 
   async function handleToggleTab(tab: TabKey) {
     setLayoutSaving(true)
@@ -363,6 +364,7 @@ export function CRMSettings({ project, saveDashboardLayout }: Props) {
             { key: 'performance' as TabKey, label: 'CRM 성과 모니터링' },
             { key: 'attribution' as TabKey, label: 'CRM Attribution' },
             { key: 'ops' as TabKey, label: '캠페인 운영 현황' },
+            { key: 'ao' as TabKey, label: 'AO 캠페인 모니터링' },
           ]).map(({ key, label }) => (
             <div key={key} className="flex items-center justify-between">
               <span className="text-sm text-[#1d1d1f]">{label}</span>

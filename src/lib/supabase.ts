@@ -21,18 +21,20 @@ export interface LayoutSection {
   items?: LayoutItem[]
 }
 
-export type TabKey = 'performance' | 'attribution' | 'ops'
+export type TabKey = 'performance' | 'attribution' | 'ops' | 'ao'
 
 export interface TabVisibility {
   performance: boolean
   attribution: boolean
   ops: boolean
+  ao: boolean
 }
 
 export interface DashboardLayout {
   performance: LayoutSection[]
   attribution: LayoutSection[]
   ops: LayoutSection[]
+  ao: LayoutSection[]
   tabVisibility: TabVisibility
 }
 
