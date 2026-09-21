@@ -10,15 +10,15 @@ import {
   ResponsiveContainer,
 } from 'recharts'
 import type { AoTrendPoint } from '@/lib/metrics'
-import { formatKorean, formatCurrency } from '@/lib/formatters'
+import { formatKorean, formatCurrency, formatCountWithRate } from '@/lib/formatters'
 import { useChartColors } from '@/lib/chartColors'
 import { SegmentedToggle } from '@/components/filters/SegmentedToggle'
 
 interface Props {
   campaignName: string
   data: AoTrendPoint[]
-  granularity: 'week' | 'month'
-  onGranularityChange: (g: 'week' | 'month') => void
+  granularity: 'day' | 'week' | 'month'
+  onGranularityChange: (g: 'day' | 'week' | 'month') => void
 }
 
 export function AoCampaignTrendChart({ campaignName, data, granularity, onGranularityChange }: Props) {
@@ -35,6 +35,7 @@ export function AoCampaignTrendChart({ campaignName, data, granularity, onGranul
           value={granularity}
           onChange={onGranularityChange}
           options={[
+            { key: 'day', label: '일별' },
             { key: 'week', label: '주별' },
             { key: 'month', label: '월별' },
           ]}
@@ -75,9 +76,14 @@ export function AoCampaignTrendChart({ campaignName, data, granularity, onGranul
               />
               <YAxis yAxisId="revenue" hide domain={['auto', 'auto']} />
               <Tooltip
-                formatter={(value: number, name: string) =>
-                  name === 'Revenue' ? [formatCurrency(value), name] : [formatKorean(value), name]
-                }
+                formatter={(value: number, name: string, entry: { payload?: AoTrendPoint }) => {
+                  if (name === 'Revenue') return [formatCurrency(value), name]
+                  if (name === 'Conversion A') {
+                    const base = entry.payload?.sentImpression ?? 0
+                    return [formatCountWithRate(value, base > 0 ? value / base : 0), name]
+                  }
+                  return [formatKorean(value), name]
+                }}
                 contentStyle={{ fontSize: 12, borderRadius: 8, border: '1px solid #e0e0e0' }}
               />
               <Legend

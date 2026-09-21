@@ -2,7 +2,7 @@ import { Fragment, useEffect, useMemo, useRef, useState } from 'react'
 import { ChevronDown, ChevronLeft, ChevronRight } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { ChartSectionNote } from './charts/ChartSectionNote'
-import { formatNumber, formatCurrency } from '@/lib/formatters'
+import { formatNumber, formatCurrency, formatCountWithRate } from '@/lib/formatters'
 import { buildAoPivot, listAoYears, monthLabel, shiftYears, calcYoY, sortByAoMetric, type AoSortKey, type AoPivotRow } from '@/lib/metrics'
 import { AoSortSelect } from './filters/AoSortSelect'
 import type { MartineeUnionRow } from '@/types/sheets'
@@ -255,7 +255,7 @@ export function AoMonthlyPerformanceTable({ rows }: Props) {
               <tr key={row.campaign} className={cn('hover:bg-[#F3F8FF]', idx % 2 === 1 && 'bg-[#FAFAFB]')}>
                 <td
                   className={cn(
-                    'sticky left-0 z-10 max-w-[220px] truncate border-b border-r border-[#E5E7EB] px-4 py-2 text-xs font-medium text-[#1d1d1f]',
+                    'sticky left-0 z-10 w-[260px] max-w-[260px] whitespace-normal break-words border-b border-r border-[#E5E7EB] px-4 py-2 text-xs font-medium text-[#1d1d1f]',
                     idx % 2 === 1 ? 'bg-[#FAFAFB]' : 'bg-white',
                   )}
                 >
@@ -263,6 +263,8 @@ export function AoMonthlyPerformanceTable({ rows }: Props) {
                 </td>
                 {columnGroups.map(g => {
                   const m = g.month ? row.byMonth[g.month] : row.byYear[g.year]
+                  const base = m ? m.impressions + m.sent : 0
+                  const rate = (count: number) => (base > 0 ? count / base : 0)
                   return (
                     <Fragment key={`${g.year}-${g.month ?? 'total'}`}>
                       <td className="border-b border-l border-[#E5E7EB] px-3 py-2 text-right text-xs tabular-nums text-[#1d1d1f]">
@@ -272,10 +274,10 @@ export function AoMonthlyPerformanceTable({ rows }: Props) {
                         {m ? formatNumber(m.sent) : '-'}
                       </td>
                       <td className="border-b border-[#F3F4F6] px-3 py-2 text-right text-xs tabular-nums text-[#1d1d1f]">
-                        {m ? formatNumber(m.conversionA) : '-'}
+                        {m ? formatCountWithRate(m.conversionA, rate(m.conversionA)) : '-'}
                       </td>
                       <td className="border-b border-[#F3F4F6] px-3 py-2 text-right text-xs tabular-nums text-[#1d1d1f]">
-                        {m ? formatNumber(m.conversionB) : '-'}
+                        {m ? formatCountWithRate(m.conversionB, rate(m.conversionB)) : '-'}
                       </td>
                       <td className="border-b border-[#F3F4F6] px-3 py-2 text-right text-xs tabular-nums text-[#1d1d1f]">
                         {m ? formatCurrency(m.revenue) : '-'}
@@ -292,10 +294,10 @@ export function AoMonthlyPerformanceTable({ rows }: Props) {
                       {showExtra && (
                         <>
                           <td className="border-b border-[#F3F4F6] px-3 py-2 text-right text-xs tabular-nums text-[#1d1d1f]">
-                            {m ? formatNumber(m.conversionC) : '-'}
+                            {m ? formatCountWithRate(m.conversionC, rate(m.conversionC)) : '-'}
                           </td>
                           <td className="border-b border-[#F3F4F6] px-3 py-2 text-right text-xs tabular-nums text-[#1d1d1f]">
-                            {m ? formatNumber(m.conversionD) : '-'}
+                            {m ? formatCountWithRate(m.conversionD, rate(m.conversionD)) : '-'}
                           </td>
                         </>
                       )}
