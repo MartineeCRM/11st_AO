@@ -30,7 +30,7 @@ export function CRMAlwaysOn() {
   const [activePreset, setActivePreset] = useState<Preset | null>(DEFAULT_PRESET)
   const [range, setRange] = useState<DateRange>({ start: '', end: '' })
   const [selectedCampaign, setSelectedCampaign] = useState('')
-  const [granularity, setGranularity] = useState<'week' | 'month'>('week')
+  const [granularity, setGranularity] = useState<'day' | 'week' | 'month'>('week')
   const [viewMode, setViewMode] = useState<'accumulated' | 'comparison'>('accumulated')
   const [trendView, setTrendView] = useState<'chart' | 'table'>('chart')
   const [periodB, setPeriodB] = useState<DateRange>({ start: '', end: '' }) // 기준 기간

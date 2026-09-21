@@ -43,7 +43,7 @@ function Leaderboard({ title, data, expanded }: { title: string; data: AoPeriodR
             ) : (
               visible.map((row, idx) => (
                 <tr key={row.campaign} className={cn('border-b border-[#F3F4F6] hover:bg-[#F9FAFB]', idx % 2 === 1 && 'bg-[#FAFAFB]')}>
-                  <td className="max-w-[180px] truncate px-3 py-2 text-xs font-medium text-[#1d1d1f]">{row.campaign}</td>
+                  <td className="max-w-[220px] whitespace-normal break-words px-3 py-2 text-xs font-medium text-[#1d1d1f]">{row.campaign}</td>
                   <td className="px-3 py-2 text-right text-xs tabular-nums text-[#1d1d1f]">{formatNumber(row.impressions + row.sent)}</td>
                   <td className="px-3 py-2 text-right text-xs tabular-nums text-[#1d1d1f]">{formatNumber(row.conversionA)}</td>
                   <td className="px-3 py-2 text-right text-xs tabular-nums text-[#1d1d1f]">{formatRate(row.conversionRate)}</td>

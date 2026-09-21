@@ -17,8 +17,8 @@ import { SegmentedToggle } from '@/components/filters/SegmentedToggle'
 interface Props {
   campaignName: string
   data: AoTrendPoint[]
-  granularity: 'week' | 'month'
-  onGranularityChange: (g: 'week' | 'month') => void
+  granularity: 'day' | 'week' | 'month'
+  onGranularityChange: (g: 'day' | 'week' | 'month') => void
 }
 
 export function AoCampaignTrendChart({ campaignName, data, granularity, onGranularityChange }: Props) {
@@ -35,6 +35,7 @@ export function AoCampaignTrendChart({ campaignName, data, granularity, onGranul
           value={granularity}
           onChange={onGranularityChange}
           options={[
+            { key: 'day', label: '일별' },
             { key: 'week', label: '주별' },
             { key: 'month', label: '월별' },
           ]}

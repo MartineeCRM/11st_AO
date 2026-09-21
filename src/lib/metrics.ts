@@ -517,16 +517,16 @@ function monthStart(dateStr: string): string {
   return dateStr.slice(0, 7)
 }
 
-/** 특정 AO 캠페인(campaign_depth_1 + campaign_depth_2 키)의 주/월 단위 합산 추이 */
+/** 특정 AO 캠페인(campaign_depth_1 + campaign_depth_2 키)의 일/주/월 단위 합산 추이 */
 export function buildAoCampaignTrend(
   rows: MartineeUnionRow[],
   campaign: string,
-  granularity: 'week' | 'month',
+  granularity: 'day' | 'week' | 'month',
 ): AoTrendPoint[] {
   const campaignRows = rows.filter(r => aoCampaignKey(r) === campaign)
   const byPeriod = new Map<string, MartineeUnionRow[]>()
   for (const r of campaignRows) {
-    const key = granularity === 'week' ? weekStart(r.date) : monthStart(r.date)
+    const key = granularity === 'day' ? r.date : granularity === 'week' ? weekStart(r.date) : monthStart(r.date)
     const list = byPeriod.get(key) ?? []
     list.push(r)
     byPeriod.set(key, list)
@@ -534,7 +534,7 @@ export function buildAoCampaignTrend(
   return [...byPeriod.entries()]
     .sort(([a], [b]) => a.localeCompare(b))
     .map(([period, rs]) => ({
-      period: granularity === 'week' ? formatDateShort(period) : monthLabel(period),
+      period: granularity === 'month' ? monthLabel(period) : formatDateShort(period),
       sentImpression: calcSentImpression(rs),
       conversionA: calcConversionA(rs),
       revenue: rs.reduce((s, r) => s + r.revenue, 0),
@@ -547,6 +547,10 @@ export interface AoDailyRow {
   sent: number
   conversionA: number
   conversionB: number
+  /** conversionA ÷ (impressions + sent) */
+  conversionRateA: number
+  /** conversionB ÷ (impressions + sent) */
+  conversionRateB: number
   revenue: number
 }
 
@@ -561,14 +565,23 @@ export function buildAoCampaignDailyRows(rows: MartineeUnionRow[], campaign: str
   }
   return [...byDate.entries()]
     .sort(([a], [b]) => b.localeCompare(a))
-    .map(([date, rs]) => ({
-      date,
-      impressions: rs.reduce((s, r) => s + r.impressions, 0),
-      sent: rs.reduce((s, r) => s + r.sent, 0),
-      conversionA: rs.reduce((s, r) => s + r.conversion_a, 0),
-      conversionB: rs.reduce((s, r) => s + r.conversion_b, 0),
-      revenue: rs.reduce((s, r) => s + r.revenue, 0),
-    }))
+    .map(([date, rs]) => {
+      const impressions = rs.reduce((s, r) => s + r.impressions, 0)
+      const sent = rs.reduce((s, r) => s + r.sent, 0)
+      const conversionA = rs.reduce((s, r) => s + r.conversion_a, 0)
+      const conversionB = rs.reduce((s, r) => s + r.conversion_b, 0)
+      const base = impressions + sent
+      return {
+        date,
+        impressions,
+        sent,
+        conversionA,
+        conversionB,
+        conversionRateA: base > 0 ? conversionA / base : 0,
+        conversionRateB: base > 0 ? conversionB / base : 0,
+        revenue: rs.reduce((s, r) => s + r.revenue, 0),
+      }
+    })
 }
 
 export interface AoMonthlyMetrics {

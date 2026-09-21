@@ -255,7 +255,7 @@ export function AoMonthlyPerformanceTable({ rows }: Props) {
               <tr key={row.campaign} className={cn('hover:bg-[#F3F8FF]', idx % 2 === 1 && 'bg-[#FAFAFB]')}>
                 <td
                   className={cn(
-                    'sticky left-0 z-10 max-w-[220px] truncate border-b border-r border-[#E5E7EB] px-4 py-2 text-xs font-medium text-[#1d1d1f]',
+                    'sticky left-0 z-10 w-[260px] max-w-[260px] whitespace-normal break-words border-b border-r border-[#E5E7EB] px-4 py-2 text-xs font-medium text-[#1d1d1f]',
                     idx % 2 === 1 ? 'bg-[#FAFAFB]' : 'bg-white',
                   )}
                 >
