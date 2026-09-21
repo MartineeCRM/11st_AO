@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { FlaskConical } from 'lucide-react'
 import { useSheetData } from '@/hooks/useSheetData'
 import { DatePresetFilter } from '@/components/filters/DatePresetFilter'
 import { CampaignSelectFilter } from '@/components/filters/CampaignSelectFilter'
@@ -10,9 +9,6 @@ import { AoMonthlyPerformanceTable } from '@/components/AoMonthlyPerformanceTabl
 import { AoPeriodComparisonTable } from '@/components/AoPeriodComparisonTable'
 import { SegmentedToggle } from '@/components/filters/SegmentedToggle'
 import { filterAoRows, listAoCampaignNames, buildAoCampaignTrend, previousPeriodOfSameLength } from '@/lib/metrics'
-import { generateDemoAoRows } from '@/lib/aoDemoData'
-import { toDateStr } from '@/lib/formatters'
-import { cn } from '@/lib/utils'
 import type { DateRange } from '@/types/sheets'
 
 const DEFAULT_PRESET: Preset = '90d'
@@ -35,7 +31,6 @@ export function CRMAlwaysOn() {
   const [range, setRange] = useState<DateRange>({ start: '', end: '' })
   const [selectedCampaign, setSelectedCampaign] = useState('')
   const [granularity, setGranularity] = useState<'week' | 'month'>('week')
-  const [demoMode, setDemoMode] = useState(false)
   const [viewMode, setViewMode] = useState<'accumulated' | 'comparison'>('accumulated')
   const [trendView, setTrendView] = useState<'chart' | 'table'>('chart')
   const [periodB, setPeriodB] = useState<DateRange>({ start: '', end: '' }) // 기준 기간
@@ -49,12 +44,7 @@ export function CRMAlwaysOn() {
     }
   }, [maxDate]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  const aoRows = useMemo(() => {
-    const real = filterAoRows(martinee)
-    if (!demoMode) return real
-    // 화면 미리보기 전용 — 실제 시트/DB에는 쓰지 않고 브라우저 메모리에서만 합쳐서 보여줌
-    return [...real, ...generateDemoAoRows(maxDate || toDateStr(new Date()))]
-  }, [martinee, demoMode, maxDate])
+  const aoRows = useMemo(() => filterAoRows(martinee), [martinee])
   const campaignOptions = useMemo(() => listAoCampaignNames(aoRows), [aoRows])
 
   // 캠페인 목록 로드 후 기본값(가나다순 첫 캠페인) 선택
@@ -115,26 +105,7 @@ export function CRMAlwaysOn() {
           selected={selectedCampaign}
           onChange={setSelectedCampaign}
         />
-
-        <button
-          onClick={() => setDemoMode(v => !v)}
-          className={cn(
-            'ml-auto flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-xs font-medium transition-colors',
-            demoMode
-              ? 'border-[#D97706] bg-[#FFFBEB] text-[#92400E]'
-              : 'border-[#e0e0e0] bg-[#F9FAFB] text-[#6B7280] hover:text-[#1d1d1f]',
-          )}
-        >
-          <FlaskConical size={12} />
-          샘플 데이터 미리보기{demoMode ? ' 끄기' : ''}
-        </button>
       </div>
-
-      {demoMode && (
-        <div className="border-b border-[#FDE68A] bg-[#FFFBEB] px-6 py-2 text-xs text-[#92400E]">
-          샘플 데이터 미리보기 중 — 실제 Bucketstore 데이터가 아니며, 화면에만 표시되고 저장되지 않습니다.
-        </div>
-      )}
 
       {loading ? (
         <LoadingSkeleton />
