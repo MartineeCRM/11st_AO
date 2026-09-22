@@ -1,7 +1,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
-import { verifyProjectAccess } from './_lib/auth.js'
 
 const SHEETS_BASE = 'https://sheets.googleapis.com/v4/spreadsheets'
+const DEFAULT_SHEET_NAME = '브레이즈 푸시 실적'
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'GET') {
@@ -9,19 +9,17 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(405).json({ error: 'Method not allowed' })
   }
 
-  const auth = await verifyProjectAccess(req as any, res as any)
-  if (!auth) return // verifyProjectAccess already sent the error response
-
-  const { sheet, range } = req.query as Record<string, string>
-  if (!sheet) {
-    return res.status(400).json({ error: 'Missing sheet parameter' })
+  const spreadsheetId = process.env.SPREADSHEET_ID
+  const apiKey = process.env.GOOGLE_SHEETS_API_KEY
+  if (!spreadsheetId || !apiKey) {
+    console.error('[sheets] missing SPREADSHEET_ID or GOOGLE_SHEETS_API_KEY env var')
+    return res.status(500).json({ error: 'Server is missing SPREADSHEET_ID or GOOGLE_SHEETS_API_KEY' })
   }
 
-  const { spreadsheet_id, google_api_key, sheet_mapping } = auth.project
-  const logicalSheet = sheet.toLowerCase()
-  const mappedSheet = sheet_mapping?.[logicalSheet] || sheet
-  const rangeParam = range ? `${mappedSheet}!${range}` : `${mappedSheet}!A:ZZ`
-  const url = `${SHEETS_BASE}/${spreadsheet_id}/values/${encodeURIComponent(rangeParam)}?key=${google_api_key}`
+  const { sheet } = req.query as Record<string, string>
+  const sheetName = sheet || DEFAULT_SHEET_NAME
+  const range = `${sheetName}!A:O`
+  const url = `${SHEETS_BASE}/${spreadsheetId}/values/${encodeURIComponent(range)}?key=${apiKey}`
 
   try {
     const upstream = await fetch(url)
@@ -32,7 +30,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
     const json = await upstream.json()
 
-    // private: 프로젝트별 인증 응답이므로 CDN 공유 캐시 금지
+    // private: 응답에 스프레드시트 전체 범위 데이터가 포함되므로 CDN 공유 캐시 금지
     res.setHeader('Cache-Control', 'private, max-age=300')
     return res.status(200).json(json)
   } catch (err) {
