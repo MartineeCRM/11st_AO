@@ -2,6 +2,7 @@ import type { VercelRequest, VercelResponse } from '@vercel/node'
 
 const SHEETS_BASE = 'https://sheets.googleapis.com/v4/spreadsheets'
 const DEFAULT_SHEET_NAME = '브레이즈 푸시 실적'
+const ALLOWED_SHEETS = new Set([DEFAULT_SHEET_NAME])
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'GET') {
@@ -17,7 +18,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   const { sheet } = req.query as Record<string, string>
-  const sheetName = sheet || DEFAULT_SHEET_NAME
+  const sheetName = sheet && ALLOWED_SHEETS.has(sheet) ? sheet : DEFAULT_SHEET_NAME
   const range = `${sheetName}!A:O`
   const url = `${SHEETS_BASE}/${spreadsheetId}/values/${encodeURIComponent(range)}?key=${apiKey}`
 

@@ -74,25 +74,13 @@ brainstorming → writing-plans → dispatching-parallel-agents → simplify →
 
 ## 정답에 가까운 프로젝트 패턴
 
-### Braze REST API
+참고: Braze REST API 연동 패턴 기록은 이 브랜치에서 Braze 연동이 완전히 제거되면서 삭제했다 (Braze 관련 프록시/클라이언트 코드는 모두 존재하지 않음). 데이터 소스는 Google Sheets(`api/sheets.ts`, `src/lib/googleSheets.ts`) 단일 경로만 사용한다.
 
-- Braze REST API는 반드시 서버투서버로 호출한다.
-- 클라이언트 코드는 `src/lib/braze.ts`에서 `/api/braze/...` 내부 API만 호출한다.
-- Vercel API route는 명시적 파일을 우선 사용한다.
-  - `api/braze/campaigns/list.js`
-  - `api/braze/campaigns/details.js`
-  - `api/braze/campaigns/data_series.js`
-- Braze 공통 프록시 로직은 `server/brazeProxy.js`에 둔다.
-- Braze 환경변수는 서버 전용 이름만 사용한다.
+### Google Sheets 프록시
 
-```env
-BRAZE_REST_ENDPOINT=https://rest.iad-07.braze.com
-BRAZE_API_KEY=...
-```
-
-- `VITE_BRAZE_*` 환경변수는 만들지 않는다. fallback도 두지 않는다.
-- `/campaigns/list`는 목록 ID 확보용으로만 보고, 라이브 여부/채널/생성일/수정일/스케줄 타입은 `/campaigns/details`에서 보강한다.
-- 라이브 캠페인 판단은 `enabled && !archived && !draft`를 기준으로 한다.
+- 클라이언트는 스프레드시트 ID/API 키를 직접 다루지 않고 `/api/sheets`만 호출한다.
+- 서버 전용 환경변수(`SPREADSHEET_ID`, `GOOGLE_SHEETS_API_KEY`)는 `VITE_` prefix 없이 `process.env`로만 읽는다.
+- 프록시는 요청받은 `sheet` 쿼리 파라미터를 그대로 신뢰하지 않고, 허용된 시트 이름(`브레이즈 푸시 실적`)으로 allowlist 검증한다.
 
 ### Vercel 배포와 Git author
 

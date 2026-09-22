@@ -54,7 +54,7 @@ class ErrorBoundary extends Component<{ children: ReactNode }, { error: Error | 
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<Tab>('ao')
-  const { colors } = useChartColorsState()
+  const chartColors = useChartColorsState()
 
   function handleTabChange(tab: Tab) {
     sessionStorage.removeItem(CHUNK_RELOAD_KEY)
@@ -62,7 +62,7 @@ export default function App() {
   }
 
   return (
-    <ChartColorsContext.Provider value={colors}>
+    <ChartColorsContext.Provider value={chartColors.colors}>
       <div className="min-h-screen bg-[#f5f5f7]">
         <TopNav activeTab={activeTab} onTabChange={handleTabChange} />
         <main>
@@ -72,7 +72,7 @@ export default function App() {
                 <CRMAlwaysOn />
               </Suspense>
             )}
-            {activeTab === 'settings' && <CRMSettings />}
+            {activeTab === 'settings' && <CRMSettings {...chartColors} />}
           </ErrorBoundary>
         </main>
       </div>

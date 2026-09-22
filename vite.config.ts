@@ -4,6 +4,7 @@ import tailwindcss from '@tailwindcss/vite'
 import path from 'path'
 
 const DEFAULT_SHEET_NAME = '브레이즈 푸시 실적'
+const ALLOWED_SHEETS = new Set([DEFAULT_SHEET_NAME])
 
 function sheetsDevProxy(env: Record<string, string>): Plugin {
   return {
@@ -21,7 +22,8 @@ function sheetsDevProxy(env: Record<string, string>): Plugin {
         }
 
         const incomingUrl = new URL(req.url ?? '/', 'http://localhost')
-        const sheet = incomingUrl.searchParams.get('sheet') || DEFAULT_SHEET_NAME
+        const requestedSheet = incomingUrl.searchParams.get('sheet')
+        const sheet = requestedSheet && ALLOWED_SHEETS.has(requestedSheet) ? requestedSheet : DEFAULT_SHEET_NAME
         const range = `${sheet}!A:O`
         const url = `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${encodeURIComponent(range)}?key=${apiKey}`
 

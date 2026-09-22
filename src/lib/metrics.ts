@@ -69,15 +69,13 @@ export function buildAoCampaignTrend(
   return [...byPeriod.entries()]
     .sort(([a], [b]) => a.localeCompare(b))
     .map(([period, rs]) => {
-      const sent = rs.reduce((s, r) => s + r.sent, 0)
-      const paymentCount = rs.reduce((s, r) => s + r.paymentCount, 0)
-      const netRevenue = rs.reduce((s, r) => s + r.netRevenue, 0)
+      const m = sumAoMetrics(rs)
       return {
         period: granularity === 'month' ? monthLabel(period) : formatDateShort(period),
-        sent,
-        paymentCount,
-        paymentRate: sent > 0 ? paymentCount / sent : 0,
-        netRevenue,
+        sent: m.sent,
+        paymentCount: m.paymentCount,
+        paymentRate: m.sent > 0 ? m.paymentCount / m.sent : 0,
+        netRevenue: m.netRevenue,
       }
     })
 }
@@ -110,23 +108,18 @@ export function buildAoCampaignDailyRows(rows: AoPushRow[], campaign: string): A
   return [...byDate.entries()]
     .sort(([a], [b]) => b.localeCompare(a))
     .map(([date, rs]) => {
-      const sent = rs.reduce((s, r) => s + r.sent, 0)
-      const opens = rs.reduce((s, r) => s + r.opens, 0)
-      const paymentCount = rs.reduce((s, r) => s + r.paymentCount, 0)
-      const payingMembers = rs.reduce((s, r) => s + r.payingMembers, 0)
-      const grossAmount = rs.reduce((s, r) => s + r.grossAmount, 0)
-      const netRevenue = rs.reduce((s, r) => s + r.netRevenue, 0)
+      const m = sumAoMetrics(rs)
       return {
         date,
-        sent,
-        opens,
-        openRate: sent > 0 ? opens / sent : 0,
-        paymentCount,
-        paymentRate: sent > 0 ? paymentCount / sent : 0,
-        payingMembers,
-        payingMemberRate: sent > 0 ? payingMembers / sent : 0,
-        grossAmount,
-        netRevenue,
+        sent: m.sent,
+        opens: m.opens,
+        openRate: m.sent > 0 ? m.opens / m.sent : 0,
+        paymentCount: m.paymentCount,
+        paymentRate: m.sent > 0 ? m.paymentCount / m.sent : 0,
+        payingMembers: m.payingMembers,
+        payingMemberRate: m.sent > 0 ? m.payingMembers / m.sent : 0,
+        grossAmount: m.grossAmount,
+        netRevenue: m.netRevenue,
       }
     })
 }
@@ -288,23 +281,18 @@ export function buildAoPeriodTable(rows: AoPushRow[], start: string, end: string
   }
 
   return [...byCampaign.entries()].map(([campaign, rs]) => {
-    const sent = rs.reduce((s, r) => s + r.sent, 0)
-    const opens = rs.reduce((s, r) => s + r.opens, 0)
-    const paymentCount = rs.reduce((s, r) => s + r.paymentCount, 0)
-    const payingMembers = rs.reduce((s, r) => s + r.payingMembers, 0)
-    const grossAmount = rs.reduce((s, r) => s + r.grossAmount, 0)
-    const netRevenue = rs.reduce((s, r) => s + r.netRevenue, 0)
+    const m = sumAoMetrics(rs)
     return {
       campaign,
-      sent,
-      opens,
-      openRate: sent > 0 ? opens / sent : 0,
-      paymentCount,
-      paymentRate: sent > 0 ? paymentCount / sent : 0,
-      payingMembers,
-      payingMemberRate: sent > 0 ? payingMembers / sent : 0,
-      grossAmount,
-      netRevenue,
+      sent: m.sent,
+      opens: m.opens,
+      openRate: m.sent > 0 ? m.opens / m.sent : 0,
+      paymentCount: m.paymentCount,
+      paymentRate: m.sent > 0 ? m.paymentCount / m.sent : 0,
+      payingMembers: m.payingMembers,
+      payingMemberRate: m.sent > 0 ? m.payingMembers / m.sent : 0,
+      grossAmount: m.grossAmount,
+      netRevenue: m.netRevenue,
     }
   })
 }

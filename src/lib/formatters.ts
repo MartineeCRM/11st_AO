@@ -13,11 +13,6 @@ export function formatKorean(n: number): string {
   return `${sign}${eok.toFixed(1)}억`
 }
 
-/** Rate 계산값 — 소수점 셋째자리 반올림 후 둘째자리까지 % 표기 */
-export function formatRate(n: number): string {
-  return `${(Math.round(n * 10000) / 100).toFixed(2)}%`
-}
-
 /** 건수 뒤에 전환율을 괄호로 병기 — 예: "1,234(12.3%)". rate는 0~1 비율 */
 export function formatCountWithRate(count: number, rate: number): string {
   return `${formatNumber(Math.round(count))}(${(rate * 100).toFixed(1)}%)`

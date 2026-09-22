@@ -3,6 +3,9 @@ import { normalizeDate } from './formatters'
 
 const AO_SHEET_NAME = '브레이즈 푸시 실적'
 
+const EXPECTED_HEADER = ['일자', '캠페인명', '캠페인명_분할', '배리언트명_분할', 'XSITE', '수신', '오픈', '오픈율',
+  '결제건수', '결제회원수', '구매전환율', '즉차거래액', '결제순매출액', '분류', '월 구분']
+
 // /api/sheets 프록시를 통해 시트 데이터를 가져옴 — 서버 측 env var로 인증하므로 클라이언트는 헤더 불필요
 async function fetchSheet(sheetName: string): Promise<string[][]> {
   const res = await fetch(`/api/sheets?sheet=${encodeURIComponent(sheetName)}`)
@@ -55,5 +58,12 @@ function normalizeAoPushRow(row: string[]): AoPushRow {
 export async function fetchAoPushRows(): Promise<AoPushRow[]> {
   const raw = await fetchSheet(AO_SHEET_NAME)
   if (raw.length < 2) return []
+
+  const header = raw[0].map(h => (h ?? '').trim())
+  const mismatch = EXPECTED_HEADER.findIndex((h, i) => header[i] !== h)
+  if (mismatch !== -1) {
+    throw new Error(`시트 열 구성이 변경되었습니다 (${mismatch + 1}번째 열: "${header[mismatch] ?? ''}" ≠ "${EXPECTED_HEADER[mismatch]}"). 관리자에게 문의하세요.`)
+  }
+
   return raw.slice(1).map(normalizeAoPushRow).sort((a, b) => a.date.localeCompare(b.date))
 }

@@ -1,8 +1,11 @@
-import { useChartColorsState } from '@/hooks/useChartColorsState'
+type ChartColorsProps = {
+  colors: string[]
+  updateColor: (index: number, value: string) => void
+  addColor: () => void
+  removeColor: (index: number) => void
+}
 
-export function CRMSettings() {
-  const { colors, updateColor, addColor, removeColor } = useChartColorsState()
-
+export function CRMSettings({ colors, updateColor, addColor, removeColor }: ChartColorsProps) {
   return (
     <div className="mx-auto max-w-2xl px-6 py-8 flex flex-col gap-6">
       <h1 className="text-base font-bold text-[#1d1d1f]">설정</h1>
