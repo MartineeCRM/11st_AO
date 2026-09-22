@@ -1,6 +1,5 @@
 import { useMemo, useState } from 'react'
 import { cn } from '@/lib/utils'
-import { ChartSectionNote } from './charts/ChartSectionNote'
 import { AoSortSelect } from './filters/AoSortSelect'
 import { DateField } from './filters/DateField'
 import { formatNumber, formatCountWithRate, formatCurrency } from '@/lib/formatters'
@@ -92,7 +91,7 @@ export function AoPeriodComparisonTable({ rows, periodA, periodB, onPeriodAChang
     <div className="rounded-xl border border-[#e0e0e0] bg-white">
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#e0e0e0] px-4 py-3">
         <div>
-          <ChartSectionNote sectionId="ao_period_comparison" title="기간 비교" titleClassName="text-xs font-semibold text-[#1d1d1f]" />
+          <p className="text-xs font-semibold text-[#1d1d1f]">기간 비교</p>
           <p className="text-[10px] text-[#9CA3AF] mt-0.5">두 기간을 골라 캠페인 성과를 나란히 비교</p>
         </div>
 

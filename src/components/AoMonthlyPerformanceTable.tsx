@@ -1,7 +1,6 @@
 import { Fragment, useEffect, useMemo, useRef, useState } from 'react'
 import { ChevronDown, ChevronLeft, ChevronRight } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { ChartSectionNote } from './charts/ChartSectionNote'
 import { formatNumber, formatCurrency, formatCountWithRate } from '@/lib/formatters'
 import { buildAoPivot, listAoYears, monthLabel, shiftYears, calcYoY, sortByAoMetric, type AoSortKey, type AoPivotRow } from '@/lib/metrics'
 import { AoSortSelect } from './filters/AoSortSelect'
@@ -137,7 +136,7 @@ export function AoMonthlyPerformanceTable({ rows }: Props) {
     <div className="rounded-xl border border-[#e0e0e0] bg-white">
       <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#e0e0e0] px-4 py-3">
         <div>
-          <ChartSectionNote sectionId="ao_monthly_table" title="캠페인 × 월 실적표" titleClassName="text-xs font-semibold text-[#1d1d1f]" />
+          <p className="text-xs font-semibold text-[#1d1d1f]">캠페인 × 월 실적표</p>
           <p className="text-[10px] text-[#9CA3AF] mt-0.5">그 달에 발송한 캠페인만 표시 · 연도 클릭 시 접기/펼치기</p>
         </div>
 
