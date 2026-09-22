@@ -4,11 +4,11 @@ import { AoSortSelect } from './filters/AoSortSelect'
 import { DateField } from './filters/DateField'
 import { formatNumber, formatCountWithRate, formatCurrency } from '@/lib/formatters'
 import { buildAoPeriodTable, calcPeriodDelta, sortByAoMetric, type AoPeriodRow, type AoSortKey } from '@/lib/metrics'
-import type { MartineeUnionRow, DateRange } from '@/types/sheets'
+import type { AoPushRow, DateRange } from '@/types/sheets'
 
 interface Props {
   /** AO 캠페인으로 이미 필터링된 행 (전체 기간 — 두 비교 기간을 자유롭게 고를 수 있어야 하므로 날짜 필터는 걸지 않음) */
-  rows: MartineeUnionRow[]
+  rows: AoPushRow[]
   periodA: DateRange
   periodB: DateRange
   onPeriodAChange: (range: DateRange) => void
@@ -17,48 +17,40 @@ interface Props {
 
 const PAGE_SIZE = 10
 
-function Leaderboard({ title, data, expanded, showExtra }: { title: string; data: AoPeriodRow[]; expanded: boolean; showExtra: boolean }) {
+function Leaderboard({ title, data, expanded }: { title: string; data: AoPeriodRow[]; expanded: boolean }) {
   const visible = expanded ? data : data.slice(0, PAGE_SIZE)
 
   return (
     <div className="flex-1 min-w-0">
       <p className="mb-2 px-1 text-xs font-semibold text-[#1d1d1f]">{title}</p>
       <div className="overflow-x-auto rounded-lg border border-[#e0e0e0]">
-        <table className="w-full min-w-[480px]">
+        <table className="w-full min-w-[640px]">
           <thead>
             <tr className="border-b border-[#F3F4F6] bg-[#F9FAFB]">
               <th className="px-3 py-2 text-left text-[11px] font-semibold text-[#6B7280]">캠페인명</th>
-              <th className="px-3 py-2 text-right text-[11px] font-semibold text-[#6B7280]">발송/노출</th>
-              <th className="px-3 py-2 text-right text-[11px] font-semibold text-[#6B7280]">Conv A</th>
-              <th className="px-3 py-2 text-right text-[11px] font-semibold text-[#6B7280]">Conv B</th>
-              {showExtra && (
-                <>
-                  <th className="px-3 py-2 text-right text-[11px] font-semibold text-[#6B7280]">Conv C</th>
-                  <th className="px-3 py-2 text-right text-[11px] font-semibold text-[#6B7280]">Conv D</th>
-                </>
-              )}
-              <th className="px-3 py-2 text-right text-[11px] font-semibold text-[#6B7280]">Revenue</th>
+              <th className="px-3 py-2 text-right text-[11px] font-semibold text-[#6B7280]">수신</th>
+              <th className="px-3 py-2 text-right text-[11px] font-semibold text-[#6B7280]">오픈</th>
+              <th className="px-3 py-2 text-right text-[11px] font-semibold text-[#6B7280]">결제건수</th>
+              <th className="px-3 py-2 text-right text-[11px] font-semibold text-[#6B7280]">결제회원수</th>
+              <th className="px-3 py-2 text-right text-[11px] font-semibold text-[#6B7280]">즉차거래액</th>
+              <th className="px-3 py-2 text-right text-[11px] font-semibold text-[#6B7280]">결제순매출액</th>
             </tr>
           </thead>
           <tbody>
             {visible.length === 0 ? (
               <tr>
-                <td colSpan={showExtra ? 7 : 5} className="px-3 py-6 text-center text-xs text-[#9CA3AF]">이 기간 데이터 없음</td>
+                <td colSpan={7} className="px-3 py-6 text-center text-xs text-[#9CA3AF]">이 기간 데이터 없음</td>
               </tr>
             ) : (
               visible.map((row, idx) => (
                 <tr key={row.campaign} className={cn('border-b border-[#F3F4F6] hover:bg-[#F9FAFB]', idx % 2 === 1 && 'bg-[#FAFAFB]')}>
                   <td className="max-w-[220px] whitespace-normal break-words px-3 py-2 text-xs font-medium text-[#1d1d1f]">{row.campaign}</td>
-                  <td className="px-3 py-2 text-right text-xs tabular-nums text-[#1d1d1f]">{formatNumber(row.impressions + row.sent)}</td>
-                  <td className="px-3 py-2 text-right text-xs tabular-nums text-[#1d1d1f]">{formatCountWithRate(row.conversionA, row.conversionRateA)}</td>
-                  <td className="px-3 py-2 text-right text-xs tabular-nums text-[#1d1d1f]">{formatCountWithRate(row.conversionB, row.conversionRateB)}</td>
-                  {showExtra && (
-                    <>
-                      <td className="px-3 py-2 text-right text-xs tabular-nums text-[#1d1d1f]">{formatCountWithRate(row.conversionC, row.conversionRateC)}</td>
-                      <td className="px-3 py-2 text-right text-xs tabular-nums text-[#1d1d1f]">{formatCountWithRate(row.conversionD, row.conversionRateD)}</td>
-                    </>
-                  )}
-                  <td className="px-3 py-2 text-right text-xs tabular-nums text-[#1d1d1f]">{formatCurrency(row.revenue)}</td>
+                  <td className="px-3 py-2 text-right text-xs tabular-nums text-[#1d1d1f]">{formatNumber(row.sent)}</td>
+                  <td className="px-3 py-2 text-right text-xs tabular-nums text-[#1d1d1f]">{formatCountWithRate(row.opens, row.openRate)}</td>
+                  <td className="px-3 py-2 text-right text-xs tabular-nums text-[#1d1d1f]">{formatCountWithRate(row.paymentCount, row.paymentRate)}</td>
+                  <td className="px-3 py-2 text-right text-xs tabular-nums text-[#1d1d1f]">{formatCountWithRate(row.payingMembers, row.payingMemberRate)}</td>
+                  <td className="px-3 py-2 text-right text-xs tabular-nums text-[#1d1d1f]">{formatCurrency(row.grossAmount)}</td>
+                  <td className="px-3 py-2 text-right text-xs tabular-nums text-[#1d1d1f]">{formatCurrency(row.netRevenue)}</td>
                 </tr>
               ))
             )}
@@ -71,7 +63,6 @@ function Leaderboard({ title, data, expanded, showExtra }: { title: string; data
 
 export function AoPeriodComparisonTable({ rows, periodA, periodB, onPeriodAChange, onPeriodBChange }: Props) {
   const [expanded, setExpanded] = useState(false)
-  const [showExtra, setShowExtra] = useState(false)
   const [sortKey, setSortKey] = useState<AoSortKey>('revenue')
 
   const tableA = useMemo(() => buildAoPeriodTable(rows, periodA.start, periodA.end), [rows, periodA])
@@ -80,9 +71,9 @@ export function AoPeriodComparisonTable({ rows, periodA, periodB, onPeriodAChang
   const sortedA = useMemo(() => sortByAoMetric(tableA, sortKey, r => r), [tableA, sortKey])
   const sortedB = useMemo(() => sortByAoMetric(tableB, sortKey, r => r), [tableB, sortKey])
 
-  const revenueA = tableA.reduce((s, r) => s + r.revenue, 0)
-  const revenueB = tableB.reduce((s, r) => s + r.revenue, 0)
-  const delta = calcPeriodDelta(revenueB, revenueA)
+  const netRevenueA = tableA.reduce((s, r) => s + r.netRevenue, 0)
+  const netRevenueB = tableB.reduce((s, r) => s + r.netRevenue, 0)
+  const delta = calcPeriodDelta(netRevenueB, netRevenueA)
 
   const maxRows = Math.max(tableA.length, tableB.length)
   const hiddenCount = maxRows - PAGE_SIZE
@@ -109,24 +100,12 @@ export function AoPeriodComparisonTable({ rows, periodA, periodB, onPeriodAChang
             <DateField value={periodB.end} onChange={v => onPeriodBChange({ ...periodB, end: v })} />
           </div>
           <AoSortSelect value={sortKey} onChange={setSortKey} />
-
-          <button
-            onClick={() => setShowExtra(v => !v)}
-            className={cn(
-              'rounded-lg border px-2.5 py-1.5 text-xs font-medium transition-colors',
-              showExtra
-                ? 'border-[#0066cc] bg-[#e8f0fb] text-[#0066cc]'
-                : 'border-[#e0e0e0] bg-[#F9FAFB] text-[#6B7280] hover:text-[#1d1d1f]',
-            )}
-          >
-            Conversion C/D {showExtra ? '숨기기' : '표시'}
-          </button>
         </div>
       </div>
 
       {delta !== null && (
         <p className="px-4 pt-3 text-xs text-[#6B7280]">
-          전체 Revenue 증감{' '}
+          전체 순매출 증감{' '}
           <span className={cn('font-semibold', delta >= 0 ? 'text-[#10B981]' : 'text-[#EF4444]')}>
             {delta >= 0 ? '▲' : '▼'} {Math.abs(delta * 100).toFixed(1)}%
           </span>
@@ -135,8 +114,8 @@ export function AoPeriodComparisonTable({ rows, periodA, periodB, onPeriodAChang
       )}
 
       <div className="flex flex-col gap-4 p-4 md:flex-row">
-        <Leaderboard title="비교 기간" data={sortedA} expanded={expanded} showExtra={showExtra} />
-        <Leaderboard title="기준 기간" data={sortedB} expanded={expanded} showExtra={showExtra} />
+        <Leaderboard title="비교 기간" data={sortedA} expanded={expanded} />
+        <Leaderboard title="기준 기간" data={sortedB} expanded={expanded} />
       </div>
 
       {hiddenCount > 0 && (

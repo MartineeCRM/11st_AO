@@ -4,14 +4,15 @@ import { cn } from '@/lib/utils'
 import { formatNumber, formatCurrency, formatCountWithRate } from '@/lib/formatters'
 import { buildAoPivot, listAoYears, monthLabel, shiftYears, calcYoY, sortByAoMetric, type AoSortKey, type AoPivotRow } from '@/lib/metrics'
 import { AoSortSelect } from './filters/AoSortSelect'
-import type { MartineeUnionRow } from '@/types/sheets'
+import type { AoPushRow } from '@/types/sheets'
 
 interface Props {
   /** AO 캠페인으로 이미 필터링된 행 (날짜 범위 필터는 적용하지 않음 — 이 테이블은 자체 연/월 범위를 가짐) */
-  rows: MartineeUnionRow[]
+  rows: AoPushRow[]
 }
 
 const DEFAULT_MONTHS = 3
+const COLS_PER_MONTH = 6
 
 interface ColumnGroup {
   year: string
@@ -21,7 +22,6 @@ interface ColumnGroup {
 }
 
 export function AoMonthlyPerformanceTable({ rows }: Props) {
-  const [showExtra, setShowExtra] = useState(false)
   const [sortKey, setSortKey] = useState<AoSortKey>('name')
   const [revealedYears, setRevealedYears] = useState<string[]>([])
   const [collapsedYears, setCollapsedYears] = useState<Set<string>>(new Set())
@@ -44,7 +44,7 @@ export function AoMonthlyPerformanceTable({ rows }: Props) {
 
   const pivot = useMemo(() => buildAoPivot(rows, revealedYears), [rows, revealedYears])
 
-  // Revenue YoY 배지용 — 화면에 펼쳐지지 않은 전년도라도 비교값은 항상 계산해둔다
+  // 결제순매출액 YoY 배지용 — 화면에 펼쳐지지 않은 전년도라도 비교값은 항상 계산해둔다
   const comparisonYears = useMemo(
     () => [...new Set(revealedYears.flatMap(y => [y, String(Number(y) - 1)]))],
     [revealedYears],
@@ -60,10 +60,10 @@ export function AoMonthlyPerformanceTable({ rows }: Props) {
     if (!yoyRow) return null
     if (g.month) {
       const priorMonth = shiftYears(g.month, -1)
-      return calcYoY(yoyRow.byMonth[g.month]?.revenue ?? 0, yoyRow.byMonth[priorMonth]?.revenue)
+      return calcYoY(yoyRow.byMonth[g.month]?.netRevenue ?? 0, yoyRow.byMonth[priorMonth]?.netRevenue)
     }
     const priorYear = String(Number(g.year) - 1)
-    return calcYoY(yoyRow.byYear[g.year]?.revenue ?? 0, yoyRow.byYear[priorYear]?.revenue)
+    return calcYoY(yoyRow.byYear[g.year]?.netRevenue ?? 0, yoyRow.byYear[priorYear]?.netRevenue)
   }
 
   const nextYear = allYears.find(y => !revealedYears.includes(y))
@@ -83,8 +83,6 @@ export function AoMonthlyPerformanceTable({ rows }: Props) {
     })
   }
 
-  const colsPerMonth = showExtra ? 7 : 5
-
   // 연도별로 접혀있으면 "연간 합계" 컬럼 1개, 펼쳐있으면 그 연도의 월별 컬럼들
   const columnGroups: ColumnGroup[] = pivot.years.flatMap(year => {
     if (collapsedYears.has(year)) {
@@ -93,18 +91,17 @@ export function AoMonthlyPerformanceTable({ rows }: Props) {
     return pivot.monthsByYear[year].map(month => ({ year, month, label: monthLabel(month) }))
   })
 
-  // 정렬 기준(Revenue/발송·노출/Conversion A)은 현재 화면에 보이는 컬럼들의 합으로 계산
+  // 정렬 기준(순매출/수신/결제건수)은 현재 화면에 보이는 컬럼들의 합으로 계산
   function aggregateForSort(row: AoPivotRow) {
-    let revenue = 0, sent = 0, impressions = 0, conversionA = 0
+    let netRevenue = 0, sent = 0, paymentCount = 0
     for (const g of columnGroups) {
       const m = g.month ? row.byMonth[g.month] : row.byYear[g.year]
       if (!m) continue
-      revenue += m.revenue
+      netRevenue += m.netRevenue
       sent += m.sent
-      impressions += m.impressions
-      conversionA += m.conversionA
+      paymentCount += m.paymentCount
     }
-    return { campaign: row.campaign, revenue, sent, impressions, conversionA }
+    return { campaign: row.campaign, netRevenue, sent, paymentCount }
   }
 
   const sortedRows = sortByAoMetric(pivot.rows, sortKey, aggregateForSort)
@@ -116,11 +113,11 @@ export function AoMonthlyPerformanceTable({ rows }: Props) {
     setCanScrollRight(el.scrollLeft + el.clientWidth < el.scrollWidth - 4)
   }
 
-  // 컬럼 수가 바뀌면(연도 펼침/접힘, C/D 토글) 스크롤 가능 여부를 다시 계산
+  // 컬럼 수가 바뀌면(연도 펼침/접힘) 스크롤 가능 여부를 다시 계산
   useEffect(() => {
     const id = requestAnimationFrame(updateScrollState)
     return () => cancelAnimationFrame(id)
-  }, [columnGroups.length, showExtra])
+  }, [columnGroups.length])
 
   function scrollByPage(direction: 1 | -1) {
     const el = scrollRef.current
@@ -151,18 +148,6 @@ export function AoMonthlyPerformanceTable({ rows }: Props) {
               + {nextYear}년 데이터 보기
             </button>
           )}
-
-          <button
-            onClick={() => setShowExtra(v => !v)}
-            className={cn(
-              'rounded-lg border px-2.5 py-1.5 text-xs font-medium transition-colors',
-              showExtra
-                ? 'border-[#0066cc] bg-[#e8f0fb] text-[#0066cc]'
-                : 'border-[#e0e0e0] bg-[#F9FAFB] text-[#6B7280] hover:text-[#1d1d1f]',
-            )}
-          >
-            Conversion C/D {showExtra ? '숨기기' : '표시'}
-          </button>
 
           {canScrollAtAll && (
             <div className="flex items-center overflow-hidden rounded-lg border border-[#e0e0e0]">
@@ -196,7 +181,7 @@ export function AoMonthlyPerformanceTable({ rows }: Props) {
               <th className="sticky left-0 z-20 border-b border-r border-[#E5E7EB] bg-[#F3F4F6] px-4 py-1.5" />
               {pivot.years.map(year => {
                 const collapsed = collapsedYears.has(year)
-                const span = collapsed ? colsPerMonth : pivot.monthsByYear[year].length * colsPerMonth
+                const span = collapsed ? COLS_PER_MONTH : pivot.monthsByYear[year].length * COLS_PER_MONTH
                 return (
                   <th
                     key={year}
@@ -220,7 +205,7 @@ export function AoMonthlyPerformanceTable({ rows }: Props) {
               {columnGroups.map(g => (
                 <th
                   key={`${g.year}-${g.month ?? 'total'}`}
-                  colSpan={colsPerMonth}
+                  colSpan={COLS_PER_MONTH}
                   className="border-b border-l border-[#E5E7EB] px-3 py-1.5 text-center text-[11px] font-semibold text-[#1d1d1f]"
                 >
                   {g.label}
@@ -234,17 +219,12 @@ export function AoMonthlyPerformanceTable({ rows }: Props) {
               </th>
               {columnGroups.map(g => (
                 <Fragment key={`${g.year}-${g.month ?? 'total'}`}>
-                  <th className="border-b border-l border-[#E5E7EB] px-3 py-1.5 text-right text-[10px] font-medium text-[#9CA3AF]">노출</th>
-                  <th className="border-b border-[#F3F4F6] px-3 py-1.5 text-right text-[10px] font-medium text-[#9CA3AF]">발송</th>
-                  <th className="border-b border-[#F3F4F6] px-3 py-1.5 text-right text-[10px] font-medium text-[#9CA3AF]">Conv A</th>
-                  <th className="border-b border-[#F3F4F6] px-3 py-1.5 text-right text-[10px] font-medium text-[#9CA3AF]">Conv B</th>
-                  <th className="border-b border-[#F3F4F6] px-3 py-1.5 text-right text-[10px] font-medium text-[#9CA3AF]">Revenue</th>
-                  {showExtra && (
-                    <>
-                      <th className="border-b border-[#F3F4F6] px-3 py-1.5 text-right text-[10px] font-medium text-[#9CA3AF]">Conv C</th>
-                      <th className="border-b border-[#F3F4F6] px-3 py-1.5 text-right text-[10px] font-medium text-[#9CA3AF]">Conv D</th>
-                    </>
-                  )}
+                  <th className="border-b border-l border-[#E5E7EB] px-3 py-1.5 text-right text-[10px] font-medium text-[#9CA3AF]">수신</th>
+                  <th className="border-b border-[#F3F4F6] px-3 py-1.5 text-right text-[10px] font-medium text-[#9CA3AF]">오픈</th>
+                  <th className="border-b border-[#F3F4F6] px-3 py-1.5 text-right text-[10px] font-medium text-[#9CA3AF]">결제건수</th>
+                  <th className="border-b border-[#F3F4F6] px-3 py-1.5 text-right text-[10px] font-medium text-[#9CA3AF]">결제회원수</th>
+                  <th className="border-b border-[#F3F4F6] px-3 py-1.5 text-right text-[10px] font-medium text-[#9CA3AF]">즉차거래액</th>
+                  <th className="border-b border-[#F3F4F6] px-3 py-1.5 text-right text-[10px] font-medium text-[#9CA3AF]">결제순매출액</th>
                 </Fragment>
               ))}
             </tr>
@@ -262,24 +242,27 @@ export function AoMonthlyPerformanceTable({ rows }: Props) {
                 </td>
                 {columnGroups.map(g => {
                   const m = g.month ? row.byMonth[g.month] : row.byYear[g.year]
-                  const base = m ? m.impressions + m.sent : 0
+                  const base = m ? m.sent : 0
                   const rate = (count: number) => (base > 0 ? count / base : 0)
                   return (
                     <Fragment key={`${g.year}-${g.month ?? 'total'}`}>
                       <td className="border-b border-l border-[#E5E7EB] px-3 py-2 text-right text-xs tabular-nums text-[#1d1d1f]">
-                        {m ? formatNumber(m.impressions) : '-'}
-                      </td>
-                      <td className="border-b border-[#F3F4F6] px-3 py-2 text-right text-xs tabular-nums text-[#1d1d1f]">
                         {m ? formatNumber(m.sent) : '-'}
                       </td>
                       <td className="border-b border-[#F3F4F6] px-3 py-2 text-right text-xs tabular-nums text-[#1d1d1f]">
-                        {m ? formatCountWithRate(m.conversionA, rate(m.conversionA)) : '-'}
+                        {m ? formatCountWithRate(m.opens, rate(m.opens)) : '-'}
                       </td>
                       <td className="border-b border-[#F3F4F6] px-3 py-2 text-right text-xs tabular-nums text-[#1d1d1f]">
-                        {m ? formatCountWithRate(m.conversionB, rate(m.conversionB)) : '-'}
+                        {m ? formatCountWithRate(m.paymentCount, rate(m.paymentCount)) : '-'}
                       </td>
                       <td className="border-b border-[#F3F4F6] px-3 py-2 text-right text-xs tabular-nums text-[#1d1d1f]">
-                        {m ? formatCurrency(m.revenue) : '-'}
+                        {m ? formatCountWithRate(m.payingMembers, rate(m.payingMembers)) : '-'}
+                      </td>
+                      <td className="border-b border-[#F3F4F6] px-3 py-2 text-right text-xs tabular-nums text-[#1d1d1f]">
+                        {m ? formatCurrency(m.grossAmount) : '-'}
+                      </td>
+                      <td className="border-b border-[#F3F4F6] px-3 py-2 text-right text-xs tabular-nums text-[#1d1d1f]">
+                        {m ? formatCurrency(m.netRevenue) : '-'}
                         {(() => {
                           const yoy = m ? revenueYoY(row.campaign, g) : null
                           if (yoy === null) return null
@@ -290,16 +273,6 @@ export function AoMonthlyPerformanceTable({ rows }: Props) {
                           )
                         })()}
                       </td>
-                      {showExtra && (
-                        <>
-                          <td className="border-b border-[#F3F4F6] px-3 py-2 text-right text-xs tabular-nums text-[#1d1d1f]">
-                            {m ? formatCountWithRate(m.conversionC, rate(m.conversionC)) : '-'}
-                          </td>
-                          <td className="border-b border-[#F3F4F6] px-3 py-2 text-right text-xs tabular-nums text-[#1d1d1f]">
-                            {m ? formatCountWithRate(m.conversionD, rate(m.conversionD)) : '-'}
-                          </td>
-                        </>
-                      )}
                     </Fragment>
                   )
                 })}

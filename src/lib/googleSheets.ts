@@ -1,19 +1,11 @@
-import type { MartineeUnionRow, DailyKpiRow, AttDataRow } from '@/types/sheets'
+import type { AoPushRow } from '@/types/sheets'
 import { normalizeDate } from './formatters'
-import { supabase } from './supabase'
 
-// /api/sheets 프록시를 통해 시트 데이터를 가져옴
-// Authorization + X-Project-Id 헤더를 자동 주입
+const AO_SHEET_NAME = '브레이즈 푸시 실적'
+
+// /api/sheets 프록시를 통해 시트 데이터를 가져옴 — 서버 측 env var로 인증하므로 클라이언트는 헤더 불필요
 async function fetchSheet(sheetName: string): Promise<string[][]> {
-  const { data: { session } } = await supabase.auth.getSession()
-  const projectId = localStorage.getItem('crm_project_id')
-
-  const headers: Record<string, string> = {}
-  if (session?.access_token) headers['Authorization'] = `Bearer ${session.access_token}`
-  if (projectId) headers['X-Project-Id'] = projectId
-
-  const pid = projectId ? `&pid=${encodeURIComponent(projectId)}` : ''
-  const res = await fetch(`/api/sheets?sheet=${encodeURIComponent(sheetName)}${pid}`, { headers })
+  const res = await fetch(`/api/sheets?sheet=${encodeURIComponent(sheetName)}`)
   if (!res.ok) {
     const json = await res.json().catch(() => ({}))
     throw new Error(`Google Sheets API 오류 [${sheetName}]: ${res.status} ${json.error ?? ''}`)
@@ -22,173 +14,46 @@ async function fetchSheet(sheetName: string): Promise<string[][]> {
   return json.values ?? []
 }
 
-function parseRows<T>(raw: string[][]): T[] {
+function parseNumber(cell: string | undefined): number {
+  if (!cell) return 0
+  const stripped = cell.replace(/,/g, '').trim()
+  const n = parseFloat(stripped)
+  return Number.isNaN(n) ? 0 : n
+}
+
+function parsePercent(cell: string | undefined): number {
+  if (!cell) return 0
+  const stripped = cell.replace(/,/g, '').replace(/%/g, '').trim()
+  const n = parseFloat(stripped)
+  return Number.isNaN(n) ? 0 : n / 100
+}
+
+/**
+ * 열 순서 고정: 일자, 캠페인명, 캠페인명_분할, 배리언트명_분할, XSITE, 수신, 오픈, 오픈율,
+ * 결제건수, 결제회원수, 구매전환율, 즉차거래액, 결제순매출액, 분류, 월 구분
+ */
+function normalizeAoPushRow(row: string[]): AoPushRow {
+  return {
+    date: normalizeDate(row[0] ?? ''),
+    campaignName: row[1] ?? '',
+    campaignSplit: row[2] ?? '',
+    variantSplit: row[3] ?? '',
+    xsite: row[4] ?? '',
+    sent: parseNumber(row[5]),
+    opens: parseNumber(row[6]),
+    openRate: parsePercent(row[7]),
+    paymentCount: parseNumber(row[8]),
+    payingMembers: parseNumber(row[9]),
+    conversionRate: parsePercent(row[10]),
+    grossAmount: parseNumber(row[11]),
+    netRevenue: parseNumber(row[12]),
+    category: row[13] ?? '',
+    monthLabel: row[14] ?? '',
+  }
+}
+
+export async function fetchAoPushRows(): Promise<AoPushRow[]> {
+  const raw = await fetchSheet(AO_SHEET_NAME)
   if (raw.length < 2) return []
-  const headers = raw[0].map(h => h.trim().toLowerCase().replace(/\s+/g, '_'))
-  return raw.slice(1).map(row => {
-    const obj: Record<string, string | number> = {}
-    headers.forEach((h, i) => {
-      const cell = row[i] ?? ''
-      const stripped = cell.replace(/,/g, '')
-      // 순수 숫자 형식만 number로 변환. "2024-03-15" 같은 날짜 문자열은 string 유지
-      const num = /^\s*-?\d+\.?\d*\s*$/.test(stripped) ? parseFloat(stripped) : NaN
-      obj[h] = isNaN(num) ? cell : num
-    })
-    return obj as T
-  })
-}
-
-function normalizeMartinee(rows: Record<string, string | number>[]): MartineeUnionRow[] {
-  return rows
-    .map(r => ({
-      date: normalizeDate(String(r['date'] ?? r['날짜'] ?? '')),
-      app: String(r['app'] ?? ''),
-      campaign_type: String(r['campaign_type'] ?? r['campaign type'] ?? ''),
-      category: String(r['category'] ?? ''),
-      channel: String(r['channel'] ?? ''),
-      os: String(r['os'] ?? r['OS'] ?? ''),
-      message_type: String(r['message_type'] ?? r['message type'] ?? ''),
-      message_name: String(r['message_name'] ?? r['message name'] ?? ''),
-      delivery_type: String(r['delivery_type'] ?? r['delivery type'] ?? ''),
-      campaign_name: String(r['campaign_name'] ?? r['campaign name'] ?? ''),
-      message_action: String(r['message_action'] ?? r['message action'] ?? ''),
-      sent: Number(r['sent'] ?? 0),
-      deliveries: Number(r['deliveries'] ?? 0),
-      impressions: Number(r['impressions'] ?? 0),
-      unique_impressions: Number(r['unique_impressions'] ?? r['unique impressions'] ?? 0),
-      unique_recipients: Number(r['unique_recipients'] ?? r['unique recipients'] ?? 0),
-      body_clicks: Number(r['body_clicks'] ?? r['body clicks'] ?? 0),
-      bounces: Number(r['bounces'] ?? 0),
-      total_opens: Number(r['total_opens'] ?? r['total opens'] ?? 0),
-      direct_opens: Number(r['direct_opens'] ?? r['direct opens'] ?? 0),
-      influenced_opens: Number(r['influenced_opens'] ?? r['influenced opens'] ?? 0),
-      first_button_clicks: Number(r['first_button_clicks'] ?? r['first button clicks'] ?? 0),
-      second_button_clicks: Number(r['second_button_clicks'] ?? r['second button clicks'] ?? 0),
-      conversion_a: Number(r['conversion_a'] ?? r['conversion a'] ?? 0),
-      conversion_b: Number(r['conversion_b'] ?? r['conversion b'] ?? 0),
-      conversion_c: Number(r['conversion_c'] ?? r['conversion c'] ?? 0),
-      conversion_d: Number(r['conversion_d'] ?? r['conversion d'] ?? 0),
-      revenue: Number(r['revenue'] ?? 0),
-      imps: Number(r['imps.'] ?? r['imps'] ?? 0),
-      sent_calc: Number(r['sent.'] ?? r['sent_calc'] ?? 0),
-      campaign_depth_1: String(r['campaign_depth_1'] ?? r['campaign depth 1'] ?? ''),
-      campaign_depth_2: String(r['campaign_depth_2'] ?? r['campaign depth 2'] ?? ''),
-      variant_depth_1: String(r['variant_depth_1'] ?? r['variant depth 1'] ?? ''),
-      variant_depth_2: String(r['variant_depth_2'] ?? r['variant depth 2'] ?? ''),
-      cg_tg: String(r['cg/tg'] ?? r['cg_tg'] ?? ''),
-      clicks: Number(r['clicks'] ?? 0),
-    }))
-    .sort((a, b) => a.date.localeCompare(b.date))
-}
-
-function normalizeDailyKpi(rows: Record<string, string | number>[]): DailyKpiRow[] {
-  return rows
-    .map(r => ({
-      // 시트 원본 컬럼 모두 포함 (pdp_view 등 실제 컬럼명 그대로)
-      ...r,
-      // 고정 alias 덮어쓰기
-      date: normalizeDate(String(r['date'] ?? r['날짜'] ?? '')),
-      push_opt_in: Number(r['push_opt_in'] ?? 0),
-      sms_opt_in: Number(r['sms_opt_in'] ?? 0),
-      kakao_opt_in: Number(r['kakao_opt_in'] ?? 0),
-      dau: Number(r['dau'] ?? 0),
-      mau: Number(r['mau'] ?? 0),
-      revenue: Number(r['revenue'] ?? 0),
-      aov: Number(r['aov'] ?? 0),
-      arpu: Number(r['arpu'] ?? 0),
-      arppu: Number(r['arppu'] ?? 0),
-      purchase_cnt: Number(r['purchase_cnt'] ?? 0),
-      complete_order_product: Number(r['complete_order_product'] ?? 0),
-      first_purchase: Number(r['first_purchase'] ?? 0),
-      like_brand: Number(r['like_brand'] ?? 0),
-      like_product: Number(r['like_product'] ?? 0),
-      view_cartpage: Number(r['view_cartpage'] ?? 0),
-      view_product_detail: Number(r['view_product_detail'] ?? 0),
-      view_promotion_list_page: Number(r['view_promotion_list_page'] ?? 0),
-    }))
-    .sort((a, b) => a.date.localeCompare(b.date))
-}
-
-export async function fetchMartineeUnion(): Promise<MartineeUnionRow[]> {
-  const raw = await fetchSheet('martinee_union')
-  const parsed = parseRows<Record<string, string | number>>(raw)
-  return normalizeMartinee(parsed)
-}
-
-export async function fetchDailyKpi(): Promise<DailyKpiRow[]> {
-  const raw = await fetchSheet('daily_kpi')
-  const parsed = parseRows<Record<string, string | number>>(raw)
-  return normalizeDailyKpi(parsed)
-}
-
-/** daily_kpi rows + H열(index 7)부터의 원본 컬럼명 반환 */
-export async function fetchDailyKpiWithHeaders(): Promise<{
-  rows: DailyKpiRow[]
-  eventColumns: { key: string; label: string }[]
-}> {
-  const raw = await fetchSheet('daily_kpi')
-  const rows = normalizeDailyKpi(parseRows<Record<string, string | number>>(raw))
-  const headerRow = raw[0] ?? []
-  // H열 = index 7 이후 원본 헤더
-  const eventColumns = headerRow
-    .slice(7)
-    .map(h => h.trim())
-    .filter(h => h.length > 0)
-    .map(h => ({
-      key: h.toLowerCase().replace(/\s+/g, '_'),
-      label: h,
-    }))
-  return { rows, eventColumns }
-}
-
-// 고정 컬럼 — extra_events 수집에서 제외
-const ATT_FIXED_KEYS = new Set([
-  'kst_date', 'date', 'source_id', 'source_type', 'message_variation_id',
-  'message_type', 'os', 'source_alias', 'variant_alias', '분류', 'category',
-  'impression_or_send_user', 'open_or_click_user',
-  'purchase_user_count', 'purchase_count', 'purchase_item_count', 'purchase_amount', 'purchase_amount_6h',
-  // 구버전 컬럼명 alias — 파싱은 하되 extra_events에 중복 수집 안 함
-  'purchase_count_6h', 'purchase_item_count_6h', 'purchase_user_count_6h',
-  // 시트 메타
-  'campaing_name', 'campaign_name', 'variant_name',
-])
-
-function normalizeAttData(rows: Record<string, string | number>[]): AttDataRow[] {
-  return rows
-    .map(r => {
-      // 고정 컬럼 외 숫자 컬럼 → extra_events
-      const extra_events: Record<string, number> = {}
-      for (const [k, v] of Object.entries(r)) {
-        if (ATT_FIXED_KEYS.has(k)) continue
-        const n = Number(v)
-        if (!isNaN(n)) extra_events[k] = n
-      }
-
-      return {
-        date: normalizeDate(String(r['kst_date'] ?? r['date'] ?? '')),
-        source_id: String(r['source_id'] ?? ''),
-        source_type: String(r['source_type'] ?? ''),
-        message_variation_id: String(r['message_variation_id'] ?? ''),
-        message_type: String(r['message_type'] ?? ''),
-        os: String(r['os'] ?? ''),
-        source_alias: String(r['source_alias'] ?? r['campaing_name'] ?? r['campaign_name'] ?? ''),
-        variant_alias: String(r['variant_alias'] ?? r['variant_name'] ?? ''),
-        category: String(r['분류'] ?? r['category'] ?? ''),
-        impression_or_send_user: Number(r['impression_or_send_user'] ?? 0),
-        open_or_click_user: Number(r['open_or_click_user'] ?? 0),
-        purchase_user_count: Number(r['purchase_user_count'] ?? r['purchase_user_count_6h'] ?? 0),
-        purchase_count: Number(r['purchase_count'] ?? r['purchase_count_6h'] ?? 0),
-        purchase_item_count: Number(r['purchase_item_count'] ?? r['purchase_item_count_6h'] ?? 0),
-        purchase_amount: Number(r['purchase_amount'] ?? r['purchase_amount_6h'] ?? 0),
-        purchase_amount_6h: Number(r['purchase_amount_6h'] ?? 0),
-        extra_events,
-      }
-    })
-    .sort((a, b) => a.date.localeCompare(b.date))
-}
-
-export async function fetchAttData(): Promise<AttDataRow[]> {
-  const raw = await fetchSheet('ATT_DATA')
-  const parsed = parseRows<Record<string, string | number>>(raw)
-  return normalizeAttData(parsed)
+  return raw.slice(1).map(normalizeAoPushRow).sort((a, b) => a.date.localeCompare(b.date))
 }

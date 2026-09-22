@@ -1,11 +1,11 @@
 import { useMemo, useState } from 'react'
 import { cn } from '@/lib/utils'
-import { formatNumber, formatRate, formatCurrency } from '@/lib/formatters'
+import { formatNumber, formatCountWithRate, formatCurrency } from '@/lib/formatters'
 import { buildAoCampaignDailyRows } from '@/lib/metrics'
-import type { MartineeUnionRow } from '@/types/sheets'
+import type { AoPushRow } from '@/types/sheets'
 
 interface Props {
-  rows: MartineeUnionRow[]
+  rows: AoPushRow[]
   campaign: string
 }
 
@@ -25,35 +25,33 @@ export function AoCampaignDailyTable({ rows, campaign }: Props) {
       </div>
 
       <div className="overflow-x-auto">
-        <table className="w-full min-w-[720px]">
+        <table className="w-full min-w-[900px]">
           <thead>
             <tr className="border-b border-[#F3F4F6] bg-[#F9FAFB]">
               <th className="px-4 py-2 text-left text-[11px] font-semibold text-[#6B7280]">일자</th>
-              <th className="px-3 py-2 text-right text-[11px] font-semibold text-[#6B7280]">노출</th>
-              <th className="px-3 py-2 text-right text-[11px] font-semibold text-[#6B7280]">발송</th>
-              <th className="px-3 py-2 text-right text-[11px] font-semibold text-[#6B7280]">Conv A</th>
-              <th className="px-3 py-2 text-right text-[11px] font-semibold text-[#6B7280]">Conv A 전환율</th>
-              <th className="px-3 py-2 text-right text-[11px] font-semibold text-[#6B7280]">Conv B</th>
-              <th className="px-3 py-2 text-right text-[11px] font-semibold text-[#6B7280]">Conv B 전환율</th>
-              <th className="px-3 py-2 text-right text-[11px] font-semibold text-[#6B7280]">Revenue</th>
+              <th className="px-3 py-2 text-right text-[11px] font-semibold text-[#6B7280]">수신</th>
+              <th className="px-3 py-2 text-right text-[11px] font-semibold text-[#6B7280]">오픈</th>
+              <th className="px-3 py-2 text-right text-[11px] font-semibold text-[#6B7280]">결제건수</th>
+              <th className="px-3 py-2 text-right text-[11px] font-semibold text-[#6B7280]">결제회원수</th>
+              <th className="px-3 py-2 text-right text-[11px] font-semibold text-[#6B7280]">즉차거래액</th>
+              <th className="px-3 py-2 text-right text-[11px] font-semibold text-[#6B7280]">결제순매출액</th>
             </tr>
           </thead>
           <tbody>
             {visible.length === 0 ? (
               <tr>
-                <td colSpan={8} className="px-4 py-6 text-center text-xs text-[#9CA3AF]">이 기간 데이터 없음</td>
+                <td colSpan={7} className="px-4 py-6 text-center text-xs text-[#9CA3AF]">이 기간 데이터 없음</td>
               </tr>
             ) : (
               visible.map((row, idx) => (
                 <tr key={row.date} className={cn('border-b border-[#F3F4F6] hover:bg-[#F9FAFB]', idx % 2 === 1 && 'bg-[#FAFAFB]')}>
                   <td className="px-4 py-2 text-xs font-medium text-[#1d1d1f]">{row.date}</td>
-                  <td className="px-3 py-2 text-right text-xs tabular-nums text-[#1d1d1f]">{formatNumber(row.impressions)}</td>
                   <td className="px-3 py-2 text-right text-xs tabular-nums text-[#1d1d1f]">{formatNumber(row.sent)}</td>
-                  <td className="px-3 py-2 text-right text-xs tabular-nums text-[#1d1d1f]">{formatNumber(row.conversionA)}</td>
-                  <td className="px-3 py-2 text-right text-xs tabular-nums text-[#1d1d1f]">{formatRate(row.conversionRateA)}</td>
-                  <td className="px-3 py-2 text-right text-xs tabular-nums text-[#1d1d1f]">{formatNumber(row.conversionB)}</td>
-                  <td className="px-3 py-2 text-right text-xs tabular-nums text-[#1d1d1f]">{formatRate(row.conversionRateB)}</td>
-                  <td className="px-3 py-2 text-right text-xs tabular-nums text-[#1d1d1f]">{formatCurrency(row.revenue)}</td>
+                  <td className="px-3 py-2 text-right text-xs tabular-nums text-[#1d1d1f]">{formatCountWithRate(row.opens, row.openRate)}</td>
+                  <td className="px-3 py-2 text-right text-xs tabular-nums text-[#1d1d1f]">{formatCountWithRate(row.paymentCount, row.paymentRate)}</td>
+                  <td className="px-3 py-2 text-right text-xs tabular-nums text-[#1d1d1f]">{formatCountWithRate(row.payingMembers, row.payingMemberRate)}</td>
+                  <td className="px-3 py-2 text-right text-xs tabular-nums text-[#1d1d1f]">{formatCurrency(row.grossAmount)}</td>
+                  <td className="px-3 py-2 text-right text-xs tabular-nums text-[#1d1d1f]">{formatCurrency(row.netRevenue)}</td>
                 </tr>
               ))
             )}

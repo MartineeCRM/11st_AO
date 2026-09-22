@@ -23,7 +23,7 @@ function LoadingSkeleton() {
 }
 
 export function CRMAlwaysOn() {
-  const { martinee, loading, error, dateRange } = useSheetData()
+  const { rows: sheetRows, loading, error, dateRange } = useSheetData()
   const minDate = dateRange?.min ?? ''
   const maxDate = dateRange?.max ?? ''
 
@@ -44,7 +44,7 @@ export function CRMAlwaysOn() {
     }
   }, [maxDate]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  const aoRows = useMemo(() => filterAoRows(martinee), [martinee])
+  const aoRows = useMemo(() => filterAoRows(sheetRows), [sheetRows])
   const campaignOptions = useMemo(() => listAoCampaignNames(aoRows), [aoRows])
 
   // 캠페인 목록 로드 후 기본값(가나다순 첫 캠페인) 선택

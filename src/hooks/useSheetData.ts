@@ -1,54 +1,30 @@
 import { useState, useEffect, useRef } from 'react'
-import { fetchMartineeUnion, fetchDailyKpiWithHeaders } from '@/lib/googleSheets'
-import type { MartineeUnionRow, DailyKpiRow } from '@/types/sheets'
+import { fetchAoPushRows } from '@/lib/googleSheets'
+import type { AoPushRow } from '@/types/sheets'
 
 const CACHE_TTL_MS = 5 * 60 * 1000 // 5분
 
-interface CacheEntry<T> {
-  data: T
+interface CacheEntry {
+  data: AoPushRow[]
   fetchedAt: number
 }
 
-interface KpiCacheData {
-  rows: DailyKpiRow[]
-  eventColumns: { key: string; label: string }[]
-}
-
-// 캐시 키에 project_id 포함 — 프로젝트 전환 시 다른 슬롯 사용
-type MarineeKey = `${string}:martinee`
-type KpiKey = `${string}:kpi`
-const martineeCache = new Map<MarineeKey, CacheEntry<MartineeUnionRow[]>>()
-const kpiCache = new Map<KpiKey, CacheEntry<KpiCacheData>>()
-const pendingMartinee = new Map<MarineeKey, Promise<MartineeUnionRow[]>>()
-const pendingKpi = new Map<KpiKey, Promise<KpiCacheData>>()
-
-export function invalidateSheetDataCache(projectId: string) {
-  martineeCache.delete(`${projectId}:martinee`)
-  kpiCache.delete(`${projectId}:kpi`)
-}
-
-function getProjectId(): string {
-  return localStorage.getItem('crm_project_id') ?? 'default'
-}
+let cache: CacheEntry | null = null
+let pending: Promise<AoPushRow[]> | null = null
 
 export interface SheetData {
-  martinee: MartineeUnionRow[]
-  kpi: DailyKpiRow[]
-  kpiEventColumns: { key: string; label: string }[]
+  rows: AoPushRow[]
   loading: boolean
   error: string | null
-  /** 전체 기간 */
+  /** 전체 기간 (수신/오픈 등 모든 원본 행 기준, AO 필터 적용 전) */
   dateRange: { min: string; max: string } | null
 }
 
 export function useSheetData(): SheetData {
-  const [martinee, setMartinee] = useState<MartineeUnionRow[]>([])
-  const [kpi, setKpi] = useState<DailyKpiRow[]>([])
-  const [kpiEventColumns, setKpiEventColumns] = useState<{ key: string; label: string }[]>([])
+  const [rows, setRows] = useState<AoPushRow[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const mounted = useRef(true)
-  const pid = getProjectId()
 
   useEffect(() => {
     mounted.current = true
@@ -58,44 +34,18 @@ export function useSheetData(): SheetData {
       setError(null)
       try {
         const now = Date.now()
-        const mKey: MarineeKey = `${pid}:martinee`
-        const kKey: KpiKey = `${pid}:kpi`
+        const needsFetch = !cache || now - cache.fetchedAt > CACHE_TTL_MS
 
-        const cachedM = martineeCache.get(mKey)
-        const cachedK = kpiCache.get(kKey)
-        const needsMartinee = !cachedM || now - cachedM.fetchedAt > CACHE_TTL_MS
-        const needsKpi = !cachedK || now - cachedK.fetchedAt > CACHE_TTL_MS
-
-        if (needsMartinee && !pendingMartinee.has(mKey)) {
-          const p = fetchMartineeUnion().finally(() => pendingMartinee.delete(mKey))
-          pendingMartinee.set(mKey, p)
-        }
-        if (needsKpi && !pendingKpi.has(kKey)) {
-          const p = fetchDailyKpiWithHeaders().finally(() => pendingKpi.delete(kKey))
-          pendingKpi.set(kKey, p)
+        if (needsFetch && !pending) {
+          pending = fetchAoPushRows().finally(() => { pending = null })
         }
 
-        const [mData, kData] = await Promise.all([
-          needsMartinee
-            ? (pendingMartinee.get(mKey) as Promise<MartineeUnionRow[]>)
-            : Promise.resolve(cachedM!.data),
-          needsKpi
-            ? (pendingKpi.get(kKey) as Promise<KpiCacheData>)
-            : Promise.resolve(cachedK!.data),
-        ])
+        const data = needsFetch ? await pending! : cache!.data
+        if (needsFetch) cache = { data, fetchedAt: Date.now() }
 
-        if (needsMartinee) martineeCache.set(mKey, { data: mData, fetchedAt: Date.now() })
-        if (needsKpi) kpiCache.set(kKey, { data: kData, fetchedAt: Date.now() })
-
-        if (mounted.current) {
-          setMartinee(mData)
-          setKpi(kData.rows)
-          setKpiEventColumns(kData.eventColumns)
-        }
+        if (mounted.current) setRows(data)
       } catch (err) {
-        if (mounted.current) {
-          setError(err instanceof Error ? err.message : '데이터 로드 실패')
-        }
+        if (mounted.current) setError(err instanceof Error ? err.message : '데이터 로드 실패')
       } finally {
         if (mounted.current) setLoading(false)
       }
@@ -103,14 +53,12 @@ export function useSheetData(): SheetData {
 
     void load()
     return () => { mounted.current = false }
-  }, [pid])
+  }, [])
 
-  const allDates = [...martinee.map(r => r.date), ...kpi.map(r => r.date)].filter(Boolean).sort()
+  // fetchAoPushRows가 날짜 오름차순으로 정렬해 반환하므로 첫/끝 원소로 min/max를 구할 수 있음
+  const dateRange = rows.length > 0
+    ? { min: rows[0].date, max: rows[rows.length - 1].date }
+    : null
 
-  const dateRange =
-    allDates.length > 0
-      ? { min: allDates[0], max: allDates[allDates.length - 1] }
-      : null
-
-  return { martinee, kpi, kpiEventColumns, loading, error, dateRange }
+  return { rows, loading, error, dateRange }
 }

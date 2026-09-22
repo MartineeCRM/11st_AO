@@ -29,7 +29,7 @@ export function AoCampaignTrendChart({ campaignName, data, granularity, onGranul
       <div className="mb-4 flex items-center justify-between gap-3">
         <div className="min-w-0">
           <p className="truncate text-sm font-semibold text-[#1d1d1f]">{campaignName || '캠페인을 선택하세요'}</p>
-          <p className="text-xs text-[#9CA3AF] mt-0.5">발송/노출 · Conversion A · Revenue 추이</p>
+          <p className="text-xs text-[#9CA3AF] mt-0.5">수신 · 결제건수 · 결제순매출액 추이</p>
         </div>
         <SegmentedToggle
           value={granularity}
@@ -77,10 +77,10 @@ export function AoCampaignTrendChart({ campaignName, data, granularity, onGranul
               <YAxis yAxisId="revenue" hide domain={['auto', 'auto']} />
               <Tooltip
                 formatter={(value: number, name: string, entry: { payload?: AoTrendPoint }) => {
-                  if (name === 'Revenue') return [formatCurrency(value), name]
-                  if (name === 'Conversion A') {
-                    const base = entry.payload?.sentImpression ?? 0
-                    return [formatCountWithRate(value, base > 0 ? value / base : 0), name]
+                  if (name === '결제순매출액') return [formatCurrency(value), name]
+                  if (name === '결제건수') {
+                    const rate = entry.payload?.paymentRate ?? 0
+                    return [formatCountWithRate(value, rate), name]
                   }
                   return [formatKorean(value), name]
                 }}
@@ -92,8 +92,8 @@ export function AoCampaignTrendChart({ campaignName, data, granularity, onGranul
               />
               <Bar
                 yAxisId="left"
-                dataKey="sentImpression"
-                name="발송/노출"
+                dataKey="sent"
+                name="수신"
                 fill={colors[0]}
                 opacity={0.85}
                 radius={[3, 3, 0, 0]}
@@ -102,8 +102,8 @@ export function AoCampaignTrendChart({ campaignName, data, granularity, onGranul
               <Line
                 yAxisId="right"
                 type="monotone"
-                dataKey="conversionA"
-                name="Conversion A"
+                dataKey="paymentCount"
+                name="결제건수"
                 stroke={colors[1]}
                 strokeWidth={2}
                 dot={{ r: 3, fill: colors[1] }}
@@ -112,8 +112,8 @@ export function AoCampaignTrendChart({ campaignName, data, granularity, onGranul
               <Line
                 yAxisId="revenue"
                 type="monotone"
-                dataKey="revenue"
-                name="Revenue"
+                dataKey="netRevenue"
+                name="결제순매출액"
                 stroke={colors[2]}
                 strokeWidth={2}
                 dot={{ r: 3, fill: colors[2] }}

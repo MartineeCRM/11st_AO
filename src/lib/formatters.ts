@@ -18,11 +18,6 @@ export function formatRate(n: number): string {
   return `${(Math.round(n * 10000) / 100).toFixed(2)}%`
 }
 
-/** Rate 옆에 분자(원본 건수)를 괄호로 병기 — 예: "12.34% (1,234)" */
-export function formatRateWithCount(rate: number, count: number): string {
-  return `${formatRate(rate)} (${formatNumber(Math.round(count))})`
-}
-
 /** 건수 뒤에 전환율을 괄호로 병기 — 예: "1,234(12.3%)". rate는 0~1 비율 */
 export function formatCountWithRate(count: number, rate: number): string {
   return `${formatNumber(Math.round(count))}(${(rate * 100).toFixed(1)}%)`
@@ -31,18 +26,6 @@ export function formatCountWithRate(count: number, rate: number): string {
 /** 단가성 지표 전체 숫자 표기 (AOV, ARPU, ARPPU, 노출당 Rev 등) — 정수 반올림 */
 export function formatCurrency(n: number): string {
   return `₩${Math.round(n).toLocaleString('ko-KR')}`
-}
-
-/** WoW 변화율을 "+2.3%" 형태로 표기 */
-export function formatWoW(ratio: number): string {
-  const pct = (Math.round(ratio * 10000) / 100).toFixed(1)
-  return ratio >= 0 ? `+${pct}%` : `${pct}%`
-}
-
-/** WoW %p 변화 표기 (CTR 같은 Rate 지표) */
-export function formatWoWpp(diff: number): string {
-  const pp = (Math.round(diff * 10000) / 100).toFixed(2)
-  return diff >= 0 ? `+${pp}%p` : `${pp}%p`
 }
 
 function pad2(value: number): string {
@@ -116,13 +99,6 @@ export function parseDateStr(dateStr: string): Date | null {
 /** Date 객체 → YYYY-MM-DD */
 export function toDateStr(d: Date): string {
   return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`
-}
-
-/** n일 전 날짜를 YYYY-MM-DD로 반환 */
-export function daysAgo(n: number, from?: Date): string {
-  const d = from ? new Date(from) : new Date()
-  d.setDate(d.getDate() - n)
-  return toDateStr(d)
 }
 
 /** 특정 날짜 문자열에서 n일 이동한 날짜를 YYYY-MM-DD로 반환 */
