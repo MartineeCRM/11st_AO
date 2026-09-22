@@ -56,8 +56,10 @@ export function useSheetData(): SheetData {
   }, [])
 
   // fetchAoPushRows가 날짜 오름차순으로 정렬해 반환하므로 첫/끝 원소로 min/max를 구할 수 있음
-  const dateRange = rows.length > 0
-    ? { min: rows[0].date, max: rows[rows.length - 1].date }
+  // (단, 빈 일자 셀이 있는 행은 정렬 시 맨 앞으로 오므로 min/max 계산 전에 제외해야 함)
+  const dated = rows.filter(r => r.date)
+  const dateRange = dated.length > 0
+    ? { min: dated[0].date, max: dated[dated.length - 1].date }
     : null
 
   return { rows, loading, error, dateRange }
