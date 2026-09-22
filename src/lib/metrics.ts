@@ -772,13 +772,14 @@ export function buildAoPeriodTable(rows: MartineeUnionRow[], start: string, end:
     })
 }
 
-export type AoSortKey = 'name' | 'revenue' | 'reach' | 'conversionA'
+export type AoSortKey = 'name' | 'revenue' | 'reach' | 'conversionA' | 'conversionRateA'
 
 export const AO_SORT_OPTIONS: { key: AoSortKey; label: string }[] = [
   { key: 'name', label: '캠페인명 (가나다순)' },
   { key: 'revenue', label: 'Revenue 높은순' },
   { key: 'reach', label: '발송/노출 높은순' },
   { key: 'conversionA', label: 'Conversion A 높은순' },
+  { key: 'conversionRateA', label: 'Conversion A 전환율 높은순' },
 ]
 
 interface AoSortable {
@@ -787,6 +788,11 @@ interface AoSortable {
   sent: number
   impressions: number
   conversionA: number
+}
+
+function conversionRateA(m: AoSortable): number {
+  const base = m.impressions + m.sent
+  return base > 0 ? m.conversionA / base : 0
 }
 
 /** 캠페인 목록/피벗 행 등을 공통 정렬 기준으로 정렬. rows 자체는 AoSortable 모양이 아니어도 toMetrics로 뽑아내면 됨 */
@@ -798,6 +804,7 @@ export function sortByAoMetric<T>(rowsIn: T[], sortKey: AoSortKey, toMetrics: (r
     if (sortKey === 'name') return ma.campaign.localeCompare(mb.campaign, 'ko')
     if (sortKey === 'revenue') return mb.revenue - ma.revenue
     if (sortKey === 'reach') return (mb.sent + mb.impressions) - (ma.sent + ma.impressions)
+    if (sortKey === 'conversionRateA') return conversionRateA(mb) - conversionRateA(ma)
     return mb.conversionA - ma.conversionA
   })
   return arr
