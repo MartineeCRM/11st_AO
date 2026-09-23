@@ -57,12 +57,20 @@ export function CRMAlwaysOn({ sheetData, aoRows, campaignOptions, monitoredCampa
   // 의미 없어서 기본적으로 대상에서 빠져있다.
   const alerts = useMemo(() => buildAoCampaignAlerts(aoRows, monitoredCampaigns), [aoRows, monitoredCampaigns])
 
-  // 캠페인 목록 로드 후 기본값(가나다순 첫 캠페인) 선택
+  // 설정 탭에서 고른 모니터링 대상 캠페인을 드롭다운 맨 위로 (각 그룹 내에서는 가나다순 유지)
+  const sortedCampaignOptions = useMemo(() => {
+    const monitoredSet = new Set(monitoredCampaigns)
+    const monitored = campaignOptions.filter(c => monitoredSet.has(c))
+    const rest = campaignOptions.filter(c => !monitoredSet.has(c))
+    return [...monitored, ...rest]
+  }, [campaignOptions, monitoredCampaigns])
+
+  // 캠페인 목록 로드 후 기본값(모니터링 대상 우선, 그다음 가나다순 첫 캠페인) 선택
   useEffect(() => {
-    if (!selectedCampaign && campaignOptions.length > 0) {
-      setSelectedCampaign(campaignOptions[0])
+    if (!selectedCampaign && sortedCampaignOptions.length > 0) {
+      setSelectedCampaign(sortedCampaignOptions[0])
     }
-  }, [campaignOptions]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [sortedCampaignOptions]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const start = range.start || minDate
   const end = range.end || maxDate
@@ -112,7 +120,7 @@ export function CRMAlwaysOn({ sheetData, aoRows, campaignOptions, monitoredCampa
 
         <CampaignSelectFilter
           label="캠페인"
-          options={campaignOptions}
+          options={sortedCampaignOptions}
           selected={selectedCampaign}
           onChange={setSelectedCampaign}
         />

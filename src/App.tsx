@@ -59,7 +59,7 @@ export default function App() {
   const sheetConnection = useSheetConnectionState()
   const alertCampaigns = useAlertCampaignsState()
 
-  // Settings의 "알림 대상 캠페인" 체크리스트도 실제 캠페인 목록이 필요해서, 시트 데이터는
+  // Settings의 "모니터링 대상 캠페인" 체크리스트도 실제 캠페인 목록이 필요해서, 시트 데이터는
   // 여기서 한 번만 받아 AO 탭/설정 탭에 props로 내려준다 (탭마다 따로 fetch하지 않도록).
   const sheetData = useSheetData(sheetConnection.connection)
   const aoRows = useMemo(() => filterAoRows(sheetData.rows), [sheetData.rows])

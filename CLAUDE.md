@@ -10,7 +10,7 @@
 ### 탭 구성
 
 1. **AO 캠페인 모니터링** — AO 푸시 캠페인별 일/주/월 추이, 캠페인별 실적 테이블, 기간 비교
-2. **설정** — Google Sheets 연결(스프레드시트 ID/시트명/API 키) + 연결 테스트 버튼 + 알림 대상 캠페인 체크리스트. 전부 이 브라우저에만 저장(`localStorage`)되며 서버에 저장되지 않는다.
+2. **설정** — Google Sheets 연결(스프레드시트 ID/시트명/API 키) + 연결 테스트 버튼 + 모니터링 대상 캠페인 체크리스트. 전부 이 브라우저에만 저장(`localStorage`)되며 서버에 저장되지 않는다.
 
 로그인/인증/Attribution/운영 관리 탭은 없다. 여러 고객사가 같은 배포를 함께 쓸 수 있도록, 사용자별로 설정 탭에서 자기 스프레드시트/API 키를 개별 지정할 수 있다 (아래 "데이터 소스" 참고). 배포자가 지정한 서버 기본 연결(`.env`)은, 사용자가 설정을 비워둔 경우의 fallback으로만 쓰인다.
 
@@ -77,7 +77,7 @@ src/
   hooks/
     useSheetData.ts             # Google Sheets 원본 데이터 페칭 + 캐시(연결별로 분리) + 에러 상태
     useSheetConnectionState.ts  # 사용자별 Sheets 연결 상태 (App.tsx에서 단일 인스턴스로 유지, AO/Settings에는 props로 전달)
-    useAlertCampaignsState.ts   # "주의 필요" 알림 대상으로 고른 캠페인 목록 (localStorage, App.tsx에서 단일 인스턴스로 유지)
+    useAlertCampaignsState.ts   # "모니터링 대상"으로 고른 캠페인 목록 (localStorage, App.tsx에서 단일 인스턴스로 유지)
   lib/
     googleSheets.ts         # Sheets API 클라이언트 + 헤더(열 순서) 검증
     formatters.ts            # 숫자/날짜 포맷 유틸
@@ -87,7 +87,7 @@ src/
     sheets.ts               # 시트 raw 데이터 타입 (AoPushRow)
   pages/
     CRMAlwaysOn.tsx          # AO 캠페인 모니터링 탭
-    CRMSettings.tsx           # 설정 탭 (Google Sheets 연결 + 연결 테스트 + 알림 대상 캠페인)
+    CRMSettings.tsx           # 설정 탭 (Google Sheets 연결 + 연결 테스트 + 모니터링 대상 캠페인)
     AoAlertBanner.tsx         # AO 탭 상단 "주의 필요" 배너 (전주 대비 급락 감지)
 ```
 
@@ -123,7 +123,8 @@ src/
 - 설정 탭에서 사용자가 직접 고른 캠페인(`useAlertCampaignsState`, `localStorage`)만 대상으로 삼는다 — 전체 캠페인에 자동 적용하지 않는다.
 - 비교 기준: 데이터의 가장 최근 날짜가 속한 주는 시트 업데이트가 덜 됐을 수 있어 **건너뛰고**, 그 직전 주(이번 주) vs 그 전전 주(지난 주)를 비교한다.
 - 발송건수/오픈율/연관거래액 중 하나라도 전주 대비 50%(`ALERT_DROP_THRESHOLD`) 이상 하락하면 표시. 지난 주에 발송 이력이 아예 없으면(비교 기준 없음) 대상에서 제외.
-- **격주/월 단위로 몰아서 발송하는 간헐적 캠페인은 알림 대상으로 고르지 않는 걸 권장** — 이런 캠페인은 "쉬는 주"가 정상이라 매주 하락으로 잡혀 오탐이 난다. 실제로 "재방문 유도" 계열 캠페인에서 확인된 패턴.
+- **격주/월 단위로 몰아서 발송하는 간헐적 캠페인은 모니터링 대상으로 고르지 않는 걸 권장** — 이런 캠페인은 "쉬는 주"가 정상이라 매주 하락으로 잡혀 오탐이 난다. 실제로 "재방문 유도" 계열 캠페인에서 확인된 패턴.
+- 설정 탭에서 체크한 모니터링 대상 캠페인은 AO 탭의 캠페인 선택 드롭다운에서도 최상단으로 우선 배치된다 (`CRMAlwaysOn.tsx`에서 `campaignOptions`를 모니터링 대상 여부로 먼저 정렬한 뒤 가나다순 적용).
 
 ---
 
