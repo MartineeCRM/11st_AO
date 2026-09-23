@@ -80,7 +80,7 @@ brainstorming → writing-plans → dispatching-parallel-agents → simplify →
 
 - 클라이언트는 스프레드시트 ID/API 키를 직접 다루지 않고 `/api/sheets`만 호출한다.
 - 서버 전용 환경변수(`SPREADSHEET_ID`, `GOOGLE_SHEETS_API_KEY`)는 `VITE_` prefix 없이 `process.env`로만 읽는다.
-- 프록시는 요청받은 `sheet` 쿼리 파라미터를 그대로 신뢰하지 않고, 허용된 시트 이름(`브레이즈 푸시 실적`)으로 allowlist 검증한다.
+- 프록시는 `spreadsheetId`/`sheet` 쿼리 파라미터와 `x-sheets-api-key` 헤더로 전달된 클라이언트(설정 탭) 연결정보를 우선 사용하고, 없으면 서버 `.env` 기본값으로 대체한다. 사용자별로 다른 스프레드시트/API 키를 쓸 수 있도록 하기 위함이며, 더 이상 시트 이름을 하나로 고정하는 allowlist는 없다.
 
 ### Vercel 배포와 Git author
 

@@ -29,7 +29,7 @@ export function AoCampaignTrendChart({ campaignName, data, granularity, onGranul
       <div className="mb-4 flex items-center justify-between gap-3">
         <div className="min-w-0">
           <p className="truncate text-sm font-semibold text-[#1d1d1f]">{campaignName || '캠페인을 선택하세요'}</p>
-          <p className="text-xs text-[#9CA3AF] mt-0.5">수신 · 결제건수 · 결제순매출액 추이</p>
+          <p className="text-xs text-[#9CA3AF] mt-0.5">수신 · 결제건수 · 연관거래액 추이</p>
         </div>
         <SegmentedToggle
           value={granularity}
@@ -77,7 +77,7 @@ export function AoCampaignTrendChart({ campaignName, data, granularity, onGranul
               <YAxis yAxisId="revenue" hide domain={['auto', 'auto']} />
               <Tooltip
                 formatter={(value: number, name: string, entry: { payload?: AoTrendPoint }) => {
-                  if (name === '결제순매출액') return [formatCurrency(value), name]
+                  if (name === '연관거래액') return [formatCurrency(value), name]
                   if (name === '결제건수') {
                     const rate = entry.payload?.paymentRate ?? 0
                     return [formatCountWithRate(value, rate), name]
@@ -112,8 +112,8 @@ export function AoCampaignTrendChart({ campaignName, data, granularity, onGranul
               <Line
                 yAxisId="revenue"
                 type="monotone"
-                dataKey="netRevenue"
-                name="결제순매출액"
+                dataKey="grossAmount"
+                name="연관거래액"
                 stroke={colors[2]}
                 strokeWidth={2}
                 dot={{ r: 3, fill: colors[2] }}

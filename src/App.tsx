@@ -4,6 +4,7 @@ const CRMAlwaysOn = lazy(() => import('@/pages/CRMAlwaysOn').then(m => ({ defaul
 import { CRMSettings } from '@/pages/CRMSettings'
 import { ChartColorsContext } from '@/lib/chartColors'
 import { useChartColorsState } from '@/hooks/useChartColorsState'
+import { useSheetConnectionState } from '@/hooks/useSheetConnectionState'
 
 export type Tab = 'ao' | 'settings'
 
@@ -55,6 +56,7 @@ class ErrorBoundary extends Component<{ children: ReactNode }, { error: Error | 
 export default function App() {
   const [activeTab, setActiveTab] = useState<Tab>('ao')
   const chartColors = useChartColorsState()
+  const sheetConnection = useSheetConnectionState()
 
   function handleTabChange(tab: Tab) {
     sessionStorage.removeItem(CHUNK_RELOAD_KEY)
@@ -69,10 +71,10 @@ export default function App() {
           <ErrorBoundary>
             {activeTab === 'ao' && (
               <Suspense fallback={<div className="flex h-64 items-center justify-center"><div className="h-5 w-5 animate-spin rounded-full border-2 border-[#0066cc] border-t-transparent" /></div>}>
-                <CRMAlwaysOn />
+                <CRMAlwaysOn connection={sheetConnection.connection} />
               </Suspense>
             )}
-            {activeTab === 'settings' && <CRMSettings {...chartColors} />}
+            {activeTab === 'settings' && <CRMSettings {...chartColors} sheetConnection={sheetConnection} />}
           </ErrorBoundary>
         </main>
       </div>

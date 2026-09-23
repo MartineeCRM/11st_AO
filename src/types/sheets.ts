@@ -10,8 +10,8 @@ export interface AoPushRow {
   paymentCount: number     // 결제건수
   payingMembers: number    // 결제회원수
   conversionRate: number   // 구매전환율 (0~1 비율로 파싱, 시트 원본값 — 집계 함수는 합산 후 재계산치를 사용)
-  grossAmount: number      // 즉차거래액
-  netRevenue: number       // 결제순매출액
+  grossAmount: number      // 즉차거래액 — FE에는 "연관거래액"으로 표기, 집계 지표의 매출 기준값
+  netRevenue: number       // 결제순매출액 (시트 원본값 — 원자료 보존용으로만 파싱, 집계/화면에는 사용하지 않음)
   category: string         // 분류 (CONTEXT/BMSIGHT/MASS/#REF!/미분류) — AO 필터링에는 사용하지 않음
   monthLabel: string       // 월 구분
 }

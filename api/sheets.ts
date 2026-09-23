@@ -2,7 +2,6 @@ import type { VercelRequest, VercelResponse } from '@vercel/node'
 
 const SHEETS_BASE = 'https://sheets.googleapis.com/v4/spreadsheets'
 const DEFAULT_SHEET_NAME = '브레이즈 푸시 실적'
-const ALLOWED_SHEETS = new Set([DEFAULT_SHEET_NAME])
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'GET') {
@@ -10,15 +9,18 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(405).json({ error: 'Method not allowed' })
   }
 
-  const spreadsheetId = process.env.SPREADSHEET_ID
-  const apiKey = process.env.GOOGLE_SHEETS_API_KEY
+  // 클라이언트(설정 탭에서 사용자가 입력한 값)가 우선, 없으면 서버 기본 연결(env var)로 대체.
+  // 이렇게 하면 여러 고객사가 각자 자기 스프레드시트/API 키를 브라우저에만 저장해 쓸 수 있고,
+  // 아무 설정도 안 한 사용자는 배포자가 지정한 기본 연결을 그대로 사용하게 된다.
+  const { sheet, spreadsheetId: qsSpreadsheetId } = req.query as Record<string, string>
+  const spreadsheetId = qsSpreadsheetId || process.env.SPREADSHEET_ID
+  const apiKey = (req.headers['x-sheets-api-key'] as string | undefined) || process.env.GOOGLE_SHEETS_API_KEY
   if (!spreadsheetId || !apiKey) {
-    console.error('[sheets] missing SPREADSHEET_ID or GOOGLE_SHEETS_API_KEY env var')
-    return res.status(500).json({ error: 'Server is missing SPREADSHEET_ID or GOOGLE_SHEETS_API_KEY' })
+    console.error('[sheets] no SPREADSHEET_ID/GOOGLE_SHEETS_API_KEY from client or server env')
+    return res.status(500).json({ error: '스프레드시트 연결 정보가 없습니다. 설정 탭에서 연결 정보를 입력해주세요.' })
   }
 
-  const { sheet } = req.query as Record<string, string>
-  const sheetName = sheet && ALLOWED_SHEETS.has(sheet) ? sheet : DEFAULT_SHEET_NAME
+  const sheetName = sheet || DEFAULT_SHEET_NAME
   const range = `${sheetName}!A:O`
   const url = `${SHEETS_BASE}/${spreadsheetId}/values/${encodeURIComponent(range)}?key=${apiKey}`
 

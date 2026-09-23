@@ -32,14 +32,13 @@ function Leaderboard({ title, data, expanded }: { title: string; data: AoPeriodR
               <th className="px-3 py-2 text-right text-[11px] font-semibold text-[#6B7280]">오픈</th>
               <th className="px-3 py-2 text-right text-[11px] font-semibold text-[#6B7280]">결제건수</th>
               <th className="px-3 py-2 text-right text-[11px] font-semibold text-[#6B7280]">결제회원수</th>
-              <th className="px-3 py-2 text-right text-[11px] font-semibold text-[#6B7280]">즉차거래액</th>
-              <th className="px-3 py-2 text-right text-[11px] font-semibold text-[#6B7280]">결제순매출액</th>
+              <th className="px-3 py-2 text-right text-[11px] font-semibold text-[#6B7280]">연관거래액</th>
             </tr>
           </thead>
           <tbody>
             {visible.length === 0 ? (
               <tr>
-                <td colSpan={7} className="px-3 py-6 text-center text-xs text-[#9CA3AF]">이 기간 데이터 없음</td>
+                <td colSpan={6} className="px-3 py-6 text-center text-xs text-[#9CA3AF]">이 기간 데이터 없음</td>
               </tr>
             ) : (
               visible.map((row, idx) => (
@@ -50,7 +49,6 @@ function Leaderboard({ title, data, expanded }: { title: string; data: AoPeriodR
                   <td className="px-3 py-2 text-right text-xs tabular-nums text-[#1d1d1f]">{formatCountWithRate(row.paymentCount, row.paymentRate)}</td>
                   <td className="px-3 py-2 text-right text-xs tabular-nums text-[#1d1d1f]">{formatCountWithRate(row.payingMembers, row.payingMemberRate)}</td>
                   <td className="px-3 py-2 text-right text-xs tabular-nums text-[#1d1d1f]">{formatCurrency(row.grossAmount)}</td>
-                  <td className="px-3 py-2 text-right text-xs tabular-nums text-[#1d1d1f]">{formatCurrency(row.netRevenue)}</td>
                 </tr>
               ))
             )}
@@ -71,9 +69,9 @@ export function AoPeriodComparisonTable({ rows, periodA, periodB, onPeriodAChang
   const sortedA = useMemo(() => sortByAoMetric(tableA, sortKey, r => r), [tableA, sortKey])
   const sortedB = useMemo(() => sortByAoMetric(tableB, sortKey, r => r), [tableB, sortKey])
 
-  const netRevenueA = tableA.reduce((s, r) => s + r.netRevenue, 0)
-  const netRevenueB = tableB.reduce((s, r) => s + r.netRevenue, 0)
-  const delta = calcPeriodDelta(netRevenueB, netRevenueA)
+  const grossAmountA = tableA.reduce((s, r) => s + r.grossAmount, 0)
+  const grossAmountB = tableB.reduce((s, r) => s + r.grossAmount, 0)
+  const delta = calcPeriodDelta(grossAmountB, grossAmountA)
 
   const maxRows = Math.max(tableA.length, tableB.length)
   const hiddenCount = maxRows - PAGE_SIZE
@@ -105,7 +103,7 @@ export function AoPeriodComparisonTable({ rows, periodA, periodB, onPeriodAChang
 
       {delta !== null && (
         <p className="px-4 pt-3 text-xs text-[#6B7280]">
-          전체 순매출 증감{' '}
+          전체 연관거래액 증감{' '}
           <span className={cn('font-semibold', delta >= 0 ? 'text-[#10B981]' : 'text-[#EF4444]')}>
             {delta >= 0 ? '▲' : '▼'} {Math.abs(delta * 100).toFixed(1)}%
           </span>

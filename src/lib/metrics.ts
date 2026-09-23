@@ -33,7 +33,8 @@ export interface AoTrendPoint {
   paymentCount: number
   /** paymentCount ÷ sent */
   paymentRate: number
-  netRevenue: number
+  /** 연관거래액 (즉차거래액) */
+  grossAmount: number
 }
 
 /** 날짜 → 그 주(월요일 시작) 첫날, YYYY-MM-DD */
@@ -75,7 +76,7 @@ export function buildAoCampaignTrend(
         sent: m.sent,
         paymentCount: m.paymentCount,
         paymentRate: m.sent > 0 ? m.paymentCount / m.sent : 0,
-        netRevenue: m.netRevenue,
+        grossAmount: m.grossAmount,
       }
     })
 }
@@ -92,8 +93,8 @@ export interface AoDailyRow {
   payingMembers: number
   /** payingMembers ÷ sent */
   payingMemberRate: number
+  /** 연관거래액 (즉차거래액) */
   grossAmount: number
-  netRevenue: number
 }
 
 /** 특정 AO 캠페인의 일자별 실적 — 최신 날짜가 먼저 */
@@ -119,7 +120,6 @@ export function buildAoCampaignDailyRows(rows: AoPushRow[], campaign: string): A
         payingMembers: m.payingMembers,
         payingMemberRate: m.sent > 0 ? m.payingMembers / m.sent : 0,
         grossAmount: m.grossAmount,
-        netRevenue: m.netRevenue,
       }
     })
 }
@@ -129,8 +129,8 @@ export interface AoMonthlyMetrics {
   opens: number
   paymentCount: number
   payingMembers: number
+  /** 연관거래액 (즉차거래액) */
   grossAmount: number
-  netRevenue: number
 }
 
 export interface AoPivotRow {
@@ -156,7 +156,6 @@ function sumAoMetrics(rs: AoPushRow[]): AoMonthlyMetrics {
     paymentCount: rs.reduce((s, r) => s + r.paymentCount, 0),
     payingMembers: rs.reduce((s, r) => s + r.payingMembers, 0),
     grossAmount: rs.reduce((s, r) => s + r.grossAmount, 0),
-    netRevenue: rs.reduce((s, r) => s + r.netRevenue, 0),
   }
 }
 
@@ -260,8 +259,8 @@ export interface AoPeriodRow {
   paymentRate: number
   payingMembers: number
   payingMemberRate: number
+  /** 연관거래액 (즉차거래액) */
   grossAmount: number
-  netRevenue: number
 }
 
 /**
@@ -292,7 +291,6 @@ export function buildAoPeriodTable(rows: AoPushRow[], start: string, end: string
       payingMembers: m.payingMembers,
       payingMemberRate: m.sent > 0 ? m.payingMembers / m.sent : 0,
       grossAmount: m.grossAmount,
-      netRevenue: m.netRevenue,
     }
   })
 }
@@ -301,7 +299,7 @@ export type AoSortKey = 'name' | 'revenue' | 'reach' | 'paymentCount' | 'payment
 
 export const AO_SORT_OPTIONS: { key: AoSortKey; label: string }[] = [
   { key: 'name', label: '캠페인명 (가나다순)' },
-  { key: 'revenue', label: '순매출 높은순' },
+  { key: 'revenue', label: '연관거래액 높은순' },
   { key: 'reach', label: '수신 높은순' },
   { key: 'paymentCount', label: '결제건수 높은순' },
   { key: 'paymentRate', label: '구매전환율 높은순' },
@@ -309,7 +307,7 @@ export const AO_SORT_OPTIONS: { key: AoSortKey; label: string }[] = [
 
 interface AoSortable {
   campaign: string
-  netRevenue: number
+  grossAmount: number
   sent: number
   paymentCount: number
 }
@@ -325,7 +323,7 @@ export function sortByAoMetric<T>(rowsIn: T[], sortKey: AoSortKey, toMetrics: (r
     const ma = toMetrics(a)
     const mb = toMetrics(b)
     if (sortKey === 'name') return ma.campaign.localeCompare(mb.campaign, 'ko')
-    if (sortKey === 'revenue') return mb.netRevenue - ma.netRevenue
+    if (sortKey === 'revenue') return mb.grossAmount - ma.grossAmount
     if (sortKey === 'reach') return mb.sent - ma.sent
     if (sortKey === 'paymentRate') return paymentRateOf(mb) - paymentRateOf(ma)
     return mb.paymentCount - ma.paymentCount

@@ -1,6 +1,7 @@
-import { useState, useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { fetchAoPushRows } from '@/lib/googleSheets'
 import type { AoPushRow } from '@/types/sheets'
+import type { SheetConnection } from './useSheetConnectionState'
 
 const CACHE_TTL_MS = 5 * 60 * 1000 // 5분
 
@@ -9,8 +10,14 @@ interface CacheEntry {
   fetchedAt: number
 }
 
-let cache: CacheEntry | null = null
-let pending: Promise<AoPushRow[]> | null = null
+// 연결 정보(스프레드시트ID+시트명)별로 캐시를 분리 — 사용자가 설정에서 연결을 바꾸면
+// 새로 fetch하고, 같은 연결로 돌아오면 캐시를 재사용한다.
+const cache = new Map<string, CacheEntry>()
+const pending = new Map<string, Promise<AoPushRow[]>>()
+
+function cacheKeyOf(connection: SheetConnection): string {
+  return `${connection.spreadsheetId}::${connection.sheetName}`
+}
 
 export interface SheetData {
   rows: AoPushRow[]
@@ -20,7 +27,7 @@ export interface SheetData {
   dateRange: { min: string; max: string } | null
 }
 
-export function useSheetData(): SheetData {
+export function useSheetData(connection: SheetConnection): SheetData {
   const [rows, setRows] = useState<AoPushRow[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -28,20 +35,22 @@ export function useSheetData(): SheetData {
 
   useEffect(() => {
     mounted.current = true
+    const key = cacheKeyOf(connection)
 
     async function load() {
       setLoading(true)
       setError(null)
       try {
         const now = Date.now()
-        const needsFetch = !cache || now - cache.fetchedAt > CACHE_TTL_MS
+        const cached = cache.get(key)
+        const needsFetch = !cached || now - cached.fetchedAt > CACHE_TTL_MS
 
-        if (needsFetch && !pending) {
-          pending = fetchAoPushRows().finally(() => { pending = null })
+        if (needsFetch && !pending.has(key)) {
+          pending.set(key, fetchAoPushRows(connection).finally(() => { pending.delete(key) }))
         }
 
-        const data = needsFetch ? await pending! : cache!.data
-        if (needsFetch) cache = { data, fetchedAt: Date.now() }
+        const data = needsFetch ? await pending.get(key)! : cached!.data
+        if (needsFetch) cache.set(key, { data, fetchedAt: Date.now() })
 
         if (mounted.current) setRows(data)
       } catch (err) {
@@ -53,7 +62,7 @@ export function useSheetData(): SheetData {
 
     void load()
     return () => { mounted.current = false }
-  }, [])
+  }, [connection.spreadsheetId, connection.sheetName, connection.apiKey]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // fetchAoPushRows가 날짜 오름차순으로 정렬해 반환하므로 첫/끝 원소로 min/max를 구할 수 있음
   // (단, 빈 일자 셀이 있는 행은 정렬 시 맨 앞으로 오므로 min/max 계산 전에 제외해야 함)

@@ -10,6 +10,7 @@ import { AoPeriodComparisonTable } from '@/components/AoPeriodComparisonTable'
 import { SegmentedToggle } from '@/components/filters/SegmentedToggle'
 import { filterAoRows, listAoCampaignNames, buildAoCampaignTrend, previousPeriodOfSameLength } from '@/lib/metrics'
 import type { DateRange } from '@/types/sheets'
+import type { SheetConnection } from '@/hooks/useSheetConnectionState'
 
 const DEFAULT_PRESET: Preset = '90d'
 
@@ -22,8 +23,12 @@ function LoadingSkeleton() {
   )
 }
 
-export function CRMAlwaysOn() {
-  const { rows: sheetRows, loading, error, dateRange } = useSheetData()
+interface Props {
+  connection: SheetConnection
+}
+
+export function CRMAlwaysOn({ connection }: Props) {
+  const { rows: sheetRows, loading, error, dateRange } = useSheetData(connection)
   const minDate = dateRange?.min ?? ''
   const maxDate = dateRange?.max ?? ''
 
@@ -81,6 +86,7 @@ export function CRMAlwaysOn() {
       <div className="flex flex-col items-center justify-center py-24 gap-3">
         <p className="text-sm font-semibold text-[#EF4444]">데이터 로드 실패</p>
         <p className="text-xs text-[#6B7280]">{error}</p>
+        <p className="text-xs text-[#9CA3AF]">설정 탭에서 Google Sheets 연결 정보를 확인해주세요.</p>
       </div>
     )
   }

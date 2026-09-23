@@ -33,14 +33,13 @@ export function AoCampaignDailyTable({ rows, campaign }: Props) {
               <th className="px-3 py-2 text-right text-[11px] font-semibold text-[#6B7280]">오픈</th>
               <th className="px-3 py-2 text-right text-[11px] font-semibold text-[#6B7280]">결제건수</th>
               <th className="px-3 py-2 text-right text-[11px] font-semibold text-[#6B7280]">결제회원수</th>
-              <th className="px-3 py-2 text-right text-[11px] font-semibold text-[#6B7280]">즉차거래액</th>
-              <th className="px-3 py-2 text-right text-[11px] font-semibold text-[#6B7280]">결제순매출액</th>
+              <th className="px-3 py-2 text-right text-[11px] font-semibold text-[#6B7280]">연관거래액</th>
             </tr>
           </thead>
           <tbody>
             {visible.length === 0 ? (
               <tr>
-                <td colSpan={7} className="px-4 py-6 text-center text-xs text-[#9CA3AF]">이 기간 데이터 없음</td>
+                <td colSpan={6} className="px-4 py-6 text-center text-xs text-[#9CA3AF]">이 기간 데이터 없음</td>
               </tr>
             ) : (
               visible.map((row, idx) => (
@@ -51,7 +50,6 @@ export function AoCampaignDailyTable({ rows, campaign }: Props) {
                   <td className="px-3 py-2 text-right text-xs tabular-nums text-[#1d1d1f]">{formatCountWithRate(row.paymentCount, row.paymentRate)}</td>
                   <td className="px-3 py-2 text-right text-xs tabular-nums text-[#1d1d1f]">{formatCountWithRate(row.payingMembers, row.payingMemberRate)}</td>
                   <td className="px-3 py-2 text-right text-xs tabular-nums text-[#1d1d1f]">{formatCurrency(row.grossAmount)}</td>
-                  <td className="px-3 py-2 text-right text-xs tabular-nums text-[#1d1d1f]">{formatCurrency(row.netRevenue)}</td>
                 </tr>
               ))
             )}
