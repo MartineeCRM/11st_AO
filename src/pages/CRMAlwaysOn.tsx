@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { useSheetData } from '@/hooks/useSheetData'
+import type { SheetData } from '@/hooks/useSheetData'
 import { DatePresetFilter } from '@/components/filters/DatePresetFilter'
 import { CampaignSelectFilter } from '@/components/filters/CampaignSelectFilter'
 import { presetToRange, type Preset } from '@/components/filters/datePresets'
@@ -7,10 +7,10 @@ import { AoCampaignTrendChart } from '@/components/charts/AoCampaignTrendChart'
 import { AoCampaignDailyTable } from '@/components/AoCampaignDailyTable'
 import { AoMonthlyPerformanceTable } from '@/components/AoMonthlyPerformanceTable'
 import { AoPeriodComparisonTable } from '@/components/AoPeriodComparisonTable'
+import { AoAlertBanner } from '@/components/AoAlertBanner'
 import { SegmentedToggle } from '@/components/filters/SegmentedToggle'
-import { filterAoRows, listAoCampaignNames, buildAoCampaignTrend, previousPeriodOfSameLength } from '@/lib/metrics'
-import type { DateRange } from '@/types/sheets'
-import type { SheetConnection } from '@/hooks/useSheetConnectionState'
+import { buildAoCampaignTrend, buildAoCampaignAlerts, previousPeriodOfSameLength } from '@/lib/metrics'
+import type { AoPushRow, DateRange } from '@/types/sheets'
 
 const DEFAULT_PRESET: Preset = '90d'
 
@@ -24,11 +24,14 @@ function LoadingSkeleton() {
 }
 
 interface Props {
-  connection: SheetConnection
+  sheetData: SheetData
+  aoRows: AoPushRow[]
+  campaignOptions: string[]
+  monitoredCampaigns: string[]
 }
 
-export function CRMAlwaysOn({ connection }: Props) {
-  const { rows: sheetRows, loading, error, dateRange } = useSheetData(connection)
+export function CRMAlwaysOn({ sheetData, aoRows, campaignOptions, monitoredCampaigns }: Props) {
+  const { loading, error, dateRange } = sheetData
   const minDate = dateRange?.min ?? ''
   const maxDate = dateRange?.max ?? ''
 
@@ -49,8 +52,10 @@ export function CRMAlwaysOn({ connection }: Props) {
     }
   }, [maxDate]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  const aoRows = useMemo(() => filterAoRows(sheetRows), [sheetRows])
-  const campaignOptions = useMemo(() => listAoCampaignNames(aoRows), [aoRows])
+  // 상단 기간 필터와 무관하게, 항상 데이터에 존재하는 최신 주 vs 직전 주를 비교 (운영 모니터링 목적).
+  // 설정 탭에서 사용자가 고른 캠페인만 대상 — 간헐적으로 몰아서 발송하는 캠페인은 전주 대비 비교가
+  // 의미 없어서 기본적으로 대상에서 빠져있다.
+  const alerts = useMemo(() => buildAoCampaignAlerts(aoRows, monitoredCampaigns), [aoRows, monitoredCampaigns])
 
   // 캠페인 목록 로드 후 기본값(가나다순 첫 캠페인) 선택
   useEffect(() => {
@@ -117,6 +122,8 @@ export function CRMAlwaysOn({ connection }: Props) {
         <LoadingSkeleton />
       ) : (
         <div className="flex flex-col gap-8 px-6 py-5">
+          <AoAlertBanner alerts={alerts} />
+
           <section className="flex flex-col gap-2">
             <div className="flex items-center justify-between px-1">
               <h2 className="text-sm font-semibold text-[#1d1d1f]">캠페인별 추이</h2>

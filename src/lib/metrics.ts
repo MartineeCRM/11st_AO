@@ -330,3 +330,93 @@ export function sortByAoMetric<T>(rowsIn: T[], sortKey: AoSortKey, toMetrics: (r
   })
   return arr
 }
+
+// ─── 주의가 필요한 캠페인 (전주 대비 급락 감지) ──────────────────────────────
+
+/** 이 비율 이상 하락하면 "주의 필요"로 표시 (예: 0.5 = 전주 대비 50% 이상 하락, 0건 포함) */
+const ALERT_DROP_THRESHOLD = 0.5
+
+export type AoAlertMetric = 'sent' | 'openRate' | 'grossAmount'
+
+export interface AoCampaignAlertTrigger {
+  metric: AoAlertMetric
+  label: string
+  previous: number
+  current: number
+  /** 0~1, 전주 대비 하락률 (양수) */
+  dropRate: number
+}
+
+export interface AoCampaignAlert {
+  campaign: string
+  triggers: AoCampaignAlertTrigger[]
+}
+
+/**
+ * 데이터에 존재하는 가장 최근 날짜가 속한 주는 아직 집계가 덜 채워졌을 수 있어(시트 업데이트 지연)
+ * 비교 대상에서 제외하고, 그 직전 주(이번 주) vs 그 전전 주(지난 주)를 비교한다.
+ * 발송건수/오픈율/연관거래액 중 하나라도 ALERT_DROP_THRESHOLD 이상 하락한 캠페인을 찾는다.
+ * 지난 주에 발송 이력이 없는 캠페인(비교 기준 없음)은 대상에서 제외한다.
+ *
+ * monitoredCampaigns에 포함된 캠페인만 검사한다 — 격주/월 단위로 몰아서 발송하는
+ * 간헐적 캠페인은 전주 대비 비교 자체가 의미 없으므로(항상 "쉬는 주"가 있음),
+ * 사용자가 설정 탭에서 직접 고른 "꾸준히 도는" 캠페인만 대상으로 삼는다.
+ */
+export function buildAoCampaignAlerts(rows: AoPushRow[], monitoredCampaigns: string[]): AoCampaignAlert[] {
+  if (rows.length === 0 || monitoredCampaigns.length === 0) return []
+  const monitoredSet = new Set(monitoredCampaigns)
+
+  const latestDate = rows.reduce((max, r) => (r.date > max ? r.date : max), rows[0].date)
+  const currentWeekStart = addDays(weekStart(latestDate), -7)
+  const currentWeekEnd = addDays(currentWeekStart, 6)
+  const previousWeekStart = addDays(currentWeekStart, -7)
+  const previousWeekEnd = addDays(currentWeekStart, -1)
+
+  const byCampaign = new Map<string, AoPushRow[]>()
+  for (const r of rows) {
+    const key = aoCampaignKey(r)
+    if (!key || !monitoredSet.has(key)) continue
+    const list = byCampaign.get(key) ?? []
+    list.push(r)
+    byCampaign.set(key, list)
+  }
+
+  const alerts: AoCampaignAlert[] = []
+  for (const [campaign, campaignRows] of byCampaign) {
+    const currentRows = campaignRows.filter(r => r.date >= currentWeekStart && r.date <= currentWeekEnd)
+    const previousRows = campaignRows.filter(r => r.date >= previousWeekStart && r.date <= previousWeekEnd)
+    if (previousRows.length === 0) continue
+
+    const curr = sumAoMetrics(currentRows)
+    const prev = sumAoMetrics(previousRows)
+    if (prev.sent === 0) continue
+
+    const currOpenRate = curr.sent > 0 ? curr.opens / curr.sent : 0
+    const prevOpenRate = prev.sent > 0 ? prev.opens / prev.sent : 0
+
+    const triggers: AoCampaignAlertTrigger[] = []
+
+    const sentDelta = calcPeriodDelta(curr.sent, prev.sent)
+    if (sentDelta !== null && sentDelta <= -ALERT_DROP_THRESHOLD) {
+      triggers.push({ metric: 'sent', label: '발송건수', previous: prev.sent, current: curr.sent, dropRate: -sentDelta })
+    }
+
+    const openRateDelta = calcPeriodDelta(currOpenRate, prevOpenRate)
+    if (openRateDelta !== null && openRateDelta <= -ALERT_DROP_THRESHOLD) {
+      triggers.push({ metric: 'openRate', label: '오픈율(클릭률)', previous: prevOpenRate, current: currOpenRate, dropRate: -openRateDelta })
+    }
+
+    const grossAmountDelta = calcPeriodDelta(curr.grossAmount, prev.grossAmount)
+    if (grossAmountDelta !== null && grossAmountDelta <= -ALERT_DROP_THRESHOLD) {
+      triggers.push({ metric: 'grossAmount', label: '연관거래액', previous: prev.grossAmount, current: curr.grossAmount, dropRate: -grossAmountDelta })
+    }
+
+    if (triggers.length > 0) alerts.push({ campaign, triggers })
+  }
+
+  return alerts.sort((a, b) => {
+    const worstA = Math.max(...a.triggers.map(t => t.dropRate))
+    const worstB = Math.max(...b.triggers.map(t => t.dropRate))
+    return worstB - worstA
+  })
+}

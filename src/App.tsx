@@ -1,8 +1,11 @@
-import { useState, lazy, Suspense, Component, type ReactNode, type ErrorInfo } from 'react'
+import { useMemo, useState, lazy, Suspense, Component, type ReactNode, type ErrorInfo } from 'react'
 import { TopNav } from '@/components/TopNav'
 const CRMAlwaysOn = lazy(() => import('@/pages/CRMAlwaysOn').then(m => ({ default: m.CRMAlwaysOn })))
 import { CRMSettings } from '@/pages/CRMSettings'
 import { useSheetConnectionState } from '@/hooks/useSheetConnectionState'
+import { useAlertCampaignsState } from '@/hooks/useAlertCampaignsState'
+import { useSheetData } from '@/hooks/useSheetData'
+import { filterAoRows, listAoCampaignNames } from '@/lib/metrics'
 
 export type Tab = 'ao' | 'settings'
 
@@ -54,6 +57,13 @@ class ErrorBoundary extends Component<{ children: ReactNode }, { error: Error | 
 export default function App() {
   const [activeTab, setActiveTab] = useState<Tab>('ao')
   const sheetConnection = useSheetConnectionState()
+  const alertCampaigns = useAlertCampaignsState()
+
+  // Settings의 "알림 대상 캠페인" 체크리스트도 실제 캠페인 목록이 필요해서, 시트 데이터는
+  // 여기서 한 번만 받아 AO 탭/설정 탭에 props로 내려준다 (탭마다 따로 fetch하지 않도록).
+  const sheetData = useSheetData(sheetConnection.connection)
+  const aoRows = useMemo(() => filterAoRows(sheetData.rows), [sheetData.rows])
+  const campaignOptions = useMemo(() => listAoCampaignNames(aoRows), [aoRows])
 
   function handleTabChange(tab: Tab) {
     sessionStorage.removeItem(CHUNK_RELOAD_KEY)
@@ -67,10 +77,21 @@ export default function App() {
         <ErrorBoundary>
           {activeTab === 'ao' && (
             <Suspense fallback={<div className="flex h-64 items-center justify-center"><div className="h-5 w-5 animate-spin rounded-full border-2 border-[#0066cc] border-t-transparent" /></div>}>
-              <CRMAlwaysOn connection={sheetConnection.connection} />
+              <CRMAlwaysOn
+                sheetData={sheetData}
+                aoRows={aoRows}
+                campaignOptions={campaignOptions}
+                monitoredCampaigns={alertCampaigns.selected}
+              />
             </Suspense>
           )}
-          {activeTab === 'settings' && <CRMSettings sheetConnection={sheetConnection} />}
+          {activeTab === 'settings' && (
+            <CRMSettings
+              sheetConnection={sheetConnection}
+              campaignOptions={campaignOptions}
+              alertCampaigns={alertCampaigns}
+            />
+          )}
         </ErrorBoundary>
       </main>
     </div>

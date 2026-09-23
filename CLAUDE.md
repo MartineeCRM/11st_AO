@@ -10,7 +10,7 @@
 ### 탭 구성
 
 1. **AO 캠페인 모니터링** — AO 푸시 캠페인별 일/주/월 추이, 캠페인별 실적 테이블, 기간 비교
-2. **설정** — Google Sheets 연결(스프레드시트 ID/시트명/API 키) + 연결 테스트 버튼. 이 브라우저에만 저장(`localStorage`)되며 서버에 저장되지 않는다.
+2. **설정** — Google Sheets 연결(스프레드시트 ID/시트명/API 키) + 연결 테스트 버튼 + 알림 대상 캠페인 체크리스트. 전부 이 브라우저에만 저장(`localStorage`)되며 서버에 저장되지 않는다.
 
 로그인/인증/Attribution/운영 관리 탭은 없다. 여러 고객사가 같은 배포를 함께 쓸 수 있도록, 사용자별로 설정 탭에서 자기 스프레드시트/API 키를 개별 지정할 수 있다 (아래 "데이터 소스" 참고). 배포자가 지정한 서버 기본 연결(`.env`)은, 사용자가 설정을 비워둔 경우의 fallback으로만 쓰인다.
 
@@ -77,6 +77,7 @@ src/
   hooks/
     useSheetData.ts             # Google Sheets 원본 데이터 페칭 + 캐시(연결별로 분리) + 에러 상태
     useSheetConnectionState.ts  # 사용자별 Sheets 연결 상태 (App.tsx에서 단일 인스턴스로 유지, AO/Settings에는 props로 전달)
+    useAlertCampaignsState.ts   # "주의 필요" 알림 대상으로 고른 캠페인 목록 (localStorage, App.tsx에서 단일 인스턴스로 유지)
   lib/
     googleSheets.ts         # Sheets API 클라이언트 + 헤더(열 순서) 검증
     formatters.ts            # 숫자/날짜 포맷 유틸
@@ -86,7 +87,8 @@ src/
     sheets.ts               # 시트 raw 데이터 타입 (AoPushRow)
   pages/
     CRMAlwaysOn.tsx          # AO 캠페인 모니터링 탭
-    CRMSettings.tsx           # 설정 탭 (Google Sheets 연결 + 연결 테스트)
+    CRMSettings.tsx           # 설정 탭 (Google Sheets 연결 + 연결 테스트 + 알림 대상 캠페인)
+    AoAlertBanner.tsx         # AO 탭 상단 "주의 필요" 배너 (전주 대비 급락 감지)
 ```
 
 ---
@@ -115,6 +117,13 @@ src/
 `결제순매출액`(시트 원본, 타입상 `netRevenue`)은 원자료 보존을 위해 `AoPushRow`에는 파싱해두지만, 어떤 집계 함수나 화면에도 노출하지 않는다 — 매출로 보여줄 값은 항상 즉차거래액(`grossAmount`, FE 표기 "연관거래액")이다.
 
 집계(일/주/월/기간/캠페인 등) 단위의 비율 지표(오픈율, 구매전환율 등)는 항상 합산된 원시 카운트(수신/오픈/결제건수 등)로부터 재계산하며, 시트가 이미 제공하는 비율 컬럼(`openRate`, `conversionRate`)을 그대로 평균 내지 않는다 — `lib/metrics.ts`의 `sumAoMetrics` + 파생 비율 계산 참고.
+
+### 주의 필요 캠페인 알림 (`buildAoCampaignAlerts`)
+
+- 설정 탭에서 사용자가 직접 고른 캠페인(`useAlertCampaignsState`, `localStorage`)만 대상으로 삼는다 — 전체 캠페인에 자동 적용하지 않는다.
+- 비교 기준: 데이터의 가장 최근 날짜가 속한 주는 시트 업데이트가 덜 됐을 수 있어 **건너뛰고**, 그 직전 주(이번 주) vs 그 전전 주(지난 주)를 비교한다.
+- 발송건수/오픈율/연관거래액 중 하나라도 전주 대비 50%(`ALERT_DROP_THRESHOLD`) 이상 하락하면 표시. 지난 주에 발송 이력이 아예 없으면(비교 기준 없음) 대상에서 제외.
+- **격주/월 단위로 몰아서 발송하는 간헐적 캠페인은 알림 대상으로 고르지 않는 걸 권장** — 이런 캠페인은 "쉬는 주"가 정상이라 매주 하락으로 잡혀 오탐이 난다. 실제로 "재방문 유도" 계열 캠페인에서 확인된 패턴.
 
 ---
 

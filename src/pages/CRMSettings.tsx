@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import type { SheetConnection } from '@/hooks/useSheetConnectionState'
 
 interface SheetConnectionProps {
@@ -7,8 +7,15 @@ interface SheetConnectionProps {
   isConfigured: boolean
 }
 
+interface AlertCampaignsProps {
+  selected: string[]
+  toggle: (campaign: string) => void
+}
+
 interface Props {
   sheetConnection: SheetConnectionProps
+  campaignOptions: string[]
+  alertCampaigns: AlertCampaignsProps
 }
 
 type TestStatus =
@@ -17,9 +24,16 @@ type TestStatus =
   | { state: 'success' }
   | { state: 'error'; message: string }
 
-export function CRMSettings({ sheetConnection }: Props) {
+export function CRMSettings({ sheetConnection, campaignOptions, alertCampaigns }: Props) {
   const { connection, updateField } = sheetConnection
   const [testStatus, setTestStatus] = useState<TestStatus>({ state: 'idle' })
+  const [campaignSearch, setCampaignSearch] = useState('')
+
+  const filteredCampaignOptions = useMemo(() => {
+    const q = campaignSearch.trim()
+    if (!q) return campaignOptions
+    return campaignOptions.filter(c => c.includes(q))
+  }, [campaignOptions, campaignSearch])
 
   async function handleTestConnection() {
     setTestStatus({ state: 'testing' })
@@ -92,6 +106,46 @@ export function CRMSettings({ sheetConnection }: Props) {
           이 브라우저에만 저장됩니다. 다른 사람에게 공유되지 않으며, 본인이 지정한 스프레드시트에만
           접근하는 데 사용됩니다. 비워두면 서버 기본 연결(설정돼 있는 경우)을 사용합니다.
         </p>
+      </Section>
+
+      <Section title="알림 대상 캠페인">
+        <p className="text-[11px] text-[#9CA3AF] -mt-2">
+          체크한 캠페인만 AO 탭 상단에서 전주 대비 발송건수/오픈율/연관거래액 급락(50% 이상)을 감시합니다.
+          격주·월 단위로 몰아서 발송하는 캠페인은 매주 하락으로 잡히니 체크하지 않는 걸 권장해요.
+        </p>
+
+        <input
+          type="text"
+          value={campaignSearch}
+          onChange={e => setCampaignSearch(e.target.value)}
+          placeholder="캠페인 검색..."
+          className="rounded-lg border border-[#e0e0e0] px-3 py-2 text-sm text-[#1d1d1f] outline-none focus:border-[#0066cc]"
+        />
+
+        <div className="max-h-64 overflow-y-auto rounded-lg border border-[#e0e0e0]">
+          {campaignOptions.length === 0 ? (
+            <p className="px-3 py-4 text-center text-xs text-[#9CA3AF]">캠페인 데이터가 아직 없습니다.</p>
+          ) : filteredCampaignOptions.length === 0 ? (
+            <p className="px-3 py-4 text-center text-xs text-[#9CA3AF]">검색 결과가 없습니다.</p>
+          ) : (
+            filteredCampaignOptions.map(campaign => (
+              <label
+                key={campaign}
+                className="flex cursor-pointer items-center gap-2 border-b border-[#F3F4F6] px-3 py-2 text-xs text-[#1d1d1f] last:border-b-0 hover:bg-[#F9FAFB]"
+              >
+                <input
+                  type="checkbox"
+                  checked={alertCampaigns.selected.includes(campaign)}
+                  onChange={() => alertCampaigns.toggle(campaign)}
+                  className="h-3.5 w-3.5"
+                />
+                {campaign}
+              </label>
+            ))
+          )}
+        </div>
+
+        <p className="text-[11px] text-[#9CA3AF]">{alertCampaigns.selected.length}개 선택됨 · 이 브라우저에만 저장됩니다.</p>
       </Section>
     </div>
   )
