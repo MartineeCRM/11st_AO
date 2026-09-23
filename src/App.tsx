@@ -2,8 +2,6 @@ import { useState, lazy, Suspense, Component, type ReactNode, type ErrorInfo } f
 import { TopNav } from '@/components/TopNav'
 const CRMAlwaysOn = lazy(() => import('@/pages/CRMAlwaysOn').then(m => ({ default: m.CRMAlwaysOn })))
 import { CRMSettings } from '@/pages/CRMSettings'
-import { ChartColorsContext } from '@/lib/chartColors'
-import { useChartColorsState } from '@/hooks/useChartColorsState'
 import { useSheetConnectionState } from '@/hooks/useSheetConnectionState'
 
 export type Tab = 'ao' | 'settings'
@@ -55,7 +53,6 @@ class ErrorBoundary extends Component<{ children: ReactNode }, { error: Error | 
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<Tab>('ao')
-  const chartColors = useChartColorsState()
   const sheetConnection = useSheetConnectionState()
 
   function handleTabChange(tab: Tab) {
@@ -64,20 +61,18 @@ export default function App() {
   }
 
   return (
-    <ChartColorsContext.Provider value={chartColors.colors}>
-      <div className="min-h-screen bg-[#f5f5f7]">
-        <TopNav activeTab={activeTab} onTabChange={handleTabChange} />
-        <main>
-          <ErrorBoundary>
-            {activeTab === 'ao' && (
-              <Suspense fallback={<div className="flex h-64 items-center justify-center"><div className="h-5 w-5 animate-spin rounded-full border-2 border-[#0066cc] border-t-transparent" /></div>}>
-                <CRMAlwaysOn connection={sheetConnection.connection} />
-              </Suspense>
-            )}
-            {activeTab === 'settings' && <CRMSettings {...chartColors} sheetConnection={sheetConnection} />}
-          </ErrorBoundary>
-        </main>
-      </div>
-    </ChartColorsContext.Provider>
+    <div className="min-h-screen bg-[#f5f5f7]">
+      <TopNav activeTab={activeTab} onTabChange={handleTabChange} />
+      <main>
+        <ErrorBoundary>
+          {activeTab === 'ao' && (
+            <Suspense fallback={<div className="flex h-64 items-center justify-center"><div className="h-5 w-5 animate-spin rounded-full border-2 border-[#0066cc] border-t-transparent" /></div>}>
+              <CRMAlwaysOn connection={sheetConnection.connection} />
+            </Suspense>
+          )}
+          {activeTab === 'settings' && <CRMSettings sheetConnection={sheetConnection} />}
+        </ErrorBoundary>
+      </main>
+    </div>
   )
 }

@@ -1,11 +1,5 @@
+import { useState } from 'react'
 import type { SheetConnection } from '@/hooks/useSheetConnectionState'
-
-type ChartColorsProps = {
-  colors: string[]
-  updateColor: (index: number, value: string) => void
-  addColor: () => void
-  removeColor: (index: number) => void
-}
 
 interface SheetConnectionProps {
   connection: SheetConnection
@@ -13,12 +7,42 @@ interface SheetConnectionProps {
   isConfigured: boolean
 }
 
-interface Props extends ChartColorsProps {
+interface Props {
   sheetConnection: SheetConnectionProps
 }
 
-export function CRMSettings({ colors, updateColor, addColor, removeColor, sheetConnection }: Props) {
+type TestStatus =
+  | { state: 'idle' }
+  | { state: 'testing' }
+  | { state: 'success' }
+  | { state: 'error'; message: string }
+
+export function CRMSettings({ sheetConnection }: Props) {
   const { connection, updateField } = sheetConnection
+  const [testStatus, setTestStatus] = useState<TestStatus>({ state: 'idle' })
+
+  async function handleTestConnection() {
+    setTestStatus({ state: 'testing' })
+    try {
+      const params = new URLSearchParams()
+      if (connection.sheetName) params.set('sheet', connection.sheetName)
+      if (connection.spreadsheetId) params.set('spreadsheetId', connection.spreadsheetId)
+
+      const headers: Record<string, string> = {}
+      if (connection.apiKey) headers['x-sheets-api-key'] = connection.apiKey
+
+      const res = await fetch(`/api/sheets?${params.toString()}`, { headers })
+      if (!res.ok) {
+        const json = await res.json().catch(() => ({}))
+        const message = typeof json.error === 'string' ? json.error : `${res.status} 오류`
+        setTestStatus({ state: 'error', message })
+        return
+      }
+      setTestStatus({ state: 'success' })
+    } catch (err) {
+      setTestStatus({ state: 'error', message: err instanceof Error ? err.message : '연결 테스트 실패' })
+    }
+  }
 
   return (
     <div className="mx-auto max-w-2xl px-6 py-8 flex flex-col gap-6">
@@ -46,40 +70,28 @@ export function CRMSettings({ colors, updateColor, addColor, removeColor, sheetC
             type="password"
           />
         </div>
+
+        <div className="flex items-center gap-3">
+          <button
+            onClick={handleTestConnection}
+            disabled={testStatus.state === 'testing'}
+            className="rounded-lg bg-[#0066cc] px-4 py-2 text-xs font-medium text-white hover:bg-[#0052a3] disabled:opacity-50"
+          >
+            {testStatus.state === 'testing' ? '연결 확인 중...' : '연결 테스트'}
+          </button>
+
+          {testStatus.state === 'success' && (
+            <span className="text-xs font-medium text-[#10B981]">✓ 연결 성공</span>
+          )}
+          {testStatus.state === 'error' && (
+            <span className="text-xs font-medium text-[#EF4444]">✗ {testStatus.message}</span>
+          )}
+        </div>
+
         <p className="text-[11px] text-[#9CA3AF]">
           이 브라우저에만 저장됩니다. 다른 사람에게 공유되지 않으며, 본인이 지정한 스프레드시트에만
           접근하는 데 사용됩니다. 비워두면 서버 기본 연결(설정돼 있는 경우)을 사용합니다.
         </p>
-      </Section>
-
-      <Section title="차트 색상">
-        <div className="flex flex-wrap gap-3">
-          {colors.map((color, i) => (
-            <div key={i} className="flex flex-col items-center gap-1">
-              <input
-                type="color"
-                value={color}
-                onChange={e => updateColor(i, e.target.value)}
-                className="h-10 w-10 cursor-pointer rounded-lg border border-[#e0e0e0] p-0.5"
-              />
-              <button
-                onClick={() => removeColor(i)}
-                className="text-[10px] text-[#9CA3AF] hover:text-[#EF4444]"
-              >
-                삭제
-              </button>
-            </div>
-          ))}
-          {colors.length < 8 && (
-            <button
-              onClick={addColor}
-              className="flex h-10 w-10 items-center justify-center rounded-lg border border-dashed border-[#D1D5DB] text-[#9CA3AF] hover:border-[#0066cc] hover:text-[#0066cc]"
-            >
-              +
-            </button>
-          )}
-        </div>
-        <p className="text-[11px] text-[#9CA3AF]">최대 8개. 차트에 순서대로 적용됩니다. 이 브라우저에만 저장됩니다.</p>
       </Section>
     </div>
   )

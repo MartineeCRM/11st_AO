@@ -30,6 +30,14 @@ function sheetsDevProxy(env: Record<string, string>): Plugin {
 
         try {
           const upstream = await fetch(url)
+          if (!upstream.ok) {
+            const text = await upstream.text().catch(() => '')
+            console.error('[sheets-dev-proxy] upstream error', upstream.status, text)
+            res.statusCode = 502
+            res.setHeader('Content-Type', 'application/json')
+            res.end(JSON.stringify({ error: `Google Sheets error: ${upstream.status}` }))
+            return
+          }
           const text = await upstream.text()
           res.statusCode = upstream.status
           res.setHeader('Content-Type', 'application/json')

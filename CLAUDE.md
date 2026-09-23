@@ -10,7 +10,7 @@
 ### 탭 구성
 
 1. **AO 캠페인 모니터링** — AO 푸시 캠페인별 일/주/월 추이, 캠페인별 실적 테이블, 기간 비교
-2. **설정** — Google Sheets 연결(스프레드시트 ID/시트명/API 키)과 차트 색상 커스터마이징. 둘 다 이 브라우저에만 저장(`localStorage`)되며 서버에 저장되지 않는다.
+2. **설정** — Google Sheets 연결(스프레드시트 ID/시트명/API 키) + 연결 테스트 버튼. 이 브라우저에만 저장(`localStorage`)되며 서버에 저장되지 않는다.
 
 로그인/인증/Attribution/운영 관리 탭은 없다. 여러 고객사가 같은 배포를 함께 쓸 수 있도록, 사용자별로 설정 탭에서 자기 스프레드시트/API 키를 개별 지정할 수 있다 (아래 "데이터 소스" 참고). 배포자가 지정한 서버 기본 연결(`.env`)은, 사용자가 설정을 비워둔 경우의 fallback으로만 쓰인다.
 
@@ -77,17 +77,16 @@ src/
   hooks/
     useSheetData.ts             # Google Sheets 원본 데이터 페칭 + 캐시(연결별로 분리) + 에러 상태
     useSheetConnectionState.ts  # 사용자별 Sheets 연결 상태 (App.tsx에서 단일 인스턴스로 유지, AO/Settings에는 props로 전달)
-    useChartColorsState.ts      # 차트 색상 상태 (App.tsx에서 단일 인스턴스로 유지, Settings에는 props로 전달)
   lib/
     googleSheets.ts         # Sheets API 클라이언트 + 헤더(열 순서) 검증
     formatters.ts            # 숫자/날짜 포맷 유틸
     metrics.ts                # 지표 계산 순수 함수
-    chartColors.ts             # 차트 색상 Context/기본값
+    chartColors.ts             # 차트 색상 고정 기본값 + Context (사용자가 바꿀 수 없음, 항상 DEFAULT_CHART_COLORS)
   types/
     sheets.ts               # 시트 raw 데이터 타입 (AoPushRow)
   pages/
     CRMAlwaysOn.tsx          # AO 캠페인 모니터링 탭
-    CRMSettings.tsx           # 설정 탭 (Google Sheets 연결 + 차트 색상)
+    CRMSettings.tsx           # 설정 탭 (Google Sheets 연결 + 연결 테스트)
 ```
 
 ---
