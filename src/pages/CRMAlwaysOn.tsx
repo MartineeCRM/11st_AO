@@ -123,6 +123,7 @@ export function CRMAlwaysOn({ sheetData, aoRows, campaignOptions, monitoredCampa
           options={sortedCampaignOptions}
           selected={selectedCampaign}
           onChange={setSelectedCampaign}
+          monitoredCampaigns={monitoredCampaigns}
         />
       </div>
 

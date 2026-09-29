@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
-import { ChevronDown, Check, Search } from 'lucide-react'
+import { ChevronDown, Check, Search, Star } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 interface Props {
@@ -7,9 +7,10 @@ interface Props {
   options: string[]
   selected: string
   onChange: (selected: string) => void
+  monitoredCampaigns?: string[]
 }
 
-export function CampaignSelectFilter({ label, options, selected, onChange }: Props) {
+export function CampaignSelectFilter({ label, options, selected, onChange, monitoredCampaigns = [] }: Props) {
   const [open, setOpen] = useState(false)
   const [query, setQuery] = useState('')
   const ref = useRef<HTMLDivElement>(null)
@@ -72,6 +73,9 @@ export function CampaignSelectFilter({ label, options, selected, onChange }: Pro
                 >
                   <Check className={cn('h-3 w-3 shrink-0 text-[#0066cc]', opt === selected ? 'opacity-100' : 'opacity-0')} />
                   <span className="truncate">{opt}</span>
+                  {monitoredCampaigns.includes(opt) && (
+                    <Star className="h-3 w-3 shrink-0 fill-[#F59E0B] text-[#F59E0B]" />
+                  )}
                 </button>
               ))
             )}
