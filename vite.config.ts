@@ -57,6 +57,7 @@ function campaignNotesDevProxy(env: Record<string, string>): Plugin {
   const SHEET_NAME = '캠페인_메모'
   const RANGE = `${SHEET_NAME}!A:B`
   const SHEETS_BASE = 'https://sheets.googleapis.com/v4/spreadsheets'
+  const SPREADSHEET_ID_PATTERN = /^[A-Za-z0-9_-]+$/
 
   function getAuthClient(): JWT | null {
     const email = env.GOOGLE_SERVICE_ACCOUNT_EMAIL
@@ -90,7 +91,9 @@ function campaignNotesDevProxy(env: Record<string, string>): Plugin {
     const notes: Record<string, string> = {}
     for (let i = 1; i < rows.length; i++) {
       const campaign = rows[i]?.[0]
-      if (campaign) notes[campaign] = rows[i]?.[1] ?? ''
+      if (campaign && !Object.hasOwn(notes, campaign)) {
+        notes[campaign] = rows[i]?.[1] ?? ''
+      }
     }
     return notes
   }
@@ -135,7 +138,7 @@ function campaignNotesDevProxy(env: Record<string, string>): Plugin {
         if (req.method === 'GET') {
           const spreadsheetId = incomingUrl.searchParams.get('spreadsheetId') || env.SPREADSHEET_ID || ''
           res.setHeader('Content-Type', 'application/json')
-          if (!auth || !spreadsheetId) {
+          if (!auth || !spreadsheetId || !SPREADSHEET_ID_PATTERN.test(spreadsheetId)) {
             console.error('[campaign-notes-dev-proxy] GOOGLE_SERVICE_ACCOUNT_EMAIL/GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY or spreadsheetId not configured')
             res.end(JSON.stringify({}))
             return
@@ -181,7 +184,7 @@ function campaignNotesDevProxy(env: Record<string, string>): Plugin {
             return
           }
           const spreadsheetId = body.spreadsheetId || env.SPREADSHEET_ID || ''
-          if (!auth || !spreadsheetId) {
+          if (!auth || !spreadsheetId || !SPREADSHEET_ID_PATTERN.test(spreadsheetId)) {
             console.error('[campaign-notes-dev-proxy] GOOGLE_SERVICE_ACCOUNT_EMAIL/GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY or spreadsheetId not configured')
             res.statusCode = 500
             res.end(JSON.stringify({ error: '메모 저장 기능이 아직 설정되지 않았습니다.' }))

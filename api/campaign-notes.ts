@@ -4,6 +4,7 @@ import { JWT } from 'google-auth-library'
 const SHEET_NAME = '캠페인_메모'
 const RANGE = `${SHEET_NAME}!A:B`
 const SHEETS_BASE = 'https://sheets.googleapis.com/v4/spreadsheets'
+const SPREADSHEET_ID_PATTERN = /^[A-Za-z0-9_-]+$/
 
 function getAuthClient(): JWT | null {
   const email = process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL
@@ -37,7 +38,9 @@ function notesFromRows(rows: string[][]): Record<string, string> {
   const notes: Record<string, string> = {}
   for (let i = 1; i < rows.length; i++) {
     const campaign = rows[i]?.[0]
-    if (campaign) notes[campaign] = rows[i]?.[1] ?? ''
+    if (campaign && !Object.hasOwn(notes, campaign)) {
+      notes[campaign] = rows[i]?.[1] ?? ''
+    }
   }
   return notes
 }
@@ -78,7 +81,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method === 'GET') {
     const { spreadsheetId: qsSpreadsheetId } = req.query as Record<string, string>
     const spreadsheetId = qsSpreadsheetId || process.env.SPREADSHEET_ID
-    if (!auth || !spreadsheetId) {
+    if (!auth || !spreadsheetId || !SPREADSHEET_ID_PATTERN.test(spreadsheetId)) {
       console.error('[campaign-notes] GOOGLE_SERVICE_ACCOUNT_EMAIL/GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY or spreadsheetId not configured')
       return res.status(200).json({})
     }
@@ -105,7 +108,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(400).json({ error: 'note가 너무 깁니다 (최대 2000자).' })
     }
     const spreadsheetId = bodySpreadsheetId || process.env.SPREADSHEET_ID
-    if (!auth || !spreadsheetId) {
+    if (!auth || !spreadsheetId || !SPREADSHEET_ID_PATTERN.test(spreadsheetId)) {
       console.error('[campaign-notes] GOOGLE_SERVICE_ACCOUNT_EMAIL/GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY or spreadsheetId not configured')
       return res.status(500).json({ error: '메모 저장 기능이 아직 설정되지 않았습니다.' })
     }
