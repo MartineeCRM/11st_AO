@@ -161,7 +161,11 @@ export function CRMAlwaysOn({ sheetData, aoRows, campaignOptions, monitoredCampa
                 value={noteDraft}
                 onChange={e => setNoteDraft(e.target.value)}
                 onBlur={() => {
-                  if (selectedCampaign && noteDraft !== (campaignNotes.notes[selectedCampaign] ?? '')) {
+                  if (
+                    selectedCampaign &&
+                    (noteDraft !== (campaignNotes.notes[selectedCampaign] ?? '') ||
+                      campaignNotes.saveStatus[selectedCampaign] === 'error')
+                  ) {
                     campaignNotes.saveNote(selectedCampaign, noteDraft)
                   }
                 }}

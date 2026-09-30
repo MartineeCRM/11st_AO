@@ -66,8 +66,8 @@ Upstash Redis에 스프레드시트ID당 해시(hash) 1개.
 
 `CRMAlwaysOn.tsx`의 "캠페인별 추이" 섹션 헤더(현재 캠페인명이 표시되는 자리) 바로 아래에 텍스트 박스 추가.
 
-- `value={notes[selectedCampaign] ?? ''}`
-- `onBlur`에서 `saveNote(selectedCampaign, value)` 호출 — 타이핑마다 저장하지 않고 포커스 이탈 시에만 (불필요한 쓰기 요청 최소화)
+- 로컬 `noteDraft` state를 두고 `notes[selectedCampaign]`이 로드되거나 `selectedCampaign`이 바뀔 때마다 그 값으로 동기화(리셋)한다 — 타이핑 중에도 텍스트박스가 즉시 반응하는 controlled input으로 동작하게 하기 위함
+- `onChange`는 `noteDraft`만 갱신하고, `onBlur`에서 `saveNote(selectedCampaign, noteDraft)` 호출 — 타이핑마다 저장하지 않고 포커스 이탈 시에만 (불필요한 쓰기 요청 최소화)
 - placeholder: "이 캠페인 특이사항 메모..."
 - 박스 옆에 저장 상태를 작은 텍스트로 표시: 저장 중 없음(즉시 로컬 반영이라 딜레이 체감 안 됨) / 저장됨(회색) / 저장 실패, 다시 시도(빨간색)
 

@@ -9,7 +9,7 @@ function getRedis() {
   const url = process.env.UPSTASH_REDIS_REST_URL
   const token = process.env.UPSTASH_REDIS_REST_TOKEN
   if (!url || !token) return null
-  return new Redis({ url, token })
+  return new Redis({ url, token, automaticDeserialization: false })
 }
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
@@ -35,6 +35,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const { spreadsheetId, campaign, note } = (req.body ?? {}) as { spreadsheetId?: string; campaign?: string; note?: string }
     if (!campaign) {
       return res.status(400).json({ error: 'campaign이 필요합니다.' })
+    }
+    if (typeof campaign !== 'string' || campaign.length > 200) {
+      return res.status(400).json({ error: 'campaign이 너무 깁니다 (최대 200자).' })
+    }
+    if (note !== undefined && (typeof note !== 'string' || note.length > 2000)) {
+      return res.status(400).json({ error: 'note가 너무 깁니다 (최대 2000자).' })
     }
     if (!redis) {
       console.error('[campaign-notes] UPSTASH_REDIS_REST_URL/UPSTASH_REDIS_REST_TOKEN not configured')

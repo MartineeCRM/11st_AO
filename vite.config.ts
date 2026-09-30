@@ -56,7 +56,7 @@ function sheetsDevProxy(env: Record<string, string>): Plugin {
 function campaignNotesDevProxy(env: Record<string, string>): Plugin {
   const redisUrl = env.UPSTASH_REDIS_REST_URL
   const redisToken = env.UPSTASH_REDIS_REST_TOKEN
-  const redis = redisUrl && redisToken ? new Redis({ url: redisUrl, token: redisToken }) : null
+  const redis = redisUrl && redisToken ? new Redis({ url: redisUrl, token: redisToken, automaticDeserialization: false }) : null
 
   function keyOf(spreadsheetId: string): string {
     return `notes:${spreadsheetId || 'default'}`
@@ -103,6 +103,16 @@ function campaignNotesDevProxy(env: Record<string, string>): Plugin {
           if (!body.campaign) {
             res.statusCode = 400
             res.end(JSON.stringify({ error: 'campaign이 필요합니다.' }))
+            return
+          }
+          if (typeof body.campaign !== 'string' || body.campaign.length > 200) {
+            res.statusCode = 400
+            res.end(JSON.stringify({ error: 'campaign이 너무 깁니다 (최대 200자).' }))
+            return
+          }
+          if (body.note !== undefined && (typeof body.note !== 'string' || body.note.length > 2000)) {
+            res.statusCode = 400
+            res.end(JSON.stringify({ error: 'note가 너무 깁니다 (최대 2000자).' }))
             return
           }
           if (!redis) {
