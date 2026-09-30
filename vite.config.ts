@@ -2,7 +2,7 @@ import { defineConfig, loadEnv, type Plugin } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 import path from 'path'
-import { Redis } from '@upstash/redis'
+import { JWT } from 'google-auth-library'
 
 const DEFAULT_SHEET_NAME = '브레이즈 푸시 실적'
 
@@ -54,12 +54,75 @@ function sheetsDevProxy(env: Record<string, string>): Plugin {
 }
 
 function campaignNotesDevProxy(env: Record<string, string>): Plugin {
-  const redisUrl = env.UPSTASH_REDIS_REST_URL
-  const redisToken = env.UPSTASH_REDIS_REST_TOKEN
-  const redis = redisUrl && redisToken ? new Redis({ url: redisUrl, token: redisToken, automaticDeserialization: false }) : null
+  const SHEET_NAME = '캠페인_메모'
+  const RANGE = `${SHEET_NAME}!A:B`
+  const SHEETS_BASE = 'https://sheets.googleapis.com/v4/spreadsheets'
 
-  function keyOf(spreadsheetId: string): string {
-    return `notes:${spreadsheetId || 'default'}`
+  function getAuthClient(): JWT | null {
+    const email = env.GOOGLE_SERVICE_ACCOUNT_EMAIL
+    const rawKey = env.GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY
+    if (!email || !rawKey) return null
+    return new JWT({
+      email,
+      key: rawKey.replace(/\\n/g, '\n'),
+      scopes: ['https://www.googleapis.com/auth/spreadsheets'],
+    })
+  }
+
+  async function getAccessToken(auth: JWT): Promise<string> {
+    const { token } = await auth.getAccessToken()
+    if (!token) throw new Error('Failed to obtain Google access token')
+    return token
+  }
+
+  async function readRows(spreadsheetId: string, token: string): Promise<string[][]> {
+    const url = `${SHEETS_BASE}/${spreadsheetId}/values/${encodeURIComponent(RANGE)}`
+    const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` } })
+    if (!res.ok) {
+      const text = await res.text().catch(() => '')
+      throw new Error(`Sheets read failed: ${res.status} ${text}`)
+    }
+    const json = (await res.json()) as { values?: string[][] }
+    return json.values ?? []
+  }
+
+  function notesFromRows(rows: string[][]): Record<string, string> {
+    const notes: Record<string, string> = {}
+    for (let i = 1; i < rows.length; i++) {
+      const campaign = rows[i]?.[0]
+      if (campaign) notes[campaign] = rows[i]?.[1] ?? ''
+    }
+    return notes
+  }
+
+  async function writeNote(spreadsheetId: string, token: string, campaign: string, note: string): Promise<void> {
+    const rows = await readRows(spreadsheetId, token)
+    const matchIndex = rows.findIndex((row, i) => i > 0 && row[0] === campaign)
+
+    if (matchIndex > 0) {
+      const range = `${SHEET_NAME}!B${matchIndex + 1}`
+      const url = `${SHEETS_BASE}/${spreadsheetId}/values/${encodeURIComponent(range)}?valueInputOption=RAW`
+      const res = await fetch(url, {
+        method: 'PUT',
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ values: [[note]] }),
+      })
+      if (!res.ok) {
+        const text = await res.text().catch(() => '')
+        throw new Error(`Sheets update failed: ${res.status} ${text}`)
+      }
+    } else {
+      const url = `${SHEETS_BASE}/${spreadsheetId}/values/${encodeURIComponent(RANGE)}:append?valueInputOption=RAW`
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ values: [[campaign, note]] }),
+      })
+      if (!res.ok) {
+        const text = await res.text().catch(() => '')
+        throw new Error(`Sheets append failed: ${res.status} ${text}`)
+      }
+    }
   }
 
   return {
@@ -67,18 +130,20 @@ function campaignNotesDevProxy(env: Record<string, string>): Plugin {
     configureServer(server) {
       server.middlewares.use('/api/campaign-notes', async (req, res) => {
         const incomingUrl = new URL(req.url ?? '/', 'http://localhost')
+        const auth = getAuthClient()
 
         if (req.method === 'GET') {
-          const spreadsheetId = incomingUrl.searchParams.get('spreadsheetId') ?? ''
+          const spreadsheetId = incomingUrl.searchParams.get('spreadsheetId') || env.SPREADSHEET_ID || ''
           res.setHeader('Content-Type', 'application/json')
-          if (!redis) {
-            console.error('[campaign-notes-dev-proxy] UPSTASH_REDIS_REST_URL/UPSTASH_REDIS_REST_TOKEN not configured')
+          if (!auth || !spreadsheetId) {
+            console.error('[campaign-notes-dev-proxy] GOOGLE_SERVICE_ACCOUNT_EMAIL/GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY or spreadsheetId not configured')
             res.end(JSON.stringify({}))
             return
           }
           try {
-            const notes = await redis.hgetall(keyOf(spreadsheetId))
-            res.end(JSON.stringify(notes ?? {}))
+            const token = await getAccessToken(auth)
+            const rows = await readRows(spreadsheetId, token)
+            res.end(JSON.stringify(notesFromRows(rows)))
           } catch (error) {
             console.error('[campaign-notes-dev-proxy] read failed', error)
             res.end(JSON.stringify({}))
@@ -115,14 +180,16 @@ function campaignNotesDevProxy(env: Record<string, string>): Plugin {
             res.end(JSON.stringify({ error: 'note가 너무 깁니다 (최대 2000자).' }))
             return
           }
-          if (!redis) {
-            console.error('[campaign-notes-dev-proxy] UPSTASH_REDIS_REST_URL/UPSTASH_REDIS_REST_TOKEN not configured')
+          const spreadsheetId = body.spreadsheetId || env.SPREADSHEET_ID || ''
+          if (!auth || !spreadsheetId) {
+            console.error('[campaign-notes-dev-proxy] GOOGLE_SERVICE_ACCOUNT_EMAIL/GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY or spreadsheetId not configured')
             res.statusCode = 500
             res.end(JSON.stringify({ error: '메모 저장 기능이 아직 설정되지 않았습니다.' }))
             return
           }
           try {
-            await redis.hset(keyOf(body.spreadsheetId ?? ''), { [body.campaign]: body.note ?? '' })
+            const token = await getAccessToken(auth)
+            await writeNote(spreadsheetId, token, body.campaign, body.note ?? '')
             res.end(JSON.stringify({ ok: true }))
           } catch (error) {
             console.error('[campaign-notes-dev-proxy] write failed', error)
