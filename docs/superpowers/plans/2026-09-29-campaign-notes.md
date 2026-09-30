@@ -4,9 +4,9 @@
 
 **Goal:** AO 탭에서 캠페인을 선택했을 때, 그 캠페인에 대한 자유 텍스트 메모를 팀 전체(같은 스프레드시트를 쓰는 사람들)와 공유해서 읽고 쓸 수 있게 한다.
 
-**Architecture:** `api/campaign-notes.ts`(Vercel 서버리스 함수)가 Vercel KV(Redis)에 스프레드시트ID당 해시 1개(`notes:{spreadsheetId}`, 필드=캠페인명)로 메모를 저장한다. 로컬 개발은 `vite.config.ts`의 `campaignNotesDevProxy` 플러그인이 같은 계약(GET/PUT, 같은 응답 형태)을 그대로 구현해 `api/sheets.ts` ↔ `sheetsDevProxy` 쌍과 동일한 구조를 따른다. 프론트는 `useCampaignNotesState` 훅이 전체 메모를 로드하고, AO 탭의 "캠페인별 추이" 섹션에 캠페인별 텍스트박스로 노출한다.
+**Architecture:** `api/campaign-notes.ts`(Vercel 서버리스 함수)가 Upstash Redis에 스프레드시트ID당 해시 1개(`notes:{spreadsheetId}`, 필드=캠페인명)로 메모를 저장한다. 로컬 개발은 `vite.config.ts`의 `campaignNotesDevProxy` 플러그인이 같은 계약(GET/PUT, 같은 응답 형태)을 그대로 구현해 `api/sheets.ts` ↔ `sheetsDevProxy` 쌍과 동일한 구조를 따른다. 프론트는 `useCampaignNotesState` 훅이 전체 메모를 로드하고, AO 탭의 "캠페인별 추이" 섹션에 캠페인별 텍스트박스로 노출한다.
 
-**Tech Stack:** React + TypeScript(기존), `@vercel/kv`(신규 의존성), Vercel Serverless Functions.
+**Tech Stack:** React + TypeScript(기존), `@upstash/redis`(신규 의존성 — "Vercel KV"는 2024년 12월 단종되어 Upstash로 흡수됨; Vercel 마켓플레이스 경유보다 Upstash 직접 가입이 커맨드당 비용 절반이라 이 경로를 택함), Vercel Serverless Functions.
 
 ## Global Constraints
 
@@ -26,10 +26,10 @@
 
 | 파일 | 상태 | 역할 |
 |---|---|---|
-| `api/campaign-notes.ts` | 신규 | 프로덕션 서버리스 함수 — KV로 메모 GET/PUT |
+| `api/campaign-notes.ts` | 신규 | 프로덕션 서버리스 함수 — Upstash Redis로 메모 GET/PUT |
 | `vite.config.ts` | 수정 | 로컬 dev용 `campaignNotesDevProxy` 플러그인 추가 (기존 `sheetsDevProxy`와 같은 구조) |
-| `.env.example` | 수정 | `KV_REST_API_URL`/`KV_REST_API_TOKEN` placeholder 추가 |
-| `package.json` | 수정 (npm install) | `@vercel/kv` 의존성 추가 |
+| `.env.example` | 수정 | `UPSTASH_REDIS_REST_URL`/`UPSTASH_REDIS_REST_TOKEN` placeholder 추가 |
+| `package.json` | 수정 (npm install) | `@upstash/redis` 의존성 추가 |
 | `src/lib/campaignNotes.ts` | 신규 | 클라이언트 fetch 래퍼 (`fetchCampaignNotes`, `saveCampaignNote`) |
 | `src/hooks/useCampaignNotesState.ts` | 신규 | React 훅 — 메모 상태 + 저장 상태 관리 |
 | `src/App.tsx` | 수정 | 훅 인스턴스화, `CRMAlwaysOn`에 prop 전달 |
@@ -47,16 +47,16 @@
 
 **Interfaces:**
 - Produces (HTTP 계약, Task 2가 그대로 소비):
-  - `GET /api/campaign-notes?spreadsheetId=<string>` → 200, body `Record<string, string>` (캠페인명 → 메모). KV가 설정 안 됐거나 읽기 실패해도 항상 200 `{}` — 절대 에러 응답 안 함.
-  - `PUT /api/campaign-notes`, body `{ spreadsheetId?: string, campaign: string, note?: string }` → 성공 시 200 `{ ok: true }`. `campaign` 없으면 400 `{ error: string }`. KV 미설정/쓰기 실패 시 500 `{ error: string }`.
+  - `GET /api/campaign-notes?spreadsheetId=<string>` → 200, body `Record<string, string>` (캠페인명 → 메모). Upstash가 설정 안 됐거나 읽기 실패해도 항상 200 `{}` — 절대 에러 응답 안 함.
+  - `PUT /api/campaign-notes`, body `{ spreadsheetId?: string, campaign: string, note?: string }` → 성공 시 200 `{ ok: true }`. `campaign` 없으면 400 `{ error: string }`. Upstash 미설정/쓰기 실패 시 500 `{ error: string }`.
 
-- [ ] **Step 1: `@vercel/kv` 설치**
+- [ ] **Step 1: `@upstash/redis` 설치**
 
 ```bash
-NODE_ENV=development npm install --include=dev @vercel/kv
+NODE_ENV=development npm install --include=dev @upstash/redis
 ```
 
-- [ ] **Step 2: `.env.example`에 KV 환경변수 placeholder 추가**
+- [ ] **Step 2: `.env.example`에 Upstash 환경변수 placeholder 추가**
 
 `.env.example` 전체를 아래로 교체:
 
@@ -65,10 +65,10 @@ NODE_ENV=development npm install --include=dev @vercel/kv
 SPREADSHEET_ID=your_spreadsheet_id_here
 GOOGLE_SHEETS_API_KEY=your_google_sheets_api_key_here
 
-# Vercel KV (캠페인별 메모 공유 저장 — Vercel 대시보드에서 KV 스토어 연결 시 자동 주입됨,
-# 로컬 개발 시에도 같은 값을 여기 채워야 메모 기능이 동작함)
-KV_REST_API_URL=your_kv_rest_api_url_here
-KV_REST_API_TOKEN=your_kv_rest_api_token_here
+# Upstash Redis (캠페인별 메모 공유 저장 — upstash.com에서 무료 계정+DB 생성 후
+# REST API 섹션 값을 여기 채워야 메모 기능이 동작함)
+UPSTASH_REDIS_REST_URL=your_upstash_redis_rest_url_here
+UPSTASH_REDIS_REST_TOKEN=your_upstash_redis_rest_token_here
 ```
 
 - [ ] **Step 3: 서버리스 함수 작성**
@@ -77,30 +77,30 @@ KV_REST_API_TOKEN=your_kv_rest_api_token_here
 
 ```ts
 import type { VercelRequest, VercelResponse } from '@vercel/node'
-import { createClient } from '@vercel/kv'
+import { Redis } from '@upstash/redis'
 
 function keyOf(spreadsheetId: string): string {
   return `notes:${spreadsheetId || 'default'}`
 }
 
-function getKv() {
-  const url = process.env.KV_REST_API_URL
-  const token = process.env.KV_REST_API_TOKEN
+function getRedis() {
+  const url = process.env.UPSTASH_REDIS_REST_URL
+  const token = process.env.UPSTASH_REDIS_REST_TOKEN
   if (!url || !token) return null
-  return createClient({ url, token })
+  return new Redis({ url, token })
 }
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
-  const kv = getKv()
+  const redis = getRedis()
 
   if (req.method === 'GET') {
     const { spreadsheetId } = req.query as Record<string, string>
-    if (!kv) {
-      console.error('[campaign-notes] KV_REST_API_URL/KV_REST_API_TOKEN not configured')
+    if (!redis) {
+      console.error('[campaign-notes] UPSTASH_REDIS_REST_URL/UPSTASH_REDIS_REST_TOKEN not configured')
       return res.status(200).json({})
     }
     try {
-      const notes = await kv.hgetall<Record<string, string>>(keyOf(spreadsheetId ?? ''))
+      const notes = await redis.hgetall<Record<string, string>>(keyOf(spreadsheetId ?? ''))
       res.setHeader('Cache-Control', 'private, no-store')
       return res.status(200).json(notes ?? {})
     } catch (err) {
@@ -114,12 +114,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (!campaign) {
       return res.status(400).json({ error: 'campaign이 필요합니다.' })
     }
-    if (!kv) {
-      console.error('[campaign-notes] KV_REST_API_URL/KV_REST_API_TOKEN not configured')
+    if (!redis) {
+      console.error('[campaign-notes] UPSTASH_REDIS_REST_URL/UPSTASH_REDIS_REST_TOKEN not configured')
       return res.status(500).json({ error: '메모 저장 기능이 아직 설정되지 않았습니다.' })
     }
     try {
-      await kv.hset(keyOf(spreadsheetId ?? ''), { [campaign]: note ?? '' })
+      await redis.hset(keyOf(spreadsheetId ?? ''), { [campaign]: note ?? '' })
       return res.status(200).json({ ok: true })
     } catch (err) {
       console.error('[campaign-notes] write failed', err)
@@ -137,16 +137,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 `vite.config.ts` 상단 import에 추가:
 
 ```ts
-import { createClient } from '@vercel/kv'
+import { Redis } from '@upstash/redis'
 ```
 
 `sheetsDevProxy` 함수 바로 아래에 새 함수 추가:
 
 ```ts
 function campaignNotesDevProxy(env: Record<string, string>): Plugin {
-  const kvUrl = env.KV_REST_API_URL
-  const kvToken = env.KV_REST_API_TOKEN
-  const kv = kvUrl && kvToken ? createClient({ url: kvUrl, token: kvToken }) : null
+  const redisUrl = env.UPSTASH_REDIS_REST_URL
+  const redisToken = env.UPSTASH_REDIS_REST_TOKEN
+  const redis = redisUrl && redisToken ? new Redis({ url: redisUrl, token: redisToken }) : null
 
   function keyOf(spreadsheetId: string): string {
     return `notes:${spreadsheetId || 'default'}`
@@ -161,13 +161,13 @@ function campaignNotesDevProxy(env: Record<string, string>): Plugin {
         if (req.method === 'GET') {
           const spreadsheetId = incomingUrl.searchParams.get('spreadsheetId') ?? ''
           res.setHeader('Content-Type', 'application/json')
-          if (!kv) {
-            console.error('[campaign-notes-dev-proxy] KV_REST_API_URL/KV_REST_API_TOKEN not configured')
+          if (!redis) {
+            console.error('[campaign-notes-dev-proxy] UPSTASH_REDIS_REST_URL/UPSTASH_REDIS_REST_TOKEN not configured')
             res.end(JSON.stringify({}))
             return
           }
           try {
-            const notes = await kv.hgetall(keyOf(spreadsheetId))
+            const notes = await redis.hgetall(keyOf(spreadsheetId))
             res.end(JSON.stringify(notes ?? {}))
           } catch (error) {
             console.error('[campaign-notes-dev-proxy] read failed', error)
@@ -195,14 +195,14 @@ function campaignNotesDevProxy(env: Record<string, string>): Plugin {
             res.end(JSON.stringify({ error: 'campaign이 필요합니다.' }))
             return
           }
-          if (!kv) {
-            console.error('[campaign-notes-dev-proxy] KV_REST_API_URL/KV_REST_API_TOKEN not configured')
+          if (!redis) {
+            console.error('[campaign-notes-dev-proxy] UPSTASH_REDIS_REST_URL/UPSTASH_REDIS_REST_TOKEN not configured')
             res.statusCode = 500
             res.end(JSON.stringify({ error: '메모 저장 기능이 아직 설정되지 않았습니다.' }))
             return
           }
           try {
-            await kv.hset(keyOf(body.spreadsheetId ?? ''), { [body.campaign]: body.note ?? '' })
+            await redis.hset(keyOf(body.spreadsheetId ?? ''), { [body.campaign]: body.note ?? '' })
             res.end(JSON.stringify({ ok: true }))
           } catch (error) {
             console.error('[campaign-notes-dev-proxy] write failed', error)
@@ -226,7 +226,7 @@ function campaignNotesDevProxy(env: Record<string, string>): Plugin {
 plugins: [react(), tailwindcss(), sheetsDevProxy(env), campaignNotesDevProxy(env)],
 ```
 
-- [ ] **Step 5: dev 서버 실행 후 curl로 계약 확인 (KV 환경변수 없는 상태 그대로, 아직 `.env`에 KV 값 안 넣어도 됨)**
+- [ ] **Step 5: dev 서버 실행 후 curl로 계약 확인 (Upstash 환경변수 없는 상태 그대로, 아직 `.env`에 값 안 넣어도 됨)**
 
 ```bash
 NODE_ENV=development npm run dev &
@@ -235,14 +235,14 @@ echo "--- GET (빈 객체 기대) ---"
 curl -s http://localhost:5173/api/campaign-notes?spreadsheetId=test
 echo "\n--- PUT campaign 없이 (400 기대) ---"
 curl -s -X PUT http://localhost:5173/api/campaign-notes -H "Content-Type: application/json" -d '{}'
-echo "\n--- PUT KV 미설정 (500 기대) ---"
+echo "\n--- PUT Upstash 미설정 (500 기대) ---"
 curl -s -X PUT http://localhost:5173/api/campaign-notes -H "Content-Type: application/json" -d '{"spreadsheetId":"test","campaign":"테스트","note":"hi"}'
 ```
 
 Expected:
 - GET → `{}`
 - PUT (no campaign) → `{"error":"campaign이 필요합니다."}`
-- PUT (with campaign, no KV configured) → `{"error":"메모 저장 기능이 아직 설정되지 않았습니다."}`
+- PUT (with campaign, no Upstash configured) → `{"error":"메모 저장 기능이 아직 설정되지 않았습니다."}`
 
 - [ ] **Step 6: dev 서버 종료**
 
@@ -254,7 +254,7 @@ pkill -f "vite" || true
 
 ```bash
 git add api/campaign-notes.ts vite.config.ts .env.example package.json package-lock.json
-git commit -m "feat(api): add shared campaign-notes endpoint backed by Vercel KV"
+git commit -m "feat(api): add shared campaign-notes endpoint backed by Upstash Redis"
 ```
 
 ---
@@ -454,11 +454,11 @@ sleep 2
 
 브라우저에서 `http://localhost:5173` 열고 (내장 브라우저 도구 사용):
 1. AO 탭 → 캠페인 하나 선택 → "캠페인별 추이" 헤더 아래에 메모 텍스트박스가 보이는지 확인
-2. 텍스트박스에 메모 입력 → 다른 곳 클릭(blur) → KV 미설정 상태이므로 "저장 실패, 다시 시도" 표시되는지 확인 (Task 1에서 확인한 500 응답 경로)
+2. 텍스트박스에 메모 입력 → 다른 곳 클릭(blur) → Upstash 미설정 상태이므로 "저장 실패, 다시 시도" 표시되는지 확인 (Task 1에서 확인한 500 응답 경로)
 3. 다른 캠페인으로 전환 → 텍스트박스가 빈 상태로 바뀌는지 확인 (그 캠페인엔 저장된 메모가 없으므로)
 4. AO 탭 전체(차트, 알림 배너 등)가 메모 저장 실패와 무관하게 정상 동작하는지 확인 (에러 처리 원칙 확인)
 
-이후 `KV_REST_API_URL`/`KV_REST_API_TOKEN`을 실제 값으로 `.env`에 채운 뒤(사용자가 Vercel KV 스토어 생성 후 제공) 같은 시나리오를 다시 확인하면 "저장됨" 경로와 새로고침 후 유지되는지까지 검증 가능 — 이 부분은 실제 KV 자격증명이 있어야 하므로 이 태스크의 필수 완료 조건에서는 제외.
+이후 `UPSTASH_REDIS_REST_URL`/`UPSTASH_REDIS_REST_TOKEN`을 실제 값으로 `.env`에 채운 뒤(사용자가 Upstash에서 DB 생성 후 제공) 같은 시나리오를 다시 확인하면 "저장됨" 경로와 새로고침 후 유지되는지까지 검증 가능 — 이 부분은 실제 Upstash 자격증명이 있어야 하므로 이 태스크의 필수 완료 조건에서는 제외.
 
 ```bash
 pkill -f "vite" || true
@@ -475,12 +475,13 @@ git commit -m "feat(ao): add shared per-campaign notes UI"
 
 ## Self-Review Notes
 
-- **스펙 커버리지**: 데이터 모델(해시+`default`키) → Task 1 Step 3/4. 백엔드 API 계약 → Task 1. 사전 설정(Vercel KV 연결) → Task 1 Step 2 안내 + 아래 "배포 전 확인" 참고. 클라이언트 훅/UI → Task 2. 에러 처리(로드 실패 조용히/저장 실패 표시) → Task 1(GET 항상 200) + Task 2 Step 6(에러 텍스트) + Step 8(검증). 테스트 방침(자동화 없음, 수동 체크리스트) → 각 태스크 Step 5/8. Out of Scope 항목은 계획에 포함 안 함(의도됨).
+- **스펙 커버리지**: 데이터 모델(해시+`default`키) → Task 1 Step 3/4. 백엔드 API 계약 → Task 1. 사전 설정(Upstash 연결) → Task 1 Step 2 안내 + 아래 "배포 전 확인" 참고. 클라이언트 훅/UI → Task 2. 에러 처리(로드 실패 조용히/저장 실패 표시) → Task 1(GET 항상 200) + Task 2 Step 6(에러 텍스트) + Step 8(검증). 테스트 방침(자동화 없음, 수동 체크리스트) → 각 태스크 Step 5/8. Out of Scope 항목은 계획에 포함 안 함(의도됨).
 - **타입 일관성**: `NoteSaveStatus`는 훅에서 정의해 `CRMAlwaysOn.tsx`가 `import type`으로 재사용 — 이름 불일치 없음. `campaignNotes` prop 모양이 훅의 반환 타입과 정확히 일치.
 - **플레이스홀더 스캔**: 없음.
 
 ## 배포 전 확인 (사용자가 직접 해야 하는 일)
 
-1. Vercel 대시보드 → 이 프로젝트 → Storage → KV 스토어 생성 및 연결 (자동으로 `KV_REST_API_URL`/`KV_REST_API_TOKEN` 환경변수 주입됨)
-2. 로컬 개발도 하려면 같은 값을 `.env`에 채워넣기
-3. 배포 후 실제 KV 연결 상태에서 "저장됨" → 새로고침 → 메모 유지되는지, 그리고 팀원 다른 브라우저에서도 같은 메모가 보이는지 최종 확인
+1. [upstash.com](https://upstash.com)에서 무료 계정 생성 → Redis 데이터베이스 생성 (무료 티어: 256MB + 월 500K 커맨드)
+2. DB 상세 페이지의 REST API 섹션에서 `UPSTASH_REDIS_REST_URL`/`UPSTASH_REDIS_REST_TOKEN` 값을 확인해 Vercel 프로젝트 환경변수에 등록
+3. 로컬 개발도 하려면 같은 값을 `.env`에 채워넣기
+4. 배포 후 실제 Upstash 연결 상태에서 "저장됨" → 새로고침 → 메모 유지되는지, 그리고 팀원 다른 브라우저에서도 같은 메모가 보이는지 최종 확인
