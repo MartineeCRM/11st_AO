@@ -2,6 +2,7 @@ import { defineConfig, loadEnv, type Plugin } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 import path from 'path'
+import { Redis } from '@upstash/redis'
 
 const DEFAULT_SHEET_NAME = '브레이즈 푸시 실적'
 
@@ -52,11 +53,87 @@ function sheetsDevProxy(env: Record<string, string>): Plugin {
   }
 }
 
+function campaignNotesDevProxy(env: Record<string, string>): Plugin {
+  const redisUrl = env.UPSTASH_REDIS_REST_URL
+  const redisToken = env.UPSTASH_REDIS_REST_TOKEN
+  const redis = redisUrl && redisToken ? new Redis({ url: redisUrl, token: redisToken }) : null
+
+  function keyOf(spreadsheetId: string): string {
+    return `notes:${spreadsheetId || 'default'}`
+  }
+
+  return {
+    name: 'campaign-notes-dev-proxy',
+    configureServer(server) {
+      server.middlewares.use('/api/campaign-notes', async (req, res) => {
+        const incomingUrl = new URL(req.url ?? '/', 'http://localhost')
+
+        if (req.method === 'GET') {
+          const spreadsheetId = incomingUrl.searchParams.get('spreadsheetId') ?? ''
+          res.setHeader('Content-Type', 'application/json')
+          if (!redis) {
+            console.error('[campaign-notes-dev-proxy] UPSTASH_REDIS_REST_URL/UPSTASH_REDIS_REST_TOKEN not configured')
+            res.end(JSON.stringify({}))
+            return
+          }
+          try {
+            const notes = await redis.hgetall(keyOf(spreadsheetId))
+            res.end(JSON.stringify(notes ?? {}))
+          } catch (error) {
+            console.error('[campaign-notes-dev-proxy] read failed', error)
+            res.end(JSON.stringify({}))
+          }
+          return
+        }
+
+        if (req.method === 'PUT') {
+          const chunks: Buffer[] = []
+          for await (const chunk of req) chunks.push(chunk as Buffer)
+          let body: { spreadsheetId?: string; campaign?: string; note?: string } = {}
+          try {
+            body = JSON.parse(Buffer.concat(chunks).toString('utf-8') || '{}')
+          } catch {
+            res.statusCode = 400
+            res.setHeader('Content-Type', 'application/json')
+            res.end(JSON.stringify({ error: '잘못된 요청 본문입니다.' }))
+            return
+          }
+
+          res.setHeader('Content-Type', 'application/json')
+          if (!body.campaign) {
+            res.statusCode = 400
+            res.end(JSON.stringify({ error: 'campaign이 필요합니다.' }))
+            return
+          }
+          if (!redis) {
+            console.error('[campaign-notes-dev-proxy] UPSTASH_REDIS_REST_URL/UPSTASH_REDIS_REST_TOKEN not configured')
+            res.statusCode = 500
+            res.end(JSON.stringify({ error: '메모 저장 기능이 아직 설정되지 않았습니다.' }))
+            return
+          }
+          try {
+            await redis.hset(keyOf(body.spreadsheetId ?? ''), { [body.campaign]: body.note ?? '' })
+            res.end(JSON.stringify({ ok: true }))
+          } catch (error) {
+            console.error('[campaign-notes-dev-proxy] write failed', error)
+            res.statusCode = 500
+            res.end(JSON.stringify({ error: '메모 저장에 실패했습니다.' }))
+          }
+          return
+        }
+
+        res.statusCode = 405
+        res.end()
+      })
+    },
+  }
+}
+
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '')
 
   return {
-    plugins: [react(), tailwindcss(), sheetsDevProxy(env)],
+    plugins: [react(), tailwindcss(), sheetsDevProxy(env), campaignNotesDevProxy(env)],
     resolve: {
       alias: {
         '@': path.resolve(__dirname, './src'),
