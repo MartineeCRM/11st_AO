@@ -11,6 +11,7 @@ import { AoAlertBanner } from '@/components/AoAlertBanner'
 import { SegmentedToggle } from '@/components/filters/SegmentedToggle'
 import { buildAoCampaignTrend, buildAoCampaignAlerts, previousPeriodOfSameLength } from '@/lib/metrics'
 import type { AoPushRow, DateRange } from '@/types/sheets'
+import type { NoteSaveStatus } from '@/hooks/useCampaignNotesState'
 
 const DEFAULT_PRESET: Preset = '90d'
 
@@ -28,9 +29,14 @@ interface Props {
   aoRows: AoPushRow[]
   campaignOptions: string[]
   monitoredCampaigns: string[]
+  campaignNotes: {
+    notes: Record<string, string>
+    saveStatus: Record<string, NoteSaveStatus>
+    saveNote: (campaign: string, note: string) => void
+  }
 }
 
-export function CRMAlwaysOn({ sheetData, aoRows, campaignOptions, monitoredCampaigns }: Props) {
+export function CRMAlwaysOn({ sheetData, aoRows, campaignOptions, monitoredCampaigns, campaignNotes }: Props) {
   const { loading, error, dateRange } = sheetData
   const minDate = dateRange?.min ?? ''
   const maxDate = dateRange?.max ?? ''
@@ -38,6 +44,11 @@ export function CRMAlwaysOn({ sheetData, aoRows, campaignOptions, monitoredCampa
   const [activePreset, setActivePreset] = useState<Preset | null>(DEFAULT_PRESET)
   const [range, setRange] = useState<DateRange>({ start: '', end: '' })
   const [selectedCampaign, setSelectedCampaign] = useState('')
+  const [noteDraft, setNoteDraft] = useState('')
+
+  useEffect(() => {
+    setNoteDraft(campaignNotes.notes[selectedCampaign] ?? '')
+  }, [selectedCampaign, campaignNotes.notes])
   const [granularity, setGranularity] = useState<'day' | 'week' | 'month'>('week')
   const [viewMode, setViewMode] = useState<'accumulated' | 'comparison'>('accumulated')
   const [trendView, setTrendView] = useState<'chart' | 'table'>('chart')
@@ -144,6 +155,26 @@ export function CRMAlwaysOn({ sheetData, aoRows, campaignOptions, monitoredCampa
                   { key: 'table', label: '테이블' },
                 ]}
               />
+            </div>
+            <div className="flex flex-col gap-1">
+              <textarea
+                value={noteDraft}
+                onChange={e => setNoteDraft(e.target.value)}
+                onBlur={() => {
+                  if (selectedCampaign && noteDraft !== (campaignNotes.notes[selectedCampaign] ?? '')) {
+                    campaignNotes.saveNote(selectedCampaign, noteDraft)
+                  }
+                }}
+                placeholder="이 캠페인 특이사항 메모..."
+                rows={2}
+                className="w-full resize-none rounded-lg border border-[#e0e0e0] px-3 py-2 text-xs text-[#1d1d1f] outline-none focus:border-[#0066cc]"
+              />
+              {campaignNotes.saveStatus[selectedCampaign] === 'saved' && (
+                <span className="text-[11px] text-[#9CA3AF]">저장됨</span>
+              )}
+              {campaignNotes.saveStatus[selectedCampaign] === 'error' && (
+                <span className="text-[11px] text-[#EF4444]">저장 실패, 다시 시도</span>
+              )}
             </div>
             {trendView === 'chart' ? (
               <div className="h-80">
