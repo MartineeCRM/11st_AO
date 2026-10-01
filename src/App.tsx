@@ -82,7 +82,6 @@ export default function App() {
               <CRMAlwaysOn
                 sheetData={sheetData}
                 aoRows={aoRows}
-                campaignOptions={campaignOptions}
                 monitoredCampaigns={alertCampaigns.selected}
                 campaignNotes={campaignNotes}
               />

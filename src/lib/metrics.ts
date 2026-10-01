@@ -27,6 +27,46 @@ export function listAoCampaignNames(rows: AoPushRow[]): string[] {
   return [...names].sort((a, b) => a.localeCompare(b, 'ko'))
 }
 
+export interface AoCampaignSelection {
+  campaign: string
+  variant: string | null
+}
+
+function matchesSelection(r: AoPushRow, selection: AoCampaignSelection): boolean {
+  if (r.campaignSplit !== selection.campaign) return false
+  return selection.variant === null || r.variantSplit === selection.variant
+}
+
+/** AO 캠페인 목록 (캠페인명_분할 기준만, 베리언트 구분 없이), 가나다순 */
+export function listAoCampaignGroups(rows: AoPushRow[]): string[] {
+  const names = new Set<string>()
+  for (const r of rows) {
+    if (r.campaignSplit) names.add(r.campaignSplit)
+  }
+  return [...names].sort((a, b) => a.localeCompare(b, 'ko'))
+}
+
+/** 주어진 캠페인(캠페인명_분할)에 속한 배리언트명_분할 목록(빈 값 제외), 가나다순 */
+export function listAoCampaignVariants(rows: AoPushRow[], campaign: string): string[] {
+  const names = new Set<string>()
+  for (const r of rows) {
+    if (r.campaignSplit === campaign && r.variantSplit) names.add(r.variantSplit)
+  }
+  return [...names].sort((a, b) => a.localeCompare(b, 'ko'))
+}
+
+/** 모니터링 대상(베리언트 단위) 목록에서, 그 베리언트들이 속한 캠페인명_분할 집합을 구함 */
+export function campaignGroupsOf(rows: AoPushRow[], monitoredVariantKeys: string[]): string[] {
+  const monitoredSet = new Set(monitoredVariantKeys)
+  const groups = new Set<string>()
+  for (const r of rows) {
+    if (r.campaignSplit && monitoredSet.has(aoCampaignKey(r))) {
+      groups.add(r.campaignSplit)
+    }
+  }
+  return [...groups]
+}
+
 export interface AoTrendPoint {
   period: string
   sent: number
@@ -56,10 +96,10 @@ function monthStart(dateStr: string): string {
 /** 특정 AO 캠페인의 일/주/월 단위 합산 추이 */
 export function buildAoCampaignTrend(
   rows: AoPushRow[],
-  campaign: string,
+  selection: AoCampaignSelection,
   granularity: 'day' | 'week' | 'month',
 ): AoTrendPoint[] {
-  const campaignRows = rows.filter(r => aoCampaignKey(r) === campaign)
+  const campaignRows = rows.filter(r => matchesSelection(r, selection))
   const byPeriod = new Map<string, AoPushRow[]>()
   for (const r of campaignRows) {
     const key = granularity === 'day' ? r.date : granularity === 'week' ? weekStart(r.date) : monthStart(r.date)
@@ -98,8 +138,8 @@ export interface AoDailyRow {
 }
 
 /** 특정 AO 캠페인의 일자별 실적 — 최신 날짜가 먼저 */
-export function buildAoCampaignDailyRows(rows: AoPushRow[], campaign: string): AoDailyRow[] {
-  const campaignRows = rows.filter(r => aoCampaignKey(r) === campaign)
+export function buildAoCampaignDailyRows(rows: AoPushRow[], selection: AoCampaignSelection): AoDailyRow[] {
+  const campaignRows = rows.filter(r => matchesSelection(r, selection))
   const byDate = new Map<string, AoPushRow[]>()
   for (const r of campaignRows) {
     const list = byDate.get(r.date) ?? []

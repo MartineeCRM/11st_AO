@@ -1,26 +1,27 @@
 import { useMemo, useState } from 'react'
 import { cn } from '@/lib/utils'
 import { formatNumber, formatCountWithRate, formatCurrency } from '@/lib/formatters'
-import { buildAoCampaignDailyRows } from '@/lib/metrics'
+import { buildAoCampaignDailyRows, type AoCampaignSelection } from '@/lib/metrics'
 import type { AoPushRow } from '@/types/sheets'
 
 interface Props {
   rows: AoPushRow[]
-  campaign: string
+  selection: AoCampaignSelection
+  label: string
 }
 
 const PAGE_SIZE = 14
 
-export function AoCampaignDailyTable({ rows, campaign }: Props) {
+export function AoCampaignDailyTable({ rows, selection, label }: Props) {
   const [expanded, setExpanded] = useState(false)
-  const daily = useMemo(() => (campaign ? buildAoCampaignDailyRows(rows, campaign) : []), [rows, campaign])
+  const daily = useMemo(() => (selection.campaign ? buildAoCampaignDailyRows(rows, selection) : []), [rows, selection])
   const visible = expanded ? daily : daily.slice(0, PAGE_SIZE)
   const hiddenCount = daily.length - PAGE_SIZE
 
   return (
     <div className="rounded-xl border border-[#e0e0e0] bg-white">
       <div className="border-b border-[#e0e0e0] px-4 py-3">
-        <p className="truncate text-sm font-semibold text-[#1d1d1f]">{campaign || '캠페인을 선택하세요'}</p>
+        <p className="truncate text-sm font-semibold text-[#1d1d1f]">{label || '캠페인을 선택하세요'}</p>
         <p className="mt-0.5 text-[10px] text-[#9CA3AF]">일자별 실적 · 최신 날짜순</p>
       </div>
 

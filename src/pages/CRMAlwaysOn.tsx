@@ -9,7 +9,15 @@ import { AoMonthlyPerformanceTable } from '@/components/AoMonthlyPerformanceTabl
 import { AoPeriodComparisonTable } from '@/components/AoPeriodComparisonTable'
 import { AoAlertBanner } from '@/components/AoAlertBanner'
 import { SegmentedToggle } from '@/components/filters/SegmentedToggle'
-import { buildAoCampaignTrend, buildAoCampaignAlerts, previousPeriodOfSameLength } from '@/lib/metrics'
+import {
+  buildAoCampaignTrend,
+  buildAoCampaignAlerts,
+  previousPeriodOfSameLength,
+  listAoCampaignGroups,
+  listAoCampaignVariants,
+  campaignGroupsOf,
+  type AoCampaignSelection,
+} from '@/lib/metrics'
 import type { AoPushRow, DateRange } from '@/types/sheets'
 import type { NoteSaveStatus } from '@/hooks/useCampaignNotesState'
 
@@ -27,7 +35,6 @@ function LoadingSkeleton() {
 interface Props {
   sheetData: SheetData
   aoRows: AoPushRow[]
-  campaignOptions: string[]
   monitoredCampaigns: string[]
   campaignNotes: {
     notes: Record<string, string>
@@ -36,19 +43,19 @@ interface Props {
   }
 }
 
-export function CRMAlwaysOn({ sheetData, aoRows, campaignOptions, monitoredCampaigns, campaignNotes }: Props) {
+export function CRMAlwaysOn({ sheetData, aoRows, monitoredCampaigns, campaignNotes }: Props) {
   const { loading, error, dateRange } = sheetData
   const minDate = dateRange?.min ?? ''
   const maxDate = dateRange?.max ?? ''
 
   const [activePreset, setActivePreset] = useState<Preset | null>(DEFAULT_PRESET)
   const [range, setRange] = useState<DateRange>({ start: '', end: '' })
-  const [selectedCampaign, setSelectedCampaign] = useState('')
+  const [selection, setSelection] = useState<AoCampaignSelection>({ campaign: '', variant: null })
   const [noteDraft, setNoteDraft] = useState('')
 
   useEffect(() => {
-    setNoteDraft(campaignNotes.notes[selectedCampaign] ?? '')
-  }, [selectedCampaign, campaignNotes.notes])
+    setNoteDraft(campaignNotes.notes[selection.campaign] ?? '')
+  }, [selection.campaign, campaignNotes.notes])
   const [granularity, setGranularity] = useState<'day' | 'week' | 'month'>('week')
   const [viewMode, setViewMode] = useState<'accumulated' | 'comparison'>('accumulated')
   const [trendView, setTrendView] = useState<'chart' | 'table'>('chart')
@@ -68,20 +75,41 @@ export function CRMAlwaysOn({ sheetData, aoRows, campaignOptions, monitoredCampa
   // 의미 없어서 기본적으로 대상에서 빠져있다.
   const alerts = useMemo(() => buildAoCampaignAlerts(aoRows, monitoredCampaigns), [aoRows, monitoredCampaigns])
 
-  // 설정 탭에서 고른 모니터링 대상 캠페인을 드롭다운 맨 위로 (각 그룹 내에서는 가나다순 유지)
-  const sortedCampaignOptions = useMemo(() => {
-    const monitoredSet = new Set(monitoredCampaigns)
-    const monitored = campaignOptions.filter(c => monitoredSet.has(c))
-    const rest = campaignOptions.filter(c => !monitoredSet.has(c))
-    return [...monitored, ...rest]
-  }, [campaignOptions, monitoredCampaigns])
+  // 캠페인(캠페인명_분할) 목록. 모니터링 대상 베리언트가 하나라도 있는 캠페인을 드롭다운 맨 위로
+  // (각 그룹 내에서는 가나다순 유지) — 기존 베리언트 단위 정렬 원칙을 캠페인 단위로 확장
+  const campaignGroups = useMemo(() => listAoCampaignGroups(aoRows), [aoRows])
 
-  // 캠페인 목록 로드 후 기본값(모니터링 대상 우선, 그다음 가나다순 첫 캠페인) 선택
+  const monitoredCampaignGroups = useMemo(
+    () => campaignGroupsOf(aoRows, monitoredCampaigns),
+    [aoRows, monitoredCampaigns],
+  )
+
+  const sortedCampaignGroups = useMemo(() => {
+    const monitoredSet = new Set(monitoredCampaignGroups)
+    const monitored = campaignGroups.filter(c => monitoredSet.has(c))
+    const rest = campaignGroups.filter(c => !monitoredSet.has(c))
+    return [...monitored, ...rest]
+  }, [campaignGroups, monitoredCampaignGroups])
+
+  // 캠페인 목록 로드 후 기본값(모니터링 대상 우선, 그다음 가나다순 첫 캠페인) 선택, 베리언트는 항상 "전체"
   useEffect(() => {
-    if (!selectedCampaign && sortedCampaignOptions.length > 0) {
-      setSelectedCampaign(sortedCampaignOptions[0])
+    if (!selection.campaign && sortedCampaignGroups.length > 0) {
+      setSelection({ campaign: sortedCampaignGroups[0], variant: null })
     }
-  }, [sortedCampaignOptions]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [sortedCampaignGroups]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // 선택된 캠페인에 속한 베리언트 목록 ("전체"는 드롭다운에 넘길 때 맨 앞에 추가)
+  const campaignVariants = useMemo(
+    () => listAoCampaignVariants(aoRows, selection.campaign),
+    [aoRows, selection.campaign],
+  )
+
+  // 표시 라벨: 전체면 "캠페인명 (전체)", 특정 베리언트면 "캠페인명 · 베리언트명"
+  const selectionLabel = selection.campaign
+    ? selection.variant
+      ? `${selection.campaign} · ${selection.variant}`
+      : `${selection.campaign} (전체)`
+    : ''
 
   const start = range.start || minDate
   const end = range.end || maxDate
@@ -101,8 +129,8 @@ export function CRMAlwaysOn({ sheetData, aoRows, campaignOptions, monitoredCampa
   )
 
   const trendData = useMemo(
-    () => (selectedCampaign ? buildAoCampaignTrend(trendSourceRows, selectedCampaign, granularity) : []),
-    [trendSourceRows, selectedCampaign, granularity],
+    () => (selection.campaign ? buildAoCampaignTrend(trendSourceRows, selection, granularity) : []),
+    [trendSourceRows, selection, granularity],
   )
 
   if (error) {
@@ -131,9 +159,17 @@ export function CRMAlwaysOn({ sheetData, aoRows, campaignOptions, monitoredCampa
 
         <CampaignSelectFilter
           label="캠페인"
-          options={sortedCampaignOptions}
-          selected={selectedCampaign}
-          onChange={setSelectedCampaign}
+          options={sortedCampaignGroups}
+          selected={selection.campaign}
+          onChange={campaign => setSelection({ campaign, variant: null })}
+          monitoredCampaigns={monitoredCampaignGroups}
+        />
+
+        <CampaignSelectFilter
+          label="베리언트"
+          options={['전체', ...campaignVariants]}
+          selected={selection.variant ?? '전체'}
+          onChange={variant => setSelection(prev => ({ ...prev, variant: variant === '전체' ? null : variant }))}
           monitoredCampaigns={monitoredCampaigns}
         />
       </div>
@@ -162,35 +198,35 @@ export function CRMAlwaysOn({ sheetData, aoRows, campaignOptions, monitoredCampa
                 onChange={e => setNoteDraft(e.target.value)}
                 onBlur={() => {
                   if (
-                    selectedCampaign &&
-                    (noteDraft !== (campaignNotes.notes[selectedCampaign] ?? '') ||
-                      campaignNotes.saveStatus[selectedCampaign] === 'error')
+                    selection.campaign &&
+                    (noteDraft !== (campaignNotes.notes[selection.campaign] ?? '') ||
+                      campaignNotes.saveStatus[selection.campaign] === 'error')
                   ) {
-                    campaignNotes.saveNote(selectedCampaign, noteDraft)
+                    campaignNotes.saveNote(selection.campaign, noteDraft)
                   }
                 }}
                 placeholder="이 캠페인 특이사항 메모..."
                 rows={2}
                 className="w-full resize-none rounded-lg border border-[#e0e0e0] px-3 py-2 text-xs text-[#1d1d1f] outline-none focus:border-[#0066cc]"
               />
-              {campaignNotes.saveStatus[selectedCampaign] === 'saved' && (
+              {campaignNotes.saveStatus[selection.campaign] === 'saved' && (
                 <span className="text-[11px] text-[#9CA3AF]">저장됨</span>
               )}
-              {campaignNotes.saveStatus[selectedCampaign] === 'error' && (
+              {campaignNotes.saveStatus[selection.campaign] === 'error' && (
                 <span className="text-[11px] text-[#EF4444]">저장 실패, 다시 시도</span>
               )}
             </div>
             {trendView === 'chart' ? (
               <div className="h-80">
                 <AoCampaignTrendChart
-                  campaignName={selectedCampaign}
+                  campaignName={selectionLabel}
                   data={trendData}
                   granularity={granularity}
                   onGranularityChange={setGranularity}
                 />
               </div>
             ) : (
-              <AoCampaignDailyTable rows={trendSourceRows} campaign={selectedCampaign} />
+              <AoCampaignDailyTable rows={trendSourceRows} selection={selection} label={selectionLabel} />
             )}
           </section>
 
