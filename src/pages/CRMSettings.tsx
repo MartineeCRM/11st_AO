@@ -31,9 +31,12 @@ export function CRMSettings({ sheetConnection, campaignOptions, alertCampaigns }
 
   const filteredCampaignOptions = useMemo(() => {
     const q = campaignSearch.trim()
-    if (!q) return campaignOptions
-    return campaignOptions.filter(c => c.includes(q))
-  }, [campaignOptions, campaignSearch])
+    const matched = q ? campaignOptions.filter(c => c.includes(q)) : campaignOptions
+    const selectedSet = new Set(alertCampaigns.selected)
+    const checked = matched.filter(c => selectedSet.has(c))
+    const unchecked = matched.filter(c => !selectedSet.has(c))
+    return [...checked, ...unchecked]
+  }, [campaignOptions, campaignSearch, alertCampaigns.selected])
 
   async function handleTestConnection() {
     setTestStatus({ state: 'testing' })
