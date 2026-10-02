@@ -104,13 +104,20 @@ export function CRMAlwaysOn({ sheetData, aoRows, monitoredCampaigns, campaignNot
     [aoRows, selection.campaign],
   )
 
+  // 선택된 캠페인 기준으로 모니터링 대상 베리언트의 "순수 베리언트명" 목록 추출
+  // (monitoredCampaigns는 "캠페인 · 베리언트" 결합 키라 베리언트 드롭다운의 별표 표시엔 그대로 못 씀)
+  const monitoredCampaignVariants = useMemo(() => {
+    const monitoredSet = new Set(monitoredCampaigns)
+    return campaignVariants.filter(v => monitoredSet.has(`${selection.campaign} · ${v}`))
+  }, [campaignVariants, monitoredCampaigns, selection.campaign])
+
   // 모니터링 대상 베리언트를 맨 위로 ("전체"는 이 정렬과 무관하게 항상 최상단 고정)
   const sortedCampaignVariants = useMemo(() => {
-    const monitoredSet = new Set(monitoredCampaigns)
-    const monitored = campaignVariants.filter(v => monitoredSet.has(`${selection.campaign} · ${v}`))
-    const rest = campaignVariants.filter(v => !monitoredSet.has(`${selection.campaign} · ${v}`))
+    const monitoredSet = new Set(monitoredCampaignVariants)
+    const monitored = campaignVariants.filter(v => monitoredSet.has(v))
+    const rest = campaignVariants.filter(v => !monitoredSet.has(v))
     return [...monitored, ...rest]
-  }, [campaignVariants, monitoredCampaigns, selection.campaign])
+  }, [campaignVariants, monitoredCampaignVariants])
 
   // 표시 라벨: 전체면 "캠페인명 (전체)", 특정 베리언트면 "캠페인명 · 베리언트명"
   const selectionLabel = selection.campaign
@@ -178,7 +185,7 @@ export function CRMAlwaysOn({ sheetData, aoRows, monitoredCampaigns, campaignNot
           options={['전체', ...sortedCampaignVariants]}
           selected={selection.variant ?? '전체'}
           onChange={variant => setSelection(prev => ({ ...prev, variant: variant === '전체' ? null : variant }))}
-          monitoredCampaigns={monitoredCampaigns}
+          monitoredCampaigns={monitoredCampaignVariants}
         />
       </div>
 
