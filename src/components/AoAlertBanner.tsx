@@ -31,7 +31,7 @@ export function AoAlertBanner({ alerts }: Props) {
       <div className="flex items-center gap-2 text-xs font-semibold text-[#B91C1C]">
         <AlertTriangle className="h-4 w-4 shrink-0" />
         주의 필요 캠페인 {alerts.length}개
-        <span className="font-normal text-[#DC2626]">(전주 대비 50% 이상 하락)</span>
+        <span className="font-normal text-[#DC2626]">(전주 대비 30% 이상 하락)</span>
       </div>
 
       <ul className="mt-2 flex flex-col gap-2">

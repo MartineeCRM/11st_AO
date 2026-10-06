@@ -373,8 +373,8 @@ export function sortByAoMetric<T>(rowsIn: T[], sortKey: AoSortKey, toMetrics: (r
 
 // ─── 주의가 필요한 캠페인 (전주 대비 급락 감지) ──────────────────────────────
 
-/** 이 비율 이상 하락하면 "주의 필요"로 표시 (예: 0.5 = 전주 대비 50% 이상 하락, 0건 포함) */
-const ALERT_DROP_THRESHOLD = 0.5
+/** 이 비율 이상 하락하면 "주의 필요"로 표시 (예: 0.3 = 전주 대비 30% 이상 하락, 0건 포함) */
+const ALERT_DROP_THRESHOLD = 0.3
 
 export type AoAlertMetric = 'sent' | 'openRate' | 'grossAmount'
 

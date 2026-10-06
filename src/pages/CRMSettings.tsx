@@ -113,7 +113,7 @@ export function CRMSettings({ sheetConnection, campaignOptions, alertCampaigns }
 
       <Section title="모니터링 대상 캠페인">
         <p className="text-[11px] text-[#9CA3AF] -mt-2">
-          체크한 캠페인만 AO 탭 상단에서 전주 대비 발송건수/오픈율/연관거래액 급락(50% 이상)을 감시하고,
+          체크한 캠페인만 AO 탭 상단에서 전주 대비 발송건수/오픈율/연관거래액 급락(30% 이상)을 감시하고,
           AO 탭의 캠페인 선택 드롭다운에서도 맨 위로 올라옵니다.
           격주·월 단위로 몰아서 발송하는 캠페인은 매주 하락으로 잡히니 체크하지 않는 걸 권장해요.
         </p>
