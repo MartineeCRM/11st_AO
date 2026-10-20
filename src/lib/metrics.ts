@@ -1,4 +1,4 @@
-import type { AoPushRow } from '@/types/sheets'
+import type { AoPushRow, DateRange } from '@/types/sheets'
 import { addDays, formatDateShort, parseDateStr, toDateStr } from './formatters'
 
 // ─── AO(Always-on) 캠페인 모니터링 ──────────────────────────────
@@ -388,12 +388,15 @@ const ALERT_DROP_THRESHOLD = 0.3
 
 export type AoAlertMetric = 'sent' | 'openRate' | 'grossAmount'
 
+export type AoAlertBasis = 'week' | 'month'
+
 export interface AoCampaignAlertTrigger {
+  basis: AoAlertBasis
   metric: AoAlertMetric
   label: string
   previous: number
   current: number
-  /** 0~1, 전주 대비 하락률 (양수) */
+  /** 0~1, 비교 기준 대비 하락률 (양수) */
   dropRate: number
 }
 
@@ -402,25 +405,70 @@ export interface AoCampaignAlert {
   triggers: AoCampaignAlertTrigger[]
 }
 
+export interface AoAlertWindows {
+  current: DateRange
+  previousWeek: DateRange
+  /** 이번 주 구간을 한 달 앞으로 민 같은 길이(7일) 구간 — 7일 구간은 요일 구성이 항상 같아 비교가 공정하다 */
+  previousMonth: DateRange
+}
+
+/** 날짜를 n개월 이동 (말일 넘치면 그 달 말일로 보정, 예: 3/31 → 2/28) */
+function shiftMonths(dateStr: string, n: number): string {
+  const d = parseDateStr(dateStr)
+  if (!d) return ''
+  const day = d.getDate()
+  d.setDate(1)
+  d.setMonth(d.getMonth() + n)
+  d.setDate(Math.min(day, new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate()))
+  return toDateStr(d)
+}
+
 /**
  * 데이터에 존재하는 가장 최근 날짜가 속한 주는 아직 집계가 덜 채워졌을 수 있어(시트 업데이트 지연)
- * 비교 대상에서 제외하고, 그 직전 주(이번 주) vs 그 전전 주(지난 주)를 비교한다.
- * 발송건수/오픈율/연관거래액 중 하나라도 ALERT_DROP_THRESHOLD 이상 하락한 캠페인을 찾는다.
- * 지난 주에 발송 이력이 없는 캠페인(비교 기준 없음)은 대상에서 제외한다.
+ * 비교 대상에서 제외한다. 그 직전 주를 "이번 주"로 보고, 전주(그 전전 주)와 전월 동기간을 비교 기준으로 삼는다.
+ */
+export function alertWindows(rows: AoPushRow[]): AoAlertWindows | null {
+  if (rows.length === 0) return null
+  const latestDate = rows.reduce((max, r) => (r.date > max ? r.date : max), rows[0].date)
+  const start = addDays(weekStart(latestDate), -7)
+  const monthStart = shiftMonths(start, -1)
+  return {
+    current: { start, end: addDays(start, 6) },
+    previousWeek: { start: addDays(start, -7), end: addDays(start, -1) },
+    previousMonth: { start: monthStart, end: addDays(monthStart, 6) },
+  }
+}
+
+function dropTriggers(basis: AoAlertBasis, curr: AoMonthlyMetrics, prev: AoMonthlyMetrics): AoCampaignAlertTrigger[] {
+  if (prev.sent === 0) return [] // 비교 기준 기간에 발송 이력이 없으면 하락 판단 불가
+  const openRate = (m: AoMonthlyMetrics) => (m.sent > 0 ? m.opens / m.sent : 0)
+  const checks: [AoAlertMetric, string, number, number][] = [
+    ['sent', '발송건수', prev.sent, curr.sent],
+    ['openRate', '오픈율(클릭률)', openRate(prev), openRate(curr)],
+    ['grossAmount', '연관거래액', prev.grossAmount, curr.grossAmount],
+  ]
+  const triggers: AoCampaignAlertTrigger[] = []
+  for (const [metric, label, previous, current] of checks) {
+    const delta = calcPeriodDelta(current, previous)
+    if (delta !== null && delta <= -ALERT_DROP_THRESHOLD) {
+      triggers.push({ basis, metric, label, previous, current, dropRate: -delta })
+    }
+  }
+  return triggers
+}
+
+/**
+ * 발송건수/오픈율/연관거래액 중 하나라도 전주 또는 전월 동기간 대비 ALERT_DROP_THRESHOLD 이상 하락한 캠페인을 찾는다.
+ * 비교 기준 기간에 발송 이력이 없는 캠페인은 그 기준에 한해 대상에서 제외한다.
  *
  * monitoredCampaigns에 포함된 캠페인만 검사한다 — 격주/월 단위로 몰아서 발송하는
  * 간헐적 캠페인은 전주 대비 비교 자체가 의미 없으므로(항상 "쉬는 주"가 있음),
  * 사용자가 설정 탭에서 직접 고른 "꾸준히 도는" 캠페인만 대상으로 삼는다.
  */
 export function buildAoCampaignAlerts(rows: AoPushRow[], monitoredCampaigns: string[]): AoCampaignAlert[] {
-  if (rows.length === 0 || monitoredCampaigns.length === 0) return []
+  const w = alertWindows(rows)
+  if (!w || monitoredCampaigns.length === 0) return []
   const monitoredSet = new Set(monitoredCampaigns)
-
-  const latestDate = rows.reduce((max, r) => (r.date > max ? r.date : max), rows[0].date)
-  const currentWeekStart = addDays(weekStart(latestDate), -7)
-  const currentWeekEnd = addDays(currentWeekStart, 6)
-  const previousWeekStart = addDays(currentWeekStart, -7)
-  const previousWeekEnd = addDays(currentWeekStart, -1)
 
   const byCampaign = new Map<string, AoPushRow[]>()
   for (const r of rows) {
@@ -433,34 +481,12 @@ export function buildAoCampaignAlerts(rows: AoPushRow[], monitoredCampaigns: str
 
   const alerts: AoCampaignAlert[] = []
   for (const [campaign, campaignRows] of byCampaign) {
-    const currentRows = campaignRows.filter(r => r.date >= currentWeekStart && r.date <= currentWeekEnd)
-    const previousRows = campaignRows.filter(r => r.date >= previousWeekStart && r.date <= previousWeekEnd)
-    if (previousRows.length === 0) continue
-
-    const curr = sumAoMetrics(currentRows)
-    const prev = sumAoMetrics(previousRows)
-    if (prev.sent === 0) continue
-
-    const currOpenRate = curr.sent > 0 ? curr.opens / curr.sent : 0
-    const prevOpenRate = prev.sent > 0 ? prev.opens / prev.sent : 0
-
-    const triggers: AoCampaignAlertTrigger[] = []
-
-    const sentDelta = calcPeriodDelta(curr.sent, prev.sent)
-    if (sentDelta !== null && sentDelta <= -ALERT_DROP_THRESHOLD) {
-      triggers.push({ metric: 'sent', label: '발송건수', previous: prev.sent, current: curr.sent, dropRate: -sentDelta })
-    }
-
-    const openRateDelta = calcPeriodDelta(currOpenRate, prevOpenRate)
-    if (openRateDelta !== null && openRateDelta <= -ALERT_DROP_THRESHOLD) {
-      triggers.push({ metric: 'openRate', label: '오픈율(클릭률)', previous: prevOpenRate, current: currOpenRate, dropRate: -openRateDelta })
-    }
-
-    const grossAmountDelta = calcPeriodDelta(curr.grossAmount, prev.grossAmount)
-    if (grossAmountDelta !== null && grossAmountDelta <= -ALERT_DROP_THRESHOLD) {
-      triggers.push({ metric: 'grossAmount', label: '연관거래액', previous: prev.grossAmount, current: curr.grossAmount, dropRate: -grossAmountDelta })
-    }
-
+    const sumIn = (range: DateRange) => sumAoMetrics(campaignRows.filter(r => r.date >= range.start && r.date <= range.end))
+    const curr = sumIn(w.current)
+    const triggers = [
+      ...dropTriggers('week', curr, sumIn(w.previousWeek)),
+      ...dropTriggers('month', curr, sumIn(w.previousMonth)),
+    ]
     if (triggers.length > 0) alerts.push({ campaign, triggers })
   }
 

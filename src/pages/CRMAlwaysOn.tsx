@@ -11,7 +11,7 @@ import { AoAlertBanner } from '@/components/AoAlertBanner'
 import { SegmentedToggle } from '@/components/filters/SegmentedToggle'
 import {
   buildAoCampaignTrend,
-  buildAoCampaignAlerts,
+  buildAoCampaignAlerts, alertWindows,
   previousPeriodOfSameLength,
   listAoCampaignGroups,
   listAoCampaignVariants,
@@ -76,6 +76,7 @@ export function CRMAlwaysOn({ sheetData, aoRows, monitoredCampaigns, groupKeys, 
   // 설정 탭에서 사용자가 고른 캠페인만 대상 — 간헐적으로 몰아서 발송하는 캠페인은 전주 대비 비교가
   // 의미 없어서 기본적으로 대상에서 빠져있다.
   const alerts = useMemo(() => buildAoCampaignAlerts(aoRows, monitoredCampaigns), [aoRows, monitoredCampaigns])
+  const windows = useMemo(() => alertWindows(aoRows), [aoRows])
 
   // 캠페인(캠페인명_분할) 목록. 모니터링 대상 베리언트가 하나라도 있는 캠페인을 드롭다운 맨 위로
   // (각 그룹 내에서는 가나다순 유지) — 기존 베리언트 단위 정렬 원칙을 캠페인 단위로 확장
@@ -195,7 +196,7 @@ export function CRMAlwaysOn({ sheetData, aoRows, monitoredCampaigns, groupKeys, 
         <LoadingSkeleton />
       ) : (
         <div className="flex flex-col gap-8 px-6 py-5">
-          <AoAlertBanner alerts={alerts} groupKeys={groupKeys} />
+          <AoAlertBanner alerts={alerts} windows={windows} groupKeys={groupKeys} />
 
           <section className="flex flex-col gap-2">
             <div className="flex items-center justify-between px-1">
