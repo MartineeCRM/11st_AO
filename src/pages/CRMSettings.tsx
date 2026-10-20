@@ -126,31 +126,38 @@ export function CRMSettings({ sheetConnection, campaignOptions, alertCampaigns, 
           격주·월 단위로 몰아서 발송하는 캠페인은 매주 하락으로 잡히니 체크하지 않는 걸 권장해요.
         </p>
 
-        <div className="flex flex-wrap items-center gap-2">
-          <span className="text-[11px] font-medium text-[#6B7280]">담당별 선택</span>
-          {[
-            ...MONITORING_GROUPS.map(g => ({ id: g.id as string, label: g.label, keys: groupKeys[g.id] })),
-            { id: 'all', label: '담당 A+B 전체 (마티니 담당 전체)', keys: MONITORING_GROUPS.flatMap(g => groupKeys[g.id]) },
-          ].map(g => {
-            const keys = g.keys
-            const active = keys.length > 0 && keys.length === selectedCount && keys.every(k => selectedSet.has(k))
-            return (
-              <button
-                key={g.id}
-                onClick={() => alertCampaigns.replace(keys)}
-                disabled={keys.length === 0}
-                className={
-                  'rounded-lg border px-3 py-1.5 text-xs font-medium disabled:opacity-40 ' +
-                  (active
-                    ? 'border-[#0066cc] bg-[#E8F0FB] text-[#0066cc]'
-                    : 'border-[#e0e0e0] text-[#1d1d1f] hover:bg-[#F9FAFB]')
-                }
-              >
-                {g.label} · {keys.length}개
-              </button>
-            )
-          })}
-        </div>
+        {[
+          {
+            title: '담당별 선택',
+            presets: MONITORING_GROUPS.map(g => ({ id: g.id as string, label: g.label, keys: groupKeys[g.id] })),
+          },
+          {
+            title: '마티니 운영 전체',
+            presets: [{ id: 'all', label: '마티니 운영 전체 (담당 A+B)', keys: MONITORING_GROUPS.flatMap(g => groupKeys[g.id]) }],
+          },
+        ].map(row => (
+          <div key={row.title} className="flex flex-wrap items-center gap-2">
+            <span className="text-[11px] font-medium text-[#6B7280]">{row.title}</span>
+            {row.presets.map(g => {
+              const active = g.keys.length > 0 && g.keys.length === selectedCount && g.keys.every(k => selectedSet.has(k))
+              return (
+                <button
+                  key={g.id}
+                  onClick={() => alertCampaigns.replace(g.keys)}
+                  disabled={g.keys.length === 0}
+                  className={
+                    'rounded-lg border px-3 py-1.5 text-xs font-medium disabled:opacity-40 ' +
+                    (active
+                      ? 'border-[#0066cc] bg-[#E8F0FB] text-[#0066cc]'
+                      : 'border-[#e0e0e0] text-[#1d1d1f] hover:bg-[#F9FAFB]')
+                  }
+                >
+                  {g.label} · {g.keys.length}개
+                </button>
+              )
+            })}
+          </div>
+        ))}
 
         <input
           type="text"
