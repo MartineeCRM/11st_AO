@@ -22,8 +22,20 @@ function formatTriggerValue(trigger: AoCampaignAlertTrigger): { previous: string
 
 const BASIS_LABEL = { week: '전주', month: '전월 동기간' } as const
 
+// 반대 기준에서는 임계값에 안 걸린 경우에만 참고 수치를 붙인다 (걸렸으면 그쪽 소제목에 이미 나옴)
+function otherNote(alert: AoCampaignAlert, t: AoCampaignAlertTrigger) {
+  if (t.otherDelta === null || alert.triggers.some(o => o.basis !== t.basis && o.metric === t.metric)) return null
+  const pct = Math.round(t.otherDelta * 100)
+  return (
+    <span className="ml-1 font-normal text-[#9CA3AF]">
+      · {t.basis === 'week' ? '전월 동기간' : '전주'} 대비 {pct > 0 ? '+' : ''}{pct}%
+    </span>
+  )
+}
+
 export function AoAlertBanner({ alerts, windows, groupKeys }: Props) {
   if (alerts.length === 0) return null
+  const sentDropCount = alerts.filter(a => a.triggers.some(t => t.metric === 'sent')).length
   const range = (r: { start: string; end: string }) => `${formatDateShort(r.start)}~${formatDateShort(r.end)}`
 
   // 담당 A/B 순서대로 묶고, 어느 쪽에도 없는 모니터링 대상은 "기타"로
@@ -40,6 +52,7 @@ export function AoAlertBanner({ alerts, windows, groupKeys }: Props) {
         <AlertTriangle className="h-4 w-4 shrink-0" />
         주의 필요 캠페인 {alerts.length}개
         <span className="font-normal text-[#DC2626]">(전주 · 전월 동기간 대비 30% 이상 하락)</span>
+        <span className="ml-auto rounded-full bg-[#FEE2E2] px-2 py-0.5 text-[11px]">발송건수 하락 {sentDropCount}개</span>
       </div>
       {windows && (
         <p className="mt-0.5 text-[10px] text-[#DC2626]">
@@ -65,8 +78,9 @@ export function AoAlertBanner({ alerts, windows, groupKeys }: Props) {
                           {triggers.map(trigger => {
                             const { previous, current } = formatTriggerValue(trigger)
                             return (
-                              <li key={trigger.metric}>
+                              <li key={trigger.metric} className={trigger.metric === 'sent' ? 'font-semibold' : undefined}>
                                 {trigger.label} {Math.round(trigger.dropRate * 100)}%↓ ({previous} → {current})
+                                {otherNote(alert, trigger)}
                               </li>
                             )
                           })}

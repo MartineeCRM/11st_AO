@@ -398,6 +398,8 @@ export interface AoCampaignAlertTrigger {
   current: number
   /** 0~1, 비교 기준 대비 하락률 (양수) */
   dropRate: number
+  /** 반대 기준(전주↔전월 동기간) 대비 증감률 (음수=하락). 참고용이라 30% 미만이어도 채워지고, 반대 기준에 발송 이력이 없으면 null */
+  otherDelta: number | null
 }
 
 export interface AoCampaignAlert {
@@ -439,19 +441,22 @@ export function alertWindows(rows: AoPushRow[]): AoAlertWindows | null {
   }
 }
 
-function dropTriggers(basis: AoAlertBasis, curr: AoMonthlyMetrics, prev: AoMonthlyMetrics): AoCampaignAlertTrigger[] {
+const ALERT_METRICS: [AoAlertMetric, string, (m: AoMonthlyMetrics) => number][] = [
+  ['sent', '발송건수', m => m.sent],
+  ['openRate', '오픈율(클릭률)', m => (m.sent > 0 ? m.opens / m.sent : 0)],
+  ['grossAmount', '연관거래액', m => m.grossAmount],
+]
+
+function dropTriggers(basis: AoAlertBasis, curr: AoMonthlyMetrics, prev: AoMonthlyMetrics, other: AoMonthlyMetrics): AoCampaignAlertTrigger[] {
   if (prev.sent === 0) return [] // 비교 기준 기간에 발송 이력이 없으면 하락 판단 불가
-  const openRate = (m: AoMonthlyMetrics) => (m.sent > 0 ? m.opens / m.sent : 0)
-  const checks: [AoAlertMetric, string, number, number][] = [
-    ['sent', '발송건수', prev.sent, curr.sent],
-    ['openRate', '오픈율(클릭률)', openRate(prev), openRate(curr)],
-    ['grossAmount', '연관거래액', prev.grossAmount, curr.grossAmount],
-  ]
   const triggers: AoCampaignAlertTrigger[] = []
-  for (const [metric, label, previous, current] of checks) {
+  for (const [metric, label, value] of ALERT_METRICS) {
+    const current = value(curr)
+    const previous = value(prev)
     const delta = calcPeriodDelta(current, previous)
     if (delta !== null && delta <= -ALERT_DROP_THRESHOLD) {
-      triggers.push({ basis, metric, label, previous, current, dropRate: -delta })
+      const otherDelta = other.sent === 0 ? null : calcPeriodDelta(current, value(other))
+      triggers.push({ basis, metric, label, previous, current, dropRate: -delta, otherDelta })
     }
   }
   return triggers
@@ -483,16 +488,17 @@ export function buildAoCampaignAlerts(rows: AoPushRow[], monitoredCampaigns: str
   for (const [campaign, campaignRows] of byCampaign) {
     const sumIn = (range: DateRange) => sumAoMetrics(campaignRows.filter(r => r.date >= range.start && r.date <= range.end))
     const curr = sumIn(w.current)
+    const prevWeek = sumIn(w.previousWeek)
+    const prevMonth = sumIn(w.previousMonth)
     const triggers = [
-      ...dropTriggers('week', curr, sumIn(w.previousWeek)),
-      ...dropTriggers('month', curr, sumIn(w.previousMonth)),
+      ...dropTriggers('week', curr, prevWeek, prevMonth),
+      ...dropTriggers('month', curr, prevMonth, prevWeek),
     ]
     if (triggers.length > 0) alerts.push({ campaign, triggers })
   }
 
-  return alerts.sort((a, b) => {
-    const worstA = Math.max(...a.triggers.map(t => t.dropRate))
-    const worstB = Math.max(...b.triggers.map(t => t.dropRate))
-    return worstB - worstA
-  })
+  // 고객사 관심사가 발송량 유지라, 발송건수가 떨어진 캠페인을 맨 위로 (그 안에서는 하락폭이 큰 순)
+  const hasSent = (a: AoCampaignAlert) => a.triggers.some(t => t.metric === 'sent')
+  const worst = (a: AoCampaignAlert) => Math.max(...a.triggers.map(t => t.dropRate))
+  return alerts.sort((a, b) => Number(hasSent(b)) - Number(hasSent(a)) || worst(b) - worst(a))
 }
