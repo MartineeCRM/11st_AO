@@ -59,32 +59,40 @@ export function AoAlertBanner({ alerts, windows, groupKeys }: Props) {
               {sec.items.map(alert => (
                 <li key={alert.campaign} className="text-xs text-[#7F1D1D]">
                   <div className="font-bold">{alert.campaign}</div>
-                  <div className="mt-1 grid grid-cols-[88px_1fr_1fr] gap-x-2 gap-y-0.5 text-[11px]">
-                    <span />
-                    {(['week', 'month'] as const).map(basis => (
-                      <span key={basis} className="font-semibold text-[#B91C1C]">{BASIS_LABEL[basis]} 대비</span>
-                    ))}
-                    {(['sent', 'openRate', 'grossAmount'] as const).map(metric => {
-                      const row = (['week', 'month'] as const).map(basis => alert.cells.find(c => c.basis === basis && c.metric === metric)!)
-                      return (
-                        <div key={metric} className="contents">
-                          <span className={metric === 'sent' ? 'font-semibold' : undefined}>{row[0].label}</span>
-                          {row.map(cell => {
-                            if (cell.delta === null) return <span key={cell.basis} className="text-[#9CA3AF]">-</span>
-                            const { previous, current } = formatCellValue(cell)
-                            return (
-                              <span
-                                key={cell.basis}
-                                className={cell.flagged ? 'rounded bg-[#FEE2E2] px-1 font-semibold text-[#B91C1C]' : 'px-1 text-[#6B7280]'}
-                              >
-                                {formatDelta(cell.delta)} ({previous} → {current})
-                              </span>
-                            )
-                          })}
-                        </div>
-                      )
-                    })}
-                  </div>
+                  <table className="mt-1 w-full max-w-2xl table-fixed border-collapse text-[11px]">
+                    <thead>
+                      <tr className="bg-[#FEE2E2] text-[#B91C1C]">
+                        <th className="w-24 border border-[#FCA5A5] px-2 py-1 text-left font-semibold">지표</th>
+                        {(['week', 'month'] as const).map(basis => (
+                          <th key={basis} className="border border-[#FCA5A5] px-2 py-1 text-left font-semibold">{BASIS_LABEL[basis]} 대비</th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {(['sent', 'openRate', 'grossAmount'] as const).map(metric => {
+                        const row = (['week', 'month'] as const).map(basis => alert.cells.find(c => c.basis === basis && c.metric === metric)!)
+                        return (
+                          <tr key={metric}>
+                            <td className={'border border-[#FCA5A5] px-2 py-1 ' + (metric === 'sent' ? 'font-semibold' : '')}>{row[0].label}</td>
+                            {row.map(cell => {
+                              if (cell.delta === null) {
+                                return <td key={cell.basis} className="border border-[#FCA5A5] px-2 py-1 text-[#9CA3AF]">-</td>
+                              }
+                              const { previous, current } = formatCellValue(cell)
+                              return (
+                                <td
+                                  key={cell.basis}
+                                  className={'border border-[#FCA5A5] px-2 py-1 ' + (cell.flagged ? 'bg-[#FEE2E2] font-semibold text-[#B91C1C]' : 'bg-white/60 text-[#6B7280]')}
+                                >
+                                  {formatDelta(cell.delta)} ({previous} → {current})
+                                </td>
+                              )
+                            })}
+                          </tr>
+                        )
+                      })}
+                    </tbody>
+                  </table>
                 </li>
               ))}
             </ul>
