@@ -128,8 +128,11 @@ export function CRMSettings({ sheetConnection, campaignOptions, alertCampaigns, 
 
         <div className="flex flex-wrap items-center gap-2">
           <span className="text-[11px] font-medium text-[#6B7280]">담당별 선택</span>
-          {MONITORING_GROUPS.map(g => {
-            const keys = groupKeys[g.id]
+          {[
+            ...MONITORING_GROUPS.map(g => ({ id: g.id as string, label: g.label, keys: groupKeys[g.id] })),
+            { id: 'all', label: '담당 A+B 전체 (마티니 담당 전체)', keys: MONITORING_GROUPS.flatMap(g => groupKeys[g.id]) },
+          ].map(g => {
+            const keys = g.keys
             const active = keys.length > 0 && keys.length === selectedCount && keys.every(k => selectedSet.has(k))
             return (
               <button
