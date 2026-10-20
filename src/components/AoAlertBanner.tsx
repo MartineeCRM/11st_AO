@@ -1,7 +1,6 @@
 import { AlertTriangle } from 'lucide-react'
-import { formatNumber, formatCurrency } from '@/lib/formatters'
-import { formatDateShort } from '@/lib/formatters'
-import type { AoCampaignAlert, AoCampaignAlertTrigger, AoAlertWindows } from '@/lib/metrics'
+import { formatNumber, formatCurrency, formatDateShort } from '@/lib/formatters'
+import type { AoCampaignAlert, AoAlertCell, AoAlertWindows } from '@/lib/metrics'
 import { MONITORING_GROUPS, type MonitoringGroupId } from '@/lib/monitoringGroups'
 
 interface Props {
@@ -10,32 +9,24 @@ interface Props {
   groupKeys: Record<MonitoringGroupId, string[]>
 }
 
-function formatTriggerValue(trigger: AoCampaignAlertTrigger): { previous: string; current: string } {
-  if (trigger.metric === 'sent') {
-    return { previous: formatNumber(trigger.previous), current: formatNumber(trigger.current) }
+function formatCellValue(cell: AoAlertCell): { previous: string; current: string } {
+  if (cell.metric === 'sent') return { previous: formatNumber(cell.previous), current: formatNumber(cell.current) }
+  if (cell.metric === 'openRate') {
+    return { previous: `${(cell.previous * 100).toFixed(1)}%`, current: `${(cell.current * 100).toFixed(1)}%` }
   }
-  if (trigger.metric === 'openRate') {
-    return { previous: `${(trigger.previous * 100).toFixed(1)}%`, current: `${(trigger.current * 100).toFixed(1)}%` }
-  }
-  return { previous: formatCurrency(trigger.previous), current: formatCurrency(trigger.current) }
+  return { previous: formatCurrency(cell.previous), current: formatCurrency(cell.current) }
 }
 
 const BASIS_LABEL = { week: '전주', month: '전월 동기간' } as const
 
-// 반대 기준에서는 임계값에 안 걸린 경우에만 참고 수치를 붙인다 (걸렸으면 그쪽 소제목에 이미 나옴)
-function otherNote(alert: AoCampaignAlert, t: AoCampaignAlertTrigger) {
-  if (t.otherDelta === null || alert.triggers.some(o => o.basis !== t.basis && o.metric === t.metric)) return null
-  const pct = Math.round(t.otherDelta * 100)
-  return (
-    <span className="ml-1 font-normal text-[#9CA3AF]">
-      · {t.basis === 'week' ? '전월 동기간' : '전주'} 대비 {pct > 0 ? '+' : ''}{pct}%
-    </span>
-  )
+function formatDelta(delta: number): string {
+  const pct = Math.round(delta * 100)
+  return pct < 0 ? `${-pct}%↓` : pct > 0 ? `+${pct}%↑` : '0%'
 }
 
 export function AoAlertBanner({ alerts, windows, groupKeys }: Props) {
   if (alerts.length === 0) return null
-  const sentDropCount = alerts.filter(a => a.triggers.some(t => t.metric === 'sent')).length
+  const sentDropCount = alerts.filter(a => a.cells.some(c => c.flagged && c.metric === 'sent')).length
   const range = (r: { start: string; end: string }) => `${formatDateShort(r.start)}~${formatDateShort(r.end)}`
 
   // 담당 A/B 순서대로 묶고, 어느 쪽에도 없는 모니터링 대상은 "기타"로
@@ -68,26 +59,32 @@ export function AoAlertBanner({ alerts, windows, groupKeys }: Props) {
               {sec.items.map(alert => (
                 <li key={alert.campaign} className="text-xs text-[#7F1D1D]">
                   <div className="font-bold">{alert.campaign}</div>
-                  {(['week', 'month'] as const).map(basis => {
-                    const triggers = alert.triggers.filter(t => t.basis === basis)
-                    if (triggers.length === 0) return null
-                    return (
-                      <div key={basis} className="mt-1">
-                        <p className="text-[11px] font-semibold text-[#B91C1C]">{BASIS_LABEL[basis]} 대비</p>
-                        <ul className="ml-3 list-disc space-y-0.5">
-                          {triggers.map(trigger => {
-                            const { previous, current } = formatTriggerValue(trigger)
+                  <div className="mt-1 grid grid-cols-[88px_1fr_1fr] gap-x-2 gap-y-0.5 text-[11px]">
+                    <span />
+                    {(['week', 'month'] as const).map(basis => (
+                      <span key={basis} className="font-semibold text-[#B91C1C]">{BASIS_LABEL[basis]} 대비</span>
+                    ))}
+                    {(['sent', 'openRate', 'grossAmount'] as const).map(metric => {
+                      const row = (['week', 'month'] as const).map(basis => alert.cells.find(c => c.basis === basis && c.metric === metric)!)
+                      return (
+                        <div key={metric} className="contents">
+                          <span className={metric === 'sent' ? 'font-semibold' : undefined}>{row[0].label}</span>
+                          {row.map(cell => {
+                            if (cell.delta === null) return <span key={cell.basis} className="text-[#9CA3AF]">-</span>
+                            const { previous, current } = formatCellValue(cell)
                             return (
-                              <li key={trigger.metric} className={trigger.metric === 'sent' ? 'font-semibold' : undefined}>
-                                {trigger.label} {Math.round(trigger.dropRate * 100)}%↓ ({previous} → {current})
-                                {otherNote(alert, trigger)}
-                              </li>
+                              <span
+                                key={cell.basis}
+                                className={cell.flagged ? 'rounded bg-[#FEE2E2] px-1 font-semibold text-[#B91C1C]' : 'px-1 text-[#6B7280]'}
+                              >
+                                {formatDelta(cell.delta)} ({previous} → {current})
+                              </span>
                             )
                           })}
-                        </ul>
-                      </div>
-                    )
-                  })}
+                        </div>
+                      )
+                    })}
+                  </div>
                 </li>
               ))}
             </ul>
