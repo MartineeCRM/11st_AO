@@ -28,5 +28,13 @@ export function useAlertCampaignsState() {
     setSelected(prev => (prev.includes(campaign) ? prev.filter(c => c !== campaign) : [...prev, campaign]))
   }
 
-  return { selected, toggle }
+  function addMany(campaigns: string[]) {
+    setSelected(prev => [...new Set([...prev, ...campaigns])])
+  }
+
+  function replace(campaigns: string[]) {
+    setSelected(campaigns)
+  }
+
+  return { selected, toggle, addMany, replace }
 }

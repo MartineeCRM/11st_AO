@@ -67,6 +67,16 @@ export function campaignGroupsOf(rows: AoPushRow[], monitoredVariantKeys: string
   return [...groups]
 }
 
+/** 캠페인명_분할이 names에 속하는 모든 베리언트의 결합 키 ("캠페인 · 베리언트"), 가나다순 */
+export function campaignKeysOf(rows: AoPushRow[], names: string[]): string[] {
+  const nameSet = new Set(names)
+  const keys = new Set<string>()
+  for (const r of rows) {
+    if (nameSet.has(r.campaignSplit)) keys.add(aoCampaignKey(r))
+  }
+  return [...keys].sort((a, b) => a.localeCompare(b, 'ko'))
+}
+
 export interface AoTrendPoint {
   period: string
   sent: number

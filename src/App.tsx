@@ -6,7 +6,8 @@ import { useSheetConnectionState } from '@/hooks/useSheetConnectionState'
 import { useAlertCampaignsState } from '@/hooks/useAlertCampaignsState'
 import { useCampaignNotesState } from '@/hooks/useCampaignNotesState'
 import { useSheetData } from '@/hooks/useSheetData'
-import { filterAoRows, listAoCampaignNames } from '@/lib/metrics'
+import { filterAoRows, listAoCampaignNames, campaignKeysOf } from '@/lib/metrics'
+import { MONITORING_GROUPS, type MonitoringGroupId } from '@/lib/monitoringGroups'
 
 export type Tab = 'ao' | 'settings'
 
@@ -66,6 +67,11 @@ export default function App() {
   const sheetData = useSheetData(sheetConnection.connection)
   const aoRows = useMemo(() => filterAoRows(sheetData.rows), [sheetData.rows])
   const campaignOptions = useMemo(() => listAoCampaignNames(aoRows), [aoRows])
+  // 담당 A/B별 모니터링 대상 키 (설정의 일괄 선택 + AO 탭 배너 그룹핑에 공통 사용)
+  const groupKeys = useMemo(
+    () => Object.fromEntries(MONITORING_GROUPS.map(g => [g.id, campaignKeysOf(aoRows, g.campaigns)])) as Record<MonitoringGroupId, string[]>,
+    [aoRows],
+  )
 
   function handleTabChange(tab: Tab) {
     sessionStorage.removeItem(CHUNK_RELOAD_KEY)
@@ -83,6 +89,7 @@ export default function App() {
                 sheetData={sheetData}
                 aoRows={aoRows}
                 monitoredCampaigns={alertCampaigns.selected}
+                groupKeys={groupKeys}
                 campaignNotes={campaignNotes}
               />
             </Suspense>
@@ -92,6 +99,7 @@ export default function App() {
               sheetConnection={sheetConnection}
               campaignOptions={campaignOptions}
               alertCampaigns={alertCampaigns}
+              groupKeys={groupKeys}
             />
           )}
         </ErrorBoundary>

@@ -18,6 +18,7 @@ import {
   campaignGroupsOf,
   type AoCampaignSelection,
 } from '@/lib/metrics'
+import type { MonitoringGroupId } from '@/lib/monitoringGroups'
 import type { AoPushRow, DateRange } from '@/types/sheets'
 import type { NoteSaveStatus } from '@/hooks/useCampaignNotesState'
 
@@ -36,6 +37,7 @@ interface Props {
   sheetData: SheetData
   aoRows: AoPushRow[]
   monitoredCampaigns: string[]
+  groupKeys: Record<MonitoringGroupId, string[]>
   campaignNotes: {
     notes: Record<string, string>
     saveStatus: Record<string, NoteSaveStatus>
@@ -43,7 +45,7 @@ interface Props {
   }
 }
 
-export function CRMAlwaysOn({ sheetData, aoRows, monitoredCampaigns, campaignNotes }: Props) {
+export function CRMAlwaysOn({ sheetData, aoRows, monitoredCampaigns, groupKeys, campaignNotes }: Props) {
   const { loading, error, dateRange } = sheetData
   const minDate = dateRange?.min ?? ''
   const maxDate = dateRange?.max ?? ''
@@ -193,7 +195,7 @@ export function CRMAlwaysOn({ sheetData, aoRows, monitoredCampaigns, campaignNot
         <LoadingSkeleton />
       ) : (
         <div className="flex flex-col gap-8 px-6 py-5">
-          <AoAlertBanner alerts={alerts} />
+          <AoAlertBanner alerts={alerts} groupKeys={groupKeys} />
 
           <section className="flex flex-col gap-2">
             <div className="flex items-center justify-between px-1">

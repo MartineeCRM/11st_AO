@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
 import type { SheetConnection } from '@/hooks/useSheetConnectionState'
+import { MONITORING_GROUPS, type MonitoringGroupId } from '@/lib/monitoringGroups'
 
 interface SheetConnectionProps {
   connection: SheetConnection
@@ -10,12 +11,15 @@ interface SheetConnectionProps {
 interface AlertCampaignsProps {
   selected: string[]
   toggle: (campaign: string) => void
+  addMany: (campaigns: string[]) => void
+  replace: (campaigns: string[]) => void
 }
 
 interface Props {
   sheetConnection: SheetConnectionProps
   campaignOptions: string[]
   alertCampaigns: AlertCampaignsProps
+  groupKeys: Record<MonitoringGroupId, string[]>
 }
 
 type TestStatus =
@@ -24,19 +28,23 @@ type TestStatus =
   | { state: 'success' }
   | { state: 'error'; message: string }
 
-export function CRMSettings({ sheetConnection, campaignOptions, alertCampaigns }: Props) {
+export function CRMSettings({ sheetConnection, campaignOptions, alertCampaigns, groupKeys }: Props) {
   const { connection, updateField } = sheetConnection
   const [testStatus, setTestStatus] = useState<TestStatus>({ state: 'idle' })
   const [campaignSearch, setCampaignSearch] = useState('')
 
   const filteredCampaignOptions = useMemo(() => {
-    const q = campaignSearch.trim()
-    const matched = q ? campaignOptions.filter(c => c.includes(q)) : campaignOptions
+    const q = campaignSearch.trim().toLowerCase()
+    const matched = q ? campaignOptions.filter(c => c.toLowerCase().includes(q)) : campaignOptions
     const selectedSet = new Set(alertCampaigns.selected)
     const checked = matched.filter(c => selectedSet.has(c))
     const unchecked = matched.filter(c => !selectedSet.has(c))
     return [...checked, ...unchecked]
   }, [campaignOptions, campaignSearch, alertCampaigns.selected])
+
+  const selectedSet = new Set(alertCampaigns.selected)
+  // 목록에 실제로 존재하는 선택 항목만 센다 (시트에서 사라진 옛 키가 숫자만 부풀리지 않도록)
+  const selectedCount = campaignOptions.filter(c => selectedSet.has(c)).length
 
   async function handleTestConnection() {
     setTestStatus({ state: 'testing' })
@@ -118,6 +126,29 @@ export function CRMSettings({ sheetConnection, campaignOptions, alertCampaigns }
           격주·월 단위로 몰아서 발송하는 캠페인은 매주 하락으로 잡히니 체크하지 않는 걸 권장해요.
         </p>
 
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="text-[11px] font-medium text-[#6B7280]">담당별 선택</span>
+          {MONITORING_GROUPS.map(g => {
+            const keys = groupKeys[g.id]
+            const active = keys.length > 0 && keys.length === selectedCount && keys.every(k => selectedSet.has(k))
+            return (
+              <button
+                key={g.id}
+                onClick={() => alertCampaigns.replace(keys)}
+                disabled={keys.length === 0}
+                className={
+                  'rounded-lg border px-3 py-1.5 text-xs font-medium disabled:opacity-40 ' +
+                  (active
+                    ? 'border-[#0066cc] bg-[#E8F0FB] text-[#0066cc]'
+                    : 'border-[#e0e0e0] text-[#1d1d1f] hover:bg-[#F9FAFB]')
+                }
+              >
+                {g.label} · {keys.length}개
+              </button>
+            )
+          })}
+        </div>
+
         <input
           type="text"
           value={campaignSearch}
@@ -125,6 +156,22 @@ export function CRMSettings({ sheetConnection, campaignOptions, alertCampaigns }
           placeholder="캠페인 검색..."
           className="rounded-lg border border-[#e0e0e0] px-3 py-2 text-sm text-[#1d1d1f] outline-none focus:border-[#0066cc]"
         />
+
+        <div className="flex items-center gap-2 text-xs">
+          <button
+            onClick={() => alertCampaigns.addMany(filteredCampaignOptions)}
+            className="text-[#0066cc] underline"
+          >
+            모두 선택
+          </button>
+          <span className="text-[#9CA3AF]">-</span>
+          <button onClick={() => alertCampaigns.replace([])} className="text-[#0066cc] underline">
+            지우기
+          </button>
+          <span className="ml-auto text-[11px] text-[#9CA3AF]">
+            {campaignSearch.trim() ? `검색 결과 ${filteredCampaignOptions.length}개 · ` : ''}전체 {campaignOptions.length}개
+          </span>
+        </div>
 
         <div className="max-h-64 overflow-y-auto rounded-lg border border-[#e0e0e0]">
           {campaignOptions.length === 0 ? (
@@ -139,7 +186,7 @@ export function CRMSettings({ sheetConnection, campaignOptions, alertCampaigns }
               >
                 <input
                   type="checkbox"
-                  checked={alertCampaigns.selected.includes(campaign)}
+                  checked={selectedSet.has(campaign)}
                   onChange={() => alertCampaigns.toggle(campaign)}
                   className="h-3.5 w-3.5"
                 />
@@ -149,7 +196,7 @@ export function CRMSettings({ sheetConnection, campaignOptions, alertCampaigns }
           )}
         </div>
 
-        <p className="text-[11px] text-[#9CA3AF]">{alertCampaigns.selected.length}개 선택됨 · 이 브라우저에만 저장됩니다.</p>
+        <p className="text-[11px] text-[#9CA3AF]">{selectedCount}개 선택됨 · 이 브라우저에만 저장됩니다.</p>
       </Section>
     </div>
   )
