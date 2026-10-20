@@ -55,16 +55,25 @@ export function AoAlertBanner({ alerts, windows, groupKeys }: Props) {
               {sec.items.map(alert => (
                 <li key={alert.campaign} className="text-xs text-[#7F1D1D]">
                   <div className="font-bold">{alert.campaign}</div>
-                  <ul className="mt-0.5 ml-3 list-disc space-y-0.5">
-                    {alert.triggers.map(trigger => {
-                      const { previous, current } = formatTriggerValue(trigger)
-                      return (
-                        <li key={`${trigger.basis}-${trigger.metric}`}>
-                          {BASIS_LABEL[trigger.basis]} 대비 {trigger.label} {Math.round(trigger.dropRate * 100)}%↓ ({previous} → {current})
-                        </li>
-                      )
-                    })}
-                  </ul>
+                  {(['week', 'month'] as const).map(basis => {
+                    const triggers = alert.triggers.filter(t => t.basis === basis)
+                    if (triggers.length === 0) return null
+                    return (
+                      <div key={basis} className="mt-1">
+                        <p className="text-[11px] font-semibold text-[#B91C1C]">{BASIS_LABEL[basis]} 대비</p>
+                        <ul className="ml-3 list-disc space-y-0.5">
+                          {triggers.map(trigger => {
+                            const { previous, current } = formatTriggerValue(trigger)
+                            return (
+                              <li key={trigger.metric}>
+                                {trigger.label} {Math.round(trigger.dropRate * 100)}%↓ ({previous} → {current})
+                              </li>
+                            )
+                          })}
+                        </ul>
+                      </div>
+                    )
+                  })}
                 </li>
               ))}
             </ul>
