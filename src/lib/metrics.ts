@@ -17,16 +17,6 @@ function aoCampaignKey(r: AoPushRow): string {
   return r.variantSplit ? `${r.campaignSplit} · ${r.variantSplit}` : r.campaignSplit
 }
 
-/** AO 캠페인 목록 (캠페인명_분할 + 배리언트명_분할 기준), 가나다순 */
-export function listAoCampaignNames(rows: AoPushRow[]): string[] {
-  const names = new Set<string>()
-  for (const r of rows) {
-    const key = aoCampaignKey(r)
-    if (key) names.add(key)
-  }
-  return [...names].sort((a, b) => a.localeCompare(b, 'ko'))
-}
-
 export interface AoCampaignSelection {
   campaign: string
   variant: string | null
@@ -53,28 +43,6 @@ export function listAoCampaignVariants(rows: AoPushRow[], campaign: string): str
     if (r.campaignSplit === campaign && r.variantSplit) names.add(r.variantSplit)
   }
   return [...names].sort((a, b) => a.localeCompare(b, 'ko'))
-}
-
-/** 모니터링 대상(베리언트 단위) 목록에서, 그 베리언트들이 속한 캠페인명_분할 집합을 구함 */
-export function campaignGroupsOf(rows: AoPushRow[], monitoredVariantKeys: string[]): string[] {
-  const monitoredSet = new Set(monitoredVariantKeys)
-  const groups = new Set<string>()
-  for (const r of rows) {
-    if (r.campaignSplit && monitoredSet.has(aoCampaignKey(r))) {
-      groups.add(r.campaignSplit)
-    }
-  }
-  return [...groups]
-}
-
-/** 캠페인명_분할이 names에 속하는 모든 베리언트의 결합 키 ("캠페인 · 베리언트"), 가나다순 */
-export function campaignKeysOf(rows: AoPushRow[], names: string[]): string[] {
-  const nameSet = new Set(names)
-  const keys = new Set<string>()
-  for (const r of rows) {
-    if (nameSet.has(r.campaignSplit)) keys.add(aoCampaignKey(r))
-  }
-  return [...keys].sort((a, b) => a.localeCompare(b, 'ko'))
 }
 
 export interface AoTrendPoint {
@@ -473,7 +441,8 @@ export function buildAoCampaignAlerts(rows: AoPushRow[], monitoredCampaigns: str
 
   const byCampaign = new Map<string, AoPushRow[]>()
   for (const r of rows) {
-    const key = aoCampaignKey(r)
+    // 배리언트는 합산해서 캠페인(캠페인명_분할) 단위로 판단
+    const key = r.campaignSplit
     if (!key || !monitoredSet.has(key)) continue
     const list = byCampaign.get(key) ?? []
     list.push(r)

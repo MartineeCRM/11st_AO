@@ -6,7 +6,7 @@ import { useSheetConnectionState } from '@/hooks/useSheetConnectionState'
 import { useAlertCampaignsState } from '@/hooks/useAlertCampaignsState'
 import { useCampaignNotesState } from '@/hooks/useCampaignNotesState'
 import { useSheetData } from '@/hooks/useSheetData'
-import { filterAoRows, listAoCampaignNames, campaignKeysOf } from '@/lib/metrics'
+import { filterAoRows, listAoCampaignGroups } from '@/lib/metrics'
 import { MONITORING_GROUPS, type MonitoringGroupId } from '@/lib/monitoringGroups'
 
 export type Tab = 'ao' | 'settings'
@@ -59,19 +59,21 @@ class ErrorBoundary extends Component<{ children: ReactNode }, { error: Error | 
 export default function App() {
   const [activeTab, setActiveTab] = useState<Tab>('ao')
   const sheetConnection = useSheetConnectionState()
-  const alertCampaigns = useAlertCampaignsState()
+  const alertCampaigns = useAlertCampaignsState(sheetConnection.connection.spreadsheetId)
   const campaignNotes = useCampaignNotesState(sheetConnection.connection.spreadsheetId)
 
   // Settings의 "모니터링 대상 캠페인" 체크리스트도 실제 캠페인 목록이 필요해서, 시트 데이터는
   // 여기서 한 번만 받아 AO 탭/설정 탭에 props로 내려준다 (탭마다 따로 fetch하지 않도록).
   const sheetData = useSheetData(sheetConnection.connection)
   const aoRows = useMemo(() => filterAoRows(sheetData.rows), [sheetData.rows])
-  const campaignOptions = useMemo(() => listAoCampaignNames(aoRows), [aoRows])
-  // 담당 A/B별 모니터링 대상 키 (설정의 일괄 선택 + AO 탭 배너 그룹핑에 공통 사용)
-  const groupKeys = useMemo(
-    () => Object.fromEntries(MONITORING_GROUPS.map(g => [g.id, campaignKeysOf(aoRows, g.campaigns)])) as Record<MonitoringGroupId, string[]>,
-    [aoRows],
-  )
+  const campaignOptions = useMemo(() => listAoCampaignGroups(aoRows), [aoRows])
+  // 담당 A/B별 모니터링 대상 캠페인 (설정의 일괄 선택 + AO 탭 배너 그룹핑에 공통 사용, 시트에 실제 있는 캠페인만)
+  const groupKeys = useMemo(() => {
+    const existing = new Set(campaignOptions)
+    return Object.fromEntries(
+      MONITORING_GROUPS.map(g => [g.id, g.campaigns.filter(c => existing.has(c))]),
+    ) as Record<MonitoringGroupId, string[]>
+  }, [campaignOptions])
 
   function handleTabChange(tab: Tab) {
     sessionStorage.removeItem(CHUNK_RELOAD_KEY)

@@ -10,6 +10,8 @@ interface SheetConnectionProps {
 
 interface AlertCampaignsProps {
   selected: string[]
+  ready: boolean
+  error: string | null
   toggle: (campaign: string) => void
   addMany: (campaigns: string[]) => void
   replace: (campaigns: string[]) => void
@@ -45,6 +47,8 @@ export function CRMSettings({ sheetConnection, campaignOptions, alertCampaigns, 
   const selectedSet = new Set(alertCampaigns.selected)
   // 목록에 실제로 존재하는 선택 항목만 센다 (시트에서 사라진 옛 키가 숫자만 부풀리지 않도록)
   const selectedCount = campaignOptions.filter(c => selectedSet.has(c)).length
+  // 공유 목록을 아직 못 불러왔으면 수정 금지 (빈 목록으로 덮어쓰지 않도록)
+  const locked = !alertCampaigns.ready
 
   async function handleTestConnection() {
     setTestStatus({ state: 'testing' })
@@ -144,7 +148,7 @@ export function CRMSettings({ sheetConnection, campaignOptions, alertCampaigns, 
                 <button
                   key={g.id}
                   onClick={() => alertCampaigns.replace(g.keys)}
-                  disabled={g.keys.length === 0}
+                  disabled={g.keys.length === 0 || locked}
                   className={
                     'rounded-lg border px-3 py-1.5 text-xs font-medium disabled:opacity-40 ' +
                     (active
@@ -170,12 +174,13 @@ export function CRMSettings({ sheetConnection, campaignOptions, alertCampaigns, 
         <div className="flex items-center gap-2 text-xs">
           <button
             onClick={() => alertCampaigns.addMany(filteredCampaignOptions)}
-            className="text-[#0066cc] underline"
+            disabled={locked}
+            className="text-[#0066cc] underline disabled:opacity-40"
           >
             모두 선택
           </button>
           <span className="text-[#9CA3AF]">-</span>
-          <button onClick={() => alertCampaigns.replace([])} className="text-[#0066cc] underline">
+          <button onClick={() => alertCampaigns.replace([])} disabled={locked} className="text-[#0066cc] underline disabled:opacity-40">
             지우기
           </button>
           <span className="ml-auto text-[11px] text-[#9CA3AF]">
@@ -198,6 +203,7 @@ export function CRMSettings({ sheetConnection, campaignOptions, alertCampaigns, 
                   type="checkbox"
                   checked={selectedSet.has(campaign)}
                   onChange={() => alertCampaigns.toggle(campaign)}
+                  disabled={locked}
                   className="h-3.5 w-3.5"
                 />
                 {campaign}
@@ -206,7 +212,11 @@ export function CRMSettings({ sheetConnection, campaignOptions, alertCampaigns, 
           )}
         </div>
 
-        <p className="text-[11px] text-[#9CA3AF]">{selectedCount}개 선택됨 · 이 브라우저에만 저장됩니다.</p>
+        <p className="text-[11px] text-[#9CA3AF]">
+          {selectedCount}개 선택됨 · 시트의 '모니터링_대상' 탭에 저장되어 같은 시트를 보는 모두에게 공유됩니다.
+          {locked && !alertCampaigns.error && ' 불러오는 중...'}
+        </p>
+        {alertCampaigns.error && <p className="text-[11px] text-[#EF4444]">{alertCampaigns.error}</p>}
       </Section>
     </div>
   )

@@ -15,7 +15,6 @@ import {
   previousPeriodOfSameLength,
   listAoCampaignGroups,
   listAoCampaignVariants,
-  campaignGroupsOf,
   type AoCampaignSelection,
 } from '@/lib/metrics'
 import type { MonitoringGroupId } from '@/lib/monitoringGroups'
@@ -78,21 +77,15 @@ export function CRMAlwaysOn({ sheetData, aoRows, monitoredCampaigns, groupKeys, 
   const alerts = useMemo(() => buildAoCampaignAlerts(aoRows, monitoredCampaigns), [aoRows, monitoredCampaigns])
   const windows = useMemo(() => alertWindows(aoRows), [aoRows])
 
-  // 캠페인(캠페인명_분할) 목록. 모니터링 대상 베리언트가 하나라도 있는 캠페인을 드롭다운 맨 위로
-  // (각 그룹 내에서는 가나다순 유지) — 기존 베리언트 단위 정렬 원칙을 캠페인 단위로 확장
+  // 캠페인(캠페인명_분할) 목록. 모니터링 대상 캠페인을 드롭다운 맨 위로 (각 그룹 내에서는 가나다순 유지)
   const campaignGroups = useMemo(() => listAoCampaignGroups(aoRows), [aoRows])
 
-  const monitoredCampaignGroups = useMemo(
-    () => campaignGroupsOf(aoRows, monitoredCampaigns),
-    [aoRows, monitoredCampaigns],
-  )
-
   const sortedCampaignGroups = useMemo(() => {
-    const monitoredSet = new Set(monitoredCampaignGroups)
+    const monitoredSet = new Set(monitoredCampaigns)
     const monitored = campaignGroups.filter(c => monitoredSet.has(c))
     const rest = campaignGroups.filter(c => !monitoredSet.has(c))
     return [...monitored, ...rest]
-  }, [campaignGroups, monitoredCampaignGroups])
+  }, [campaignGroups, monitoredCampaigns])
 
   // 캠페인 목록 로드 후 기본값(모니터링 대상 우선, 그다음 가나다순 첫 캠페인) 선택, 베리언트는 항상 "전체"
   useEffect(() => {
@@ -106,21 +99,6 @@ export function CRMAlwaysOn({ sheetData, aoRows, monitoredCampaigns, groupKeys, 
     () => listAoCampaignVariants(aoRows, selection.campaign),
     [aoRows, selection.campaign],
   )
-
-  // 선택된 캠페인 기준으로 모니터링 대상 베리언트의 "순수 베리언트명" 목록 추출
-  // (monitoredCampaigns는 "캠페인 · 베리언트" 결합 키라 베리언트 드롭다운의 별표 표시엔 그대로 못 씀)
-  const monitoredCampaignVariants = useMemo(() => {
-    const monitoredSet = new Set(monitoredCampaigns)
-    return campaignVariants.filter(v => monitoredSet.has(`${selection.campaign} · ${v}`))
-  }, [campaignVariants, monitoredCampaigns, selection.campaign])
-
-  // 모니터링 대상 베리언트를 맨 위로 ("전체"는 이 정렬과 무관하게 항상 최상단 고정)
-  const sortedCampaignVariants = useMemo(() => {
-    const monitoredSet = new Set(monitoredCampaignVariants)
-    const monitored = campaignVariants.filter(v => monitoredSet.has(v))
-    const rest = campaignVariants.filter(v => !monitoredSet.has(v))
-    return [...monitored, ...rest]
-  }, [campaignVariants, monitoredCampaignVariants])
 
   // 표시 라벨: 전체면 "캠페인명 (전체)", 특정 베리언트면 "캠페인명 · 베리언트명"
   const selectionLabel = selection.campaign
@@ -180,15 +158,14 @@ export function CRMAlwaysOn({ sheetData, aoRows, monitoredCampaigns, groupKeys, 
           options={sortedCampaignGroups}
           selected={selection.campaign}
           onChange={campaign => setSelection({ campaign, variant: null })}
-          monitoredCampaigns={monitoredCampaignGroups}
+          monitoredCampaigns={monitoredCampaigns}
         />
 
         <CampaignSelectFilter
           label="베리언트"
-          options={['전체', ...sortedCampaignVariants]}
+          options={['전체', ...campaignVariants]}
           selected={selection.variant ?? '전체'}
           onChange={variant => setSelection(prev => ({ ...prev, variant: variant === '전체' ? null : variant }))}
-          monitoredCampaigns={monitoredCampaignVariants}
         />
       </div>
 

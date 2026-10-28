@@ -205,6 +205,81 @@ function campaignNotesDevProxy(env: Record<string, string>): Plugin {
         res.statusCode = 405
         res.end()
       })
+
+      // 모니터링 대상 캠페인(팀 공유 목록) — api/monitored-campaigns.ts와 동일한 규칙, 위 인증/상수를 재사용
+      const MONITORED_SHEET = '모니터링_대상'
+      const monitoredUrl = (spreadsheetId: string, range: string, suffix = '') =>
+        `${SHEETS_BASE}/${spreadsheetId}/values/${encodeURIComponent(`${MONITORED_SHEET}!${range}`)}${suffix}`
+
+      async function monitoredFetch(url: string, auth: JWT, init: RequestInit = {}): Promise<Response> {
+        const token = await getAccessToken(auth)
+        const upstream = await fetch(url, { ...init, headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' } })
+        if (!upstream.ok) throw new Error(`Sheets request failed: ${upstream.status} ${await upstream.text().catch(() => '')}`)
+        return upstream
+      }
+
+      server.middlewares.use('/api/monitored-campaigns', async (req, res) => {
+        const incomingUrl = new URL(req.url ?? '/', 'http://localhost')
+        const auth = getAuthClient()
+        const send = (status: number, json: unknown) => {
+          res.statusCode = status
+          res.setHeader('Content-Type', 'application/json')
+          res.end(JSON.stringify(json))
+        }
+        const notConfigured = { error: '모니터링 대상 공유 기능이 아직 설정되지 않았습니다.' }
+
+        if (req.method === 'GET') {
+          const spreadsheetId = incomingUrl.searchParams.get('spreadsheetId') || env.SPREADSHEET_ID || ''
+          if (!auth || !spreadsheetId || !SPREADSHEET_ID_PATTERN.test(spreadsheetId)) {
+            console.error('[monitored-campaigns-dev-proxy] GOOGLE_SERVICE_ACCOUNT_EMAIL/GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY or spreadsheetId not configured')
+            return send(503, notConfigured)
+          }
+          try {
+            const upstream = await monitoredFetch(monitoredUrl(spreadsheetId, 'A:A'), auth)
+            const { values } = (await upstream.json()) as { values?: string[][] }
+            return send(200, { campaigns: (values ?? []).slice(1).map(row => row[0]).filter(Boolean) })
+          } catch (error) {
+            console.error('[monitored-campaigns-dev-proxy] read failed', error)
+            return send(500, { error: `'${MONITORED_SHEET}' 탭을 읽지 못했습니다. 시트에 탭이 있고 서비스 계정에 공유돼 있는지 확인해주세요.` })
+          }
+        }
+
+        if (req.method === 'PUT') {
+          const chunks: Buffer[] = []
+          for await (const chunk of req) chunks.push(chunk as Buffer)
+          let body: { spreadsheetId?: string; campaigns?: unknown } = {}
+          try {
+            body = JSON.parse(Buffer.concat(chunks).toString('utf-8') || '{}')
+          } catch {
+            return send(400, { error: '잘못된 요청 본문입니다.' })
+          }
+          const { campaigns } = body
+          if (!Array.isArray(campaigns) || campaigns.length > 500) {
+            return send(400, { error: 'campaigns는 최대 500개의 배열이어야 합니다.' })
+          }
+          if (!campaigns.every(c => typeof c === 'string' && c.length > 0 && c.length <= 200)) {
+            return send(400, { error: '캠페인명은 1~200자 문자열이어야 합니다.' })
+          }
+          const spreadsheetId = body.spreadsheetId || env.SPREADSHEET_ID || ''
+          if (!auth || !spreadsheetId || !SPREADSHEET_ID_PATTERN.test(spreadsheetId)) {
+            console.error('[monitored-campaigns-dev-proxy] GOOGLE_SERVICE_ACCOUNT_EMAIL/GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY or spreadsheetId not configured')
+            return send(503, notConfigured)
+          }
+          try {
+            await monitoredFetch(monitoredUrl(spreadsheetId, 'A1', '?valueInputOption=RAW'), auth, {
+              method: 'PUT',
+              body: JSON.stringify({ values: [['캠페인명_분할'], ...campaigns.map(c => [c])] }),
+            })
+            await monitoredFetch(monitoredUrl(spreadsheetId, `A${campaigns.length + 2}:A`, ':clear'), auth, { method: 'POST', body: '{}' })
+            return send(200, { ok: true })
+          } catch (error) {
+            console.error('[monitored-campaigns-dev-proxy] write failed', error)
+            return send(500, { error: '모니터링 대상 저장에 실패했습니다.' })
+          }
+        }
+
+        send(405, { error: 'Method not allowed' })
+      })
     },
   }
 }
